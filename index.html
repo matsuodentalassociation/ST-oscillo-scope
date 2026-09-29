@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>ST-SCOPE-V24</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;height:100vh;overflow:hidden;display:flex;flex-direction:column;background:#e2e8f0;color:#1e293b;font:11px Consolas,"Noto Sans JP",monospace;user-select:none}
+button,input,select,textarea{font:inherit}
+button{border:1px solid #94a3b8;border-radius:4px;background:white;padding:4px 7px;font-weight:bold;cursor:pointer}
+button:hover{background:#eff6ff}
+button.primary{background:#2563eb;border-color:#2563eb;color:white}
+button.stopping{background:#dc2626;border-color:#dc2626;color:white}
+input[type=range]{accent-color:#2563eb}
+input[type=file]{max-width:160px;font-size:10px}
+select,input[type=number]{border:1px solid #94a3b8;border-radius:4px;padding:3px;color:#1d4ed8;background:white;font-weight:bold}
+header{flex:none;display:flex;align-items:center;flex-wrap:wrap;gap:5px 10px;padding:6px 10px;background:white;border-bottom:1px solid #cbd5e1;z-index:10}
+.brand{font-weight:900;min-width:153px}
+.brand small{display:block;color:#1d4ed8}
+.group{display:flex;align-items:center;gap:4px}
+.status{display:inline-block;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.badge{background:#eff6ff;border:1px solid #bfdbfe;border-radius:4px;padding:4px 6px;color:#1e40af;font-weight:bold}
+.tabs{margin-left:auto;display:flex;gap:4px}
+.tabs button[aria-selected=true]{background:#1e40af;color:white}
+main{flex:1;min-height:0;padding:7px}
+.page{height:100%;min-height:0}
+.page[hidden]{display:none!important}
+#scopePage{display:flex;justify-content:center}
+#scopeContainer{width:1120px;max-width:100%;height:100%;min-height:0;background:white;border:2px solid #94a3b8;border-radius:7px;box-shadow:0 7px 20px #33415525;display:flex;flex-direction:column;overflow:hidden}
+#scaleHeader{flex:none;height:30px;display:grid;grid-template-columns:16% 44% 12% 10% 10% 8%;border-bottom:2px solid #94a3b8;font-size:9px;font-weight:900;white-space:nowrap}
+#scaleHeader>div{display:flex;align-items:center;justify-content:center;min-width:0;border-right:1px solid #cbd5e1}
+#motionHeader,#soundHeader{justify-content:space-between!important;padding:0 4px}
+#screenViewport{position:relative;flex:1;min-height:0;overflow:hidden;background:white}
+#waveCanvas{display:block;width:100%;height:100%}
+.measureLine{position:absolute;left:0;width:100%;height:28px;margin-top:-14px;display:flex;align-items:center;z-index:5;cursor:row-resize;touch-action:none}
+.measureLine:before{content:"";width:100%;height:2px;background:#0f172a}
+#lineB:before{background:#dc2626}
+.lineLabel{position:absolute;right:14%;display:flex;gap:5px;white-space:nowrap;padding:3px 5px;background:white;border:1px solid #0f172a;border-radius:4px;font-weight:900;pointer-events:none;box-shadow:0 2px 5px #0003}
+#lineB .lineLabel{border-color:#dc2626;color:#b91c1c}
+.clockLabel{color:#1d4ed8}
+.hzLabel{color:#4338ca;background:#eef2ff}
+#intervalBracket{position:absolute;right:14%;border-right:2px dashed #3b82f6;pointer-events:none;z-index:3}
+#playheadLine{position:absolute;left:0;width:100%;height:24px;margin-top:-12px;display:none;z-index:7;cursor:row-resize;touch-action:none}
+#playheadLine:before{content:"";position:absolute;top:10px;left:0;width:100%;height:3px;background:#fbbf24;box-shadow:0 1px 3px #0006}
+#playheadLine:after{content:"";position:absolute;right:4px;top:2px;width:18px;height:18px;background:#f59e0b;border:2px solid white;border-radius:50%}
+#playheadLine span{position:absolute;left:5px;top:13px;padding:2px 4px;background:#fbbf24;font-weight:900}
+#intervalHud{position:absolute;right:4px;width:12%;min-width:108px;max-width:145px;z-index:6;padding:5px;background:white;border:1px solid #3b82f6;border-radius:4px;box-shadow:0 2px 6px #0003;display:flex;flex-direction:column;gap:4px;text-align:center;font-weight:bold}
+#intervalSec{color:#1d4ed8}
+#replayMetrics,#seekButtons{display:none}
+#seekButtons{grid-template-columns:1fr 1fr;gap:3px}
+#audioStatusText{color:#64748b;font-size:9px}
+#controls{flex:none;display:flex;flex-direction:column;gap:5px;padding:5px 8px;background:#f8fafc;border-top:2px solid #cbd5e1}
+.controlRow{display:flex;align-items:center;gap:5px;white-space:nowrap;min-width:0}
+.controlRow input[type=range]{min-width:20px;flex:1}
+#motionOffsetInput{width:70px}
+#motionOffsetDirection{min-width:80px;color:#1d4ed8}
+#currentCenterTime{padding:3px 6px;background:white;border:1px solid #cbd5e1;border-radius:4px;color:#1d4ed8;font-weight:bold}
+#dataNotice{color:#64748b;font-size:10px}
+#reportPage{overflow:auto;background:#f1f5f9;padding:5px}
+.paper{max-width:950px;margin:auto;padding:20px;background:white;border:1px solid #cbd5e1;user-select:text}
+.paper h1{margin:0;font-size:20px}
+.paper h2{font-size:14px;margin:18px 0 7px;border-bottom:1px solid #94a3b8}
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.card{border:1px solid #cbd5e1;padding:10px}
+.card strong{display:block;margin-top:7px;font-size:16px}
+.warning{padding:8px;background:#fff7ed;border:1px solid #fdba74;color:#9a3412}
+#stageChart{width:100%;height:110px;border:1px solid #cbd5e1}
+#doctorNotes{width:100%;min-height:110px;resize:vertical;padding:8px;border:1px solid #94a3b8}
+.reportActions{text-align:right}
+@media(max-width:720px){header{font-size:10px}#soundHeader{font-size:7px}.lineLabel{font-size:9px}.cards{grid-template-columns:1fr}}
+@media print{body{display:block;height:auto;overflow:visible;background:white}header,#scopePage,.reportActions{display:none!important}main,#reportPage{display:block!important;height:auto;overflow:visible;padding:0}.paper{max-width:none;border:0;padding:0}#doctorNotes{border:0}}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand">睡眠音響・体動オシロスコープ<small>ST-SCOPE-V24</small></div>
+  <label class="group">完全ログ: <input id="masterInput" type="file" accept=".json,.zip"></label>
+  <span id="loadStatusBadge" class="status">待機中</span>
+  <label class="group">Fitbit JSON: <input id="fitbitInput" type="file" accept=".json,.zip" multiple></label>
+  <span id="fitbitStatus" class="status">未読込</span>
+  <button id="demoBtn" type="button">デモ表示</button>
+  <div class="badge">開始: <span id="sessionStartText">--</span><br>終了: <span id="sessionEndText">--</span></div>
+  <div class="badge">いびき録音 <span id="snoreCountText">0</span> 本</div>
+  <label>時間幅: <select id="windowScaleSelect"><option value="60">1分</option><option value="120">2分</option><option value="300">5分</option><option value="600">10分</option><option value="1800">30分</option><option value="3600" selected>1時間</option></select></label>
+  <div class="tabs"><button id="scopeTab" type="button" aria-selected="true">オシロスコープ</button><button id="reportTab" type="button" aria-selected="false">統合レポート</button></div>
+</header>
+<main>
+  <section id="scopePage" class="page">
+    <div id="scopeContainer">
+      <div id="scaleHeader">
+        <div id="motionHeader"><span>0G</span><span id="motionMidLabel">0.1G</span><span id="motionMaxLabel">0.2G</span></div>
+        <div id="soundHeader"><span>-1.0</span><span>-.8</span><span>-.6</span><span>-.4</span><span>-.2</span><span style="color:#2563eb">0</span><span>.2</span><span>.4</span><span>.6</span><span>.8</span><span>1.0</span></div>
+        <div>時計時刻 ↓</div><div>SpO₂ 90–100%</div><div>心拍 bpm</div><div>睡眠段階</div>
+      </div>
+      <div id="screenViewport">
+        <canvas id="waveCanvas"></canvas>
+        <div id="lineA" class="measureLine" style="top:32%">
+          <div class="lineLabel"><span id="labelATime" class="clockLabel">--:--:--</span><span id="labelADb">-- dB</span><span id="labelAHz" class="hzLabel">-- Hz</span></div>
+        </div>
+        <div id="lineB" class="measureLine" style="top:48%">
+          <div class="lineLabel"><span id="labelBTime" class="clockLabel">--:--:--</span><span id="labelBDb">-- dB</span><span id="labelBHz" class="hzLabel">-- Hz</span></div>
+        </div>
+        <div id="playheadLine"><span>↕ REPLAY</span></div>
+        <div id="intervalBracket"></div>
+        <div id="intervalHud">
+          <div>計測区間 <span id="intervalSec">0.0</span> 秒</div>
+          <div id="replayMetrics"><span id="replayTime">--:--:--</span><br><span id="replayDb">-- dB</span> / <span id="replayHz">-- Hz</span></div>
+          <div id="seekButtons"><button id="rewindBtn" type="button">−5秒</button><button id="forwardBtn" type="button">＋5秒</button></div>
+          <button id="playIntervalBtn" class="primary" type="button"><span id="playIcon">▶</span> <span id="playText">区間再生</span></button>
+          <div id="audioStatusText">待機中</div>
+        </div>
+      </div>
+      <div id="controls">
+        <div class="controlRow"><b>タイムライン:</b><input id="timeSlider" type="range" min="0" max="1" step="0.1" value="0"><span>中央時計時刻:</span><span id="currentCenterTime">--:--:--</span></div>
+        <div class="controlRow">
+          <b>体動:</b><span style="color:#2563eb">折れ線＝平均</span><span style="color:#ea580c">横棒＝最大</span>
+          <label>スケール: <select id="motionScaleSelect"><option value="auto">自動</option><option value="0.005">0.005G</option><option value="0.01">0.01G</option><option value="0.02">0.02G</option><option value="0.05">0.05G</option><option value="0.1">0.1G</option><option value="0.2">0.2G</option></select></label>
+          <b>体動位置補正:</b><input id="motionOffsetSlider" type="range" min="-300" max="300" step="0.5" value="0">
+          <input id="motionOffsetInput" type="number" min="-3600" max="3600" step="0.5" value="0"><span>秒</span>
+          <button id="motionOffsetMinusBtn" type="button">−1秒</button><button id="motionOffsetPlusBtn" type="button">＋1秒</button><button id="motionOffsetResetBtn" type="button">0に戻す</button><span id="motionOffsetDirection">補正なし</span>
+        </div>
+        <div id="dataNotice">青いPCM波形は録音のある範囲だけです。未録音範囲を無音とは判定しません。dB換算値は校正済み音圧ではありません。</div>
+      </div>
+    </div>
+  </section>
+  <section id="reportPage" class="page" hidden>
+    <div class="paper">
+      <div class="reportActions"><button id="printBtn" type="button">印刷 / PDF保存</button></div>
+      <h1>統合睡眠スコアレポート</h1>
+      <p id="reportPeriod">セッション未読込</p>
+      <p id="reportMode" class="warning">データ未読込</p>
+      <div class="cards">
+        <div class="card">Fitbit睡眠スコア<strong id="fitbitScoreText">未取得</strong></div>
+        <div class="card">音響・体動の参考候補<strong id="eventCountText">未解析</strong></div>
+        <div class="card">統合睡眠補正スコア<strong id="correctedScoreText">未検証</strong></div>
+      </div>
+      <h2>Fitbit睡眠ステージ</h2><canvas id="stageChart"></canvas><p id="stageSummary">ステージデータなし</p>
+      <h2>参照情報</h2><p id="eventSummary">SleepTrackerログ未読込</p><p id="fitbitSummary">Fitbitデータ未読込</p>
+      <h2>医師所見</h2><textarea id="doctorNotes" placeholder="医師が所見を入力してください。自動診断文ではありません。"></textarea>
+      <p class="warning">体動と音量低下は観察候補であり、無呼吸・中途覚醒の診断ではありません。補正スコアの臨床的妥当性は未検証です。</p>
+    </div>
+  </section>
+</main>
+<script>
+'use strict';
+(() => {
+  const $ = id => document.getElementById(id);
+  const canvas = $('waveCanvas');
+  const ctx = canvas.getContext('2d');
+  const viewport = $('screenViewport');
+  const SCALES = [.005,.01,.02,.05,.1,.2];
+  const STAGE_COLORS = {deep:'#4338ca',light:'#60a5fa',rem:'#a855f7',wake:'#f97316'};
+  const RATE = 10, PEAK_RATE = 200;
+  let logs=[], bins=[], metadata=[], clips=[], fitbit=emptyFitbit();
+  let hasTracker=false, trackerDemo=false, fitbitDemo=false;
+  let startMs=Date.now(), duration=1, center=0, span=3600;
+  let motionOffset=0, motionSetting='auto';
+  let ya=140, yb=240, drag=null;
+  let audioCtx=null, sources=[], playing=false, seeking=false, resumeSeek=false, frame=0;
+  let cursor=0, anchorSec=0, anchorTime=0, intervalStart=0, intervalEnd=0;
+  let trackerGeneration=0, fitbitGeneration=0;
+
+  function emptyFitbit(){return {stages:[],bpm:[],spo2:[],score:null,spo2Range:null,temperature:[],sourceCount:0}}
+  function num(v,f=null){if(v===null||v===undefined||v==='')return f;const n=Number(v);return Number.isFinite(n)?n:f}
+  function clamp(v,a,b){return Math.max(a,Math.min(b,v))}
+  function ms(v){
+    if(v===null||v===undefined||v==='')return null;
+    if(typeof v==='number')return Number.isFinite(v)?(v<1e11?v*1000:v):null;
+    const n=Number(v);if(Number.isFinite(n))return n<1e11?n*1000:n;
+    const t=Date.parse(v);return Number.isFinite(t)?t:null;
+  }
+  function clock(sec){const d=new Date(startMs+(Number.isFinite(sec)?sec:0)*1000);return [d.getHours(),d.getMinutes(),d.getSeconds()].map(x=>String(x).padStart(2,'0')).join(':')}
+  function datetime(sec){const d=new Date(startMs+sec*1000);return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')} ${clock(sec)}`}
+  function rawLogs(d){return [d?.session?.timeSeriesLogs,d?.timeSeriesLogs,d?.session?.logs,d?.logs,d?.session?.measurements,d?.measurements,d?.session?.samples,d?.samples].find(Array.isArray)||[]}
+  function rawBins(d){return [d?.session?.profileBins,d?.profileBins].find(Array.isArray)||[]}
+  function rawClips(d){return [d?.clips,d?.session?.clips,d?.session?.recordingClips,d?.recordingClips].find(Array.isArray)||[]}
+  function path(v){return String(v||'').replace(/\\/g,'/').toLowerCase()}
+  function base(v){return path(v).split('/').pop()}
+  function clipStart(m,name){
+    const t=ms(m?.startedAt);if(t!==null)return Math.max(0,(t-startMs)/1000);
+    const n=num(m?.startSec);if(n!==null)return Math.max(0,n);
+    const id=ms(m?.id);if(id!==null)return Math.max(0,(id-startMs)/1000);
+    const s=base(name).match(/(?:^|[_-])(\d+(?:\.\d+)?)s(?:[_-]|\.)/i);
+    if(s)return Number(s[1]);
+    const unix=base(name).match(/(?:^|[_-])(\d{10,13})(?:[_-]|\.)/);
+    return unix?Math.max(0,(ms(Number(unix[1]))-startMs)/1000):0;
+  }
+  function findMeta(name){return metadata.find(m=>[m?.audioFile,m?.file,m?.filename,m?.path,m?.url].filter(Boolean).some(p=>path(p)===path(name)||base(p)===base(name)))||{}}
+  function snore(m){return /snore|いびき/i.test(String(m?.category??m?.type??m?.label??''))}
+  function parseTracker(data){
+    if(!data||typeof data!=='object'||Array.isArray(data))throw Error('セッションJSONが不正です');
+    const source=rawLogs(data);
+    let t=ms(data?.session?.startedAt??data?.session?.startTime??data?.session?.startAt??data?.startedAt??data?.startTime);
+    if(t===null){
+      const times=source.map(x=>ms(x?.timestamp??x?.time??x?.recordedAt??x?.createdAt)).filter(x=>x!==null);
+      if(times.length)t=times.reduce((a,b)=>Math.min(a,b),Infinity);
+    }
+    if(t===null)throw Error('セッション開始時刻がありません（startedAt等）');
+    startMs=t;
+    metadata=rawClips(data).slice();
+    logs=source.map(item=>{
+      let sec=num(item?.sec??item?.elapsedSec??item?.timeSec??item?.seconds??item?.offsetSec);
+      if(sec===null){const at=ms(item?.timestamp??item?.time??item?.recordedAt??item?.createdAt);if(at!==null)sec=(at-startMs)/1000}
+      if(sec===null||sec<0)return null;
+      return {sec,
+        db:num(item?.db??item?.dB??item?.peakDb??item?.soundDb??item?.soundPressureDb??item?.decibel??item?.decibels??item?.audioDb??item?.audio?.db??item?.audio?.peakDb),
+        hz:num(item?.peakHz??item?.hz??item?.Hz??item?.frequency??item?.frequencyHz??item?.dominantHz??item?.peakFrequency??item?.peakFrequencyHz??item?.audio?.peakHz??item?.audio?.frequencyHz),
+        motion:num(item?.motionG??item?.accelerationG??item?.g??item?.motion?.g)
+      };
+    }).filter(Boolean).sort((a,b)=>a.sec-b.sec);
+    bins=rawBins(data).map((b,i)=>{const avg=Math.max(0,num(b?.avgMotion,0));return {start:Math.max(0,num(b?.startSec,i*30)),length:Math.max(.001,num(b?.durationSec,30)),avg,max:Math.max(avg,num(b?.maxMotion,avg))}}).sort((a,b)=>a.start-b.start);
+    let end=Math.max(1,num(data?.session?.durationSec??data?.durationSec,0));
+    if(logs.length)end=Math.max(end,logs[logs.length-1].sec+1);
+    for(const b of bins)end=Math.max(end,b.start+b.length);
+    for(const m of metadata)end=Math.max(end,clipStart(m,m.audioFile||m.file||m.filename||'')+num(m.durationSec??m.duration,0));
+    duration=end;center=end/2;clips=[];hasTracker=true;trackerDemo=false;refresh();
+  }
+  function refresh(){
+    for(const c of clips)duration=Math.max(duration,c.start+c.length);
+    center=clamp(center,0,duration);
+    $('timeSlider').max=String(duration);$('timeSlider').value=String(center);
+    $('sessionStartText').textContent=datetime(0);$('sessionEndText').textContent=datetime(duration);
+    $('snoreCountText').textContent=String(clips.filter(snore).length||metadata.filter(snore).length);
+    draw();updateLines();report();
+  }
+
+  /* ZIP中央ディレクトリを読み、格納・DEFLATEをJavaScriptだけで展開する。ZIP64・暗号化は非対応。 */
+  function inflate(input,expected){
+    const LB=[3,4,5,6,7,8,9,10,11,13,15,17,19,23,27,31,35,43,51,59,67,83,99,115,131,163,195,227,258];
+    const LE=[0,0,0,0,0,0,0,0,1,1,1,1,2,2,2,2,3,3,3,3,4,4,4,4,5,5,5,5,0];
+    const DB=[1,2,3,4,5,7,9,13,17,25,33,49,65,97,129,193,257,385,513,769,1025,1537,2049,3073,4097,6145,8193,12289,16385,24577];
+    const DE=[0,0,0,0,1,1,2,2,3,3,4,4,5,5,6,6,7,7,8,8,9,9,10,10,11,11,12,12,13,13];
+    let pos=0,buffer=0,count=0,used=0,out=new Uint8Array(Math.max(1024,Math.min(expected||1024,262144)));
+    function bits(n){
+      while(count<n){if(pos>=input.length)throw Error('ZIP圧縮データが途中で終了');buffer|=input[pos++]<<count;count+=8}
+      const value=buffer&((1<<n)-1);buffer>>>=n;count-=n;return value;
+    }
+    function put(v){
+      if(used>=268435456)throw Error('ZIPエントリーが256MBを超えます');
+      if(used===out.length){const grown=new Uint8Array(Math.min(out.length*2,268435456));grown.set(out);out=grown}
+      out[used++]=v;
+    }
+    function tree(lengths){
+      const counts=new Uint16Array(16),next=new Uint16Array(16),tables=Array.from({length:16},()=>new Map());let max=0,code=0;
+      for(const n of lengths){if(n>15)throw Error('ZIP符号長が不正');if(n){counts[n]++;max=Math.max(max,n)}}
+      for(let i=1;i<=15;i++){code=(code+counts[i-1])<<1;next[i]=code}
+      lengths.forEach((n,s)=>{if(n)tables[n].set(next[n]++,s)});
+      return {tables,max};
+    }
+    function symbol(t){let code=0;for(let n=1;n<=t.max;n++){code=(code<<1)|bits(1);if(t.tables[n].has(code))return t.tables[n].get(code)}throw Error('ZIP Huffman符号が不正')}
+    let final=false;
+    while(!final){
+      final=bits(1)===1;const type=bits(2);
+      if(type===0){
+        if(count%8)bits(count%8);
+        const length=bits(16),inverse=bits(16);
+        if(((length^inverse)&65535)!==65535)throw Error('ZIP無圧縮ブロックが不正');
+        for(let i=0;i<length;i++)put(bits(8));
+        continue;
+      }
+      if(type===3)throw Error('ZIPブロック形式が不正');
+      let literal,distance;
+      if(type===1){
+        literal=tree(Array.from({length:288},(_,i)=>i<=143?8:i<=255?9:i<=279?7:8));
+        distance=tree(Array(32).fill(5));
+      }else{
+        const nl=bits(5)+257,nd=bits(5)+1,nc=bits(4)+4;
+        const order=[16,17,18,0,8,7,9,6,10,5,11,4,12,3,13,2,14,1,15];
+        const lengths=Array(19).fill(0);
+        for(let i=0;i<nc;i++)lengths[order[i]]=bits(3);
+        const ct=tree(lengths),all=[];
+        while(all.length<nl+nd){
+          const v=symbol(ct);
+          if(v<=15)all.push(v);
+          else{
+            let repeat,value;
+            if(v===16){if(!all.length)throw Error('ZIP反復符号が不正');repeat=bits(2)+3;value=all[all.length-1]}
+            else if(v===17){repeat=bits(3)+3;value=0}
+            else{repeat=bits(7)+11;value=0}
+            for(let i=0;i<repeat;i++)all.push(value);
+          }
+          if(all.length>nl+nd)throw Error('ZIP符号長の個数が不正');
+        }
+        literal=tree(all.slice(0,nl));distance=tree(all.slice(nl));
+      }
+      for(;;){
+        const v=symbol(literal);
+        if(v<256){put(v);continue}
+        if(v===256)break;
+        const li=v-257;
+        if(li<0||li>=LB.length)throw Error('ZIP長さ符号が不正');
+        const length=LB[li]+bits(LE[li]),di=symbol(distance);
+        if(di<0||di>=DB.length)throw Error('ZIP距離符号が不正');
+        const dist=DB[di]+bits(DE[di]);
+        if(dist>used)throw Error('ZIPコピー距離が不正');
+        for(let i=0;i<length;i++)put(out[used-dist]);
+      }
+    }
+    if(used!==expected)throw Error('ZIP展開後のサイズが一致しません');
+    return out.slice(0,used).buffer;
+  }
+  async function unzip(file){
+    const bytes=new Uint8Array(await file.arrayBuffer()),view=new DataView(bytes.buffer);
+    const u16=p=>view.getUint16(p,true),u32=p=>view.getUint32(p,true);
+    let end=-1;
+    for(let p=bytes.length-22;p>=Math.max(0,bytes.length-65557);p--){if(u32(p)===0x06054b50){end=p;break}}
+    if(end<0)throw Error('ZIP中央ディレクトリがありません');
+    const count=u16(end+10),offset=u32(end+16);
+    if(count===65535||offset===0xffffffff)throw Error('ZIP64は非対応です');
+    let p=offset;const entries=[],decoder=new TextDecoder();
+    for(let i=0;i<count;i++){
+      if(p+46>bytes.length||u32(p)!==0x02014b50)throw Error('ZIP中央ディレクトリが不正');
+      const flags=u16(p+8),method=u16(p+10),compressed=u32(p+20),expanded=u32(p+24);
+      const nl=u16(p+28),extra=u16(p+30),comment=u16(p+32),local=u32(p+42);
+      const name=decoder.decode(bytes.subarray(p+46,p+46+nl));
+      if(!(flags&1)&&!name.endsWith('/')&&/\.(json|wav|webm|mp3|ogg|m4a)$/i.test(name)){
+        entries.push({name,async data(){
+          if(local+30>bytes.length||u32(local)!==0x04034b50)throw Error('ZIPローカルヘッダーが不正');
+          const begin=local+30+u16(local+26)+u16(local+28);
+          if(begin+compressed>bytes.length||expanded>268435456)throw Error('ZIPエントリーが破損または大きすぎます');
+          const contents=bytes.subarray(begin,begin+compressed);
+          if(method===0){if(compressed!==expanded)throw Error('ZIP格納サイズが不一致');return contents.slice().buffer}
+          if(method===8)return inflate(contents,expanded);
+          throw Error('未対応のZIP圧縮方式: '+method);
+        }});
+      }
+      p+=46+nl+extra+comment;
+    }
+    return entries;
+  }
+  function audioContext(){
+    if(!audioCtx){const C=window.AudioContext||window.webkitAudioContext;if(!C)throw Error('Web Audio非対応');audioCtx=new C()}
+    return audioCtx;
+  }
+  function features(buffer){
+    const channels=Array.from({length:buffer.numberOfChannels},(_,i)=>buffer.getChannelData(i));
+    const mix=i=>{let v=0;for(const c of channels)v+=c[i];return v/channels.length};
+    const fw=Math.max(1,Math.floor(buffer.sampleRate/RATE)),pw=Math.max(1,Math.floor(buffer.sampleRate/PEAK_RATE));
+    const envelope=new Float32Array(Math.ceil(buffer.length/fw)),minimum=new Float32Array(Math.ceil(buffer.length/pw)),maximum=new Float32Array(minimum.length);
+    for(let k=0;k<envelope.length;k++){let sum=0,n=0;for(let i=k*fw;i<Math.min(buffer.length,(k+1)*fw);i++){const v=mix(i);sum+=v*v;n++}const rms=n?Math.sqrt(sum/n):0;envelope[k]=clamp(rms>1e-7?20*Math.log10(rms)+72:0,0,60)}
+    for(let k=0;k<minimum.length;k++){let low=1,high=-1;for(let i=k*pw;i<Math.min(buffer.length,(k+1)*pw);i++){const v=mix(i);low=Math.min(low,v);high=Math.max(high,v)}minimum[k]=low<=high?low:0;maximum[k]=low<=high?high:0}
+    return {envelope,minimum,maximum,frequency:new Float32Array(envelope.length)};
+  }
+  async function decodeAudio(entries,generation){
+    const ac=audioContext();let next=0,done=0,success=0;
+    async function worker(){
+      while(generation===trackerGeneration){
+        const index=next++;if(index>=entries.length)return;
+        const entry=entries[index];
+        try{
+          const bytes=await entry.data();if(generation!==trackerGeneration)return;
+          const buffer=await ac.decodeAudioData(bytes.slice(0));if(generation!==trackerGeneration)return;
+          const meta=findMeta(entry.name),f=features(buffer);
+          if(generation!==trackerGeneration)return;
+          clips.push({start:clipStart(meta,entry.name),length:buffer.duration,category:meta.category??meta.type??meta.label??'other',buffer,...f});success++;
+        }catch(error){console.warn('音声をスキップ',entry.name,error)}
+        finally{
+          done++;
+          if(generation===trackerGeneration){clips.sort((a,b)=>a.start-b.start);refresh();$('loadStatusBadge').textContent=`ログ表示済み / 音声 ${done}/${entries.length}（成功${success}本）`;await new Promise(r=>setTimeout(r,0))}
+        }
+      }
+    }
+    await Promise.all(Array.from({length:Math.min(2,entries.length)},worker));
+    if(generation===trackerGeneration)$('loadStatusBadge').textContent=`同期完了: ログ${logs.length}点 / 録音${clips.length}本`;
+  }
+  async function loadTracker(file,generation){
+    stopPlayback();$('loadStatusBadge').textContent='JSONを解析中…';
+    let data=null,entries=[];
+    if(/\.zip$/i.test(file.name)){
+      entries=await unzip(file);
+      let best=-1,errors=[];
+      for(const e of entries.filter(x=>/\.json$/i.test(x.name))){
+        try{
+          const candidate=JSON.parse(new TextDecoder().decode(await e.data()));
+          const rank=candidate&&typeof candidate==='object'&&!Array.isArray(candidate)
+            ?rawLogs(candidate).length*2+rawBins(candidate).length+rawClips(candidate).length+
+              (candidate?.session||candidate?.startedAt?1:0):-1;
+          if(rank>best){best=rank;data=candidate}
+        }catch(error){errors.push(`${e.name}: ${error.message}`)}
+      }
+      if(!data)throw Error(errors.length?errors[0]:'ZIP内にセッションJSONがありません');
+    }else if(/\.json$/i.test(file.name))data=JSON.parse(await file.text());
+    else throw Error('JSONかZIPを選択してください');
+    if(generation!==trackerGeneration)return;
+    parseTracker(data);
+    const audio=entries.filter(e=>/\.(wav|webm|mp3|ogg|m4a)$/i.test(e.name));
+    $('loadStatusBadge').textContent=audio.length?`ログ${logs.length}点表示済み / 音声読込開始`:`ログ${logs.length}点 / 録音なし`;
+    if(audio.length)decodeAudio(audio,generation).catch(err=>{if(generation===trackerGeneration)$('loadStatusBadge').textContent='音声読込失敗: '+err.message});
+  }
+
+  function stage(v){const s=String(v||'').toLowerCase();return ['deep','light','rem'].includes(s)?s:(s==='wake'||s==='awake'?'wake':null)}
+  function timeValue(target,t,v,low,high){const at=ms(t),value=num(v);if(at!==null&&value!==null&&value>=low&&value<=high)target.push({at,value})}
+  function fitbitObject(object,name=''){
+    if(Array.isArray(object)){for(const item of object)fitbitObject(item,name);return}
+    if(!object||typeof object!=='object')return;
+    const records=Array.isArray(object.sleep)?object.sleep:[object];
+    for(const r of records){
+      const score=num(r?.sleepScore?.overallScore??r?.sleepScore?.score??r?.sleepScore??r?.score);
+      if(score!==null&&score>=0&&score<=100&&(r?.levels||r?.sleepScore||/score/i.test(name)))fitbit.score=score;
+      if(Array.isArray(r?.levels?.data))for(const item of r.levels.data){
+        const at=ms(item.dateTime??item.datetime??item.startTime),length=num(item.seconds),level=stage(item.level);
+        if(at!==null&&length>0&&level)fitbit.stages.push({start:at,end:at+length*1000,level});
+      }
+    }
+    for(const array of [object.bpm,object.heartRate,object['heart-rate']].filter(Array.isArray))
+      for(const item of array)timeValue(fitbit.bpm,item.dateTime??item.datetime??item.timestamp,item.value?.bpm??item.value?.heartRate??item.value,25,240);
+    for(const array of [object.spo2,object.SpO2,object['Oxygen Saturation']].filter(Array.isArray))
+      for(const item of array)timeValue(fitbit.spo2,item.dateTime??item.datetime??item.timestamp,item.value?.spo2??item.value?.SpO2??item.value,50,100);
+    if(/spo2|oxygen/i.test(name)||object.spo2||object.SpO2){
+      const range=object.value&&!Array.isArray(object.value)?object.value:object,min=num(range.minimum??range.min),max=num(range.maximum??range.max);
+      if(min!==null&&max!==null&&min>=50&&max<=100&&min<=max)fitbit.spo2Range={min,max};
+    }
+    const temp=object.temperature??object['Relative Sleep Skin Temperature'];
+    if(Array.isArray(temp))for(const item of temp)timeValue(fitbit.temperature,item.dateTime??item.datetime,item.value?.nightlyRelative??item.value,-20,20);
+    fitbit.sourceCount++;
+  }
+  function normalizeFitbit(){
+    for(const k of ['stages','bpm','spo2','temperature'])fitbit[k].sort((a,b)=>(a.at??a.start)-(b.at??b.start));
+    $('fitbitStatus').textContent=`段階${fitbit.stages.length} / 心拍${fitbit.bpm.length} / SpO₂${fitbit.spo2.length}`+(fitbitDemo?'【デモ】':'');
+    draw();report();
+  }
+  async function loadFitbit(files,generation){
+    $('fitbitStatus').textContent='解析中…';
+    const data=[];
+    for(const file of files){
+      if(/\.zip$/i.test(file.name)){for(const e of (await unzip(file)).filter(x=>/\.json$/i.test(x.name))){try{data.push({name:e.name,obj:JSON.parse(new TextDecoder().decode(await e.data()))})}catch(err){console.warn(e.name,err)}}}
+      else if(/\.json$/i.test(file.name))data.push({name:file.name,obj:JSON.parse(await file.text())});
+    }
+    if(generation!==fitbitGeneration)return;
+    fitbit=emptyFitbit();fitbitDemo=false;
+    for(const d of data)fitbitObject(d.obj,d.name);
+    normalizeFitbit();
+  }
+  function demo(){
+    trackerGeneration++;fitbitGeneration++;stopPlayback();
+    startMs=new Date(2025,0,14,23,0,0).getTime();duration=8*3600;center=duration/2;
+    logs=[];bins=[];metadata=[];clips=[];fitbit=emptyFitbit();
+    for(let s=0;s<duration;s++){
+      const active=s%1700<35;
+      logs.push({sec:s,db:27+5*Math.abs(Math.sin(s/45))+(s%850<90?11:0),hz:92+34*Math.abs(Math.sin(s/100)),motion:.002+.0015*Math.abs(Math.sin(s/57))+(active?.028*Math.abs(Math.sin(s/3)):0)});
+    }
+    for(let s=0;s<duration;s+=30){const v=logs.slice(s,s+30).map(x=>x.motion);bins.push({start:s,length:30,avg:v.reduce((a,b)=>a+b,0)/v.length,max:Math.max(...v)})}
+    for(let s=0;s<duration;s+=180){
+      const level=['light','deep','light','rem'][Math.floor(s/5400)%4];
+      fitbit.stages.push({start:startMs+s*1000,end:startMs+Math.min(duration,s+180)*1000,level:s>0&&s%7200===0?'wake':level});
+      fitbit.bpm.push({at:startMs+s*1000,value:57+7*Math.sin(s/2100)});
+      fitbit.spo2.push({at:startMs+s*1000,value:97+Math.sin(s/900)});
+    }
+    fitbit.score=81;fitbit.spo2Range={min:95,max:99};fitbit.sourceCount=1;
+    hasTracker=true;trackerDemo=true;fitbitDemo=true;
+    refresh();normalizeFitbit();$('loadStatusBadge').textContent='【デモ】架空ログ / 録音なし';
+  }
+
+  function windowStart(){return center-span/2}
+  function yToSec(y){return windowStart()+y/Math.max(1,canvas.height)*span}
+  function secToY(s){return (s-windowStart())/span*canvas.height}
+  function columns(){const w=canvas.width;return {ml:w*.01,mw:w*.15,sl:w*.16,sw:w*.44,t:w*.60,spo:w*.72,bpm:w*.82,stage:w*.92}}
+  function line(x,y,x2,y2,color='#cbd5e1',thick=1){ctx.strokeStyle=color;ctx.lineWidth=thick;ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x2,y2);ctx.stroke()}
+  function motionMax(){
+    if(motionSetting!=='auto')return Number(motionSetting);
+    let max=0;
+    if(logs.some(x=>x.motion!==null)){for(const x of logs)max=Math.max(max,x.motion??0)}
+    else for(const b of bins)max=Math.max(max,b.max);
+    return SCALES.find(x=>max<=x)||.2;
+  }
+  function motionX(v,max,col){return col.ml+clamp(num(v,0),0,max)/max*col.mw}
+  function motionLabel(v){return (v>=.1?v.toFixed(1):v>=.01?v.toFixed(2):v.toFixed(3))+'G'}
+  function ticks(start,end,col){
+    const step=span<=60?5:span<=300?15:span<=600?30:span<=1800?120:300;
+    ctx.font='10px monospace';
+    for(let s=Math.ceil(start/step)*step;s<=end;s+=step){
+      const y=secToY(s);line(col.t+2,y,col.t+10,y,'#94a3b8');
+      if(step<60?Math.round(s)%60===0:Math.round(s)%(step*2)===0){ctx.fillStyle='#475569';ctx.fillText(clock(s),col.t+12,y+3)}
+    }
+    const midnight=new Date(startMs+start*1000);midnight.setHours(24,0,0,0);
+    while(midnight.getTime()<=startMs+end*1000){
+      const s=(midnight.getTime()-startMs)/1000,y=secToY(s);
+      ctx.setLineDash([5,4]);line(0,y,canvas.width,y,'#f59e0b');ctx.setLineDash([]);
+      ctx.fillStyle='#92400e';ctx.fillText(datetime(s),Math.max(0,canvas.width-160),Math.max(12,y-4));midnight.setDate(midnight.getDate()+1);
+    }
+  }
+  function motionGraph(start,end,col,max){
+    if(logs.some(x=>x.motion!==null)){
+      let previous=null;
+      for(const item of logs){
+        if(item.motion===null)continue;
+        const s=item.sec+motionOffset;if(s<start||s>end)continue;
+        const y=secToY(s),x=motionX(item.motion,max,col);
+        if(previous&&Math.abs(y-previous.y)<30)line(previous.x,previous.y,x,y,'#2563eb',1.3);
+        line(col.ml,y,x,y,'#f97316');previous={x,y};
+      }
+      return;
+    }
+    let previous=null;
+    for(const b of bins){
+      if(b.start+motionOffset+b.length<start||b.start+motionOffset>end)continue;
+      const y=secToY(b.start+motionOffset+b.length/2),x=motionX(b.avg,max,col);
+      if(previous)line(previous.x,previous.y,x,y,'#2563eb',1.4);
+      previous={x,y};
+      if(y>=0&&y<=canvas.height){line(col.ml,y,motionX(b.max,max,col),y,'#f97316',1.2);ctx.fillStyle='#2563eb';ctx.beginPath();ctx.arc(x,y,1.5,0,Math.PI*2);ctx.fill()}
+    }
+  }
+  function waveGraph(start,end,col){
+    const centerX=col.sl+col.sw/2,amp=col.sw/2;
+    ctx.save();ctx.strokeStyle='#2563eb';ctx.lineWidth=1;ctx.globalAlpha=.9;
+    for(const clip of clips){
+      if(clip.start+clip.length<start||clip.start>end)continue;
+      const first=Math.max(0,Math.floor((start-clip.start)*PEAK_RATE));
+      const last=Math.min(clip.minimum.length-1,Math.ceil((end-clip.start)*PEAK_RATE));
+      let row=-1,low=0,high=0;
+      const flush=()=>{if(row<0)return;ctx.beginPath();ctx.moveTo(centerX+clamp(low,-1,1)*amp,row+.5);ctx.lineTo(centerX+clamp(high,-1,1)*amp,row+.5);ctx.stroke()};
+      for(let i=first;i<=last;i++){
+        const y=Math.floor(secToY(clip.start+i/PEAK_RATE));if(y<0||y>=canvas.height)continue;
+        if(y!==row){flush();row=y;low=clip.minimum[i];high=clip.maximum[i]}
+        else{low=Math.min(low,clip.minimum[i]);high=Math.max(high,clip.maximum[i])}
+      }
+      flush();
+    }
+    ctx.restore();
+  }
+  function fitbitGraph(start,end,col){
+    for(const x of [col.spo,col.bpm,col.stage])line(x,0,x,canvas.height);
+    function graph(points,left,right,scale,color){
+      let previous=null;
+      for(const item of points){
+        const s=(item.at-startMs)/1000;if(s<start||s>end)continue;
+        const p={x:left+clamp(scale(item.value),0,1)*(right-left),y:secToY(s)};
+        if(previous)line(previous.x,previous.y,p.x,p.y,color,1.5);
+        ctx.fillStyle=color;ctx.fillRect(p.x-1,p.y-1,2,2);previous=p;
+      }
+    }
+    graph(fitbit.spo2,col.spo+3,col.bpm-4,v=>(v-90)/10,'#0f766e');
+    let hmin=40,hmax=110;
+    if(fitbit.bpm.length){
+      hmin=clamp(Math.floor(fitbit.bpm.reduce((a,b)=>Math.min(a,b.value),Infinity)/10)*10,25,180);
+      hmax=Math.max(hmin+10,clamp(Math.ceil(fitbit.bpm.reduce((a,b)=>Math.max(a,b.value),0)/10)*10,40,240));
+    }
+    graph(fitbit.bpm,col.bpm+3,col.stage-4,v=>(v-hmin)/(hmax-hmin),'#dc2626');
+    for(const item of fitbit.stages){
+      const a=(item.start-startMs)/1000,b=(item.end-startMs)/1000;if(b<start||a>end)continue;
+      const top=clamp(secToY(a),0,canvas.height),bottom=clamp(secToY(b),0,canvas.height);
+      ctx.fillStyle=STAGE_COLORS[item.level];
+      ctx.fillRect(col.stage+3,top,Math.max(1,canvas.width-col.stage-6),Math.max(1,bottom-top));
+    }
+  }
+  function draw(){
+    if(!canvas.width||!canvas.height)return;
+    ctx.fillStyle='white';ctx.fillRect(0,0,canvas.width,canvas.height);
+    const start=windowStart(),end=start+span,col=columns(),max=motionMax();
+    $('motionMidLabel').textContent=motionLabel(max/2);$('motionMaxLabel').textContent=motionLabel(max);
+    for(const v of [max/2,max]){const x=motionX(v,max,col);line(x,0,x,canvas.height,'#e2e8f0')}
+    const middle=col.sl+col.sw/2;
+    for(let s=-10;s<=10;s+=2){const x=middle+s/10*col.sw/2;line(x,0,x,canvas.height,s===0?'#64748b':'#eef2f7',s===0?1.2:1)}
+    ticks(start,end,col);motionGraph(start,end,col,max);waveGraph(start,end,col);fitbitGraph(start,end,col);
+    $('currentCenterTime').textContent=clock(center);
+  }
+  function resize(){
+    const rect=viewport.getBoundingClientRect();
+    canvas.width=Math.max(1,Math.round(rect.width));canvas.height=Math.max(1,Math.round(rect.height));
+    ya=clamp(ya,10,Math.max(10,canvas.height-10));yb=clamp(yb,10,Math.max(10,canvas.height-10));
+    draw();updateLines();if(playing||seeking)showHead(cursor);
+  }
+  function nearest(s){
+    if(!logs.length)return null;
+    let lo=0,hi=logs.length-1;
+    while(lo<hi){const m=(lo+hi)>>1;if(logs[m].sec<s)lo=m+1;else hi=m}
+    const right=logs[lo],left=lo?logs[lo-1]:null;
+    return left&&Math.abs(left.sec-s)<=Math.abs(right.sec-s)?left:right;
+  }
+  function frequency(clip,index){
+    if(!clip.buffer||index<0||index>=clip.frequency.length)return null;
+    if(clip.frequency[index]>0)return clip.frequency[index];
+    const buffer=clip.buffer,n=2048,rate=buffer.sampleRate,center=Math.round(index/RATE*rate);
+    const begin=clamp(center-n/2,0,Math.max(0,buffer.length-n));
+    const available=Math.min(n,buffer.length-begin);if(available<64)return null;
+    const real=new Float64Array(n),imag=new Float64Array(n);let average=0;
+    for(let i=0;i<available;i++){for(let c=0;c<buffer.numberOfChannels;c++)real[i]+=buffer.getChannelData(c)[begin+i]/buffer.numberOfChannels;average+=real[i]}
+    average/=available;
+    for(let i=0;i<available;i++)real[i]=(real[i]-average)*(.5-.5*Math.cos(2*Math.PI*i/(n-1)));
+    let j=0;
+    for(let i=1;i<n;i++){let bit=n>>1;while(j&bit){j^=bit;bit>>=1}j^=bit;if(i<j){[real[i],real[j]]=[real[j],real[i]];[imag[i],imag[j]]=[imag[j],imag[i]]}}
+    for(let length=2;length<=n;length<<=1){
+      const angle=-2*Math.PI/length,wr=Math.cos(angle),wi=Math.sin(angle);
+      for(let block=0;block<n;block+=length){
+        let r=1,im=0;
+        for(let k=0;k<length/2;k++){
+          const a=block+k,b=a+length/2,tr=real[b]*r-imag[b]*im,ti=real[b]*im+imag[b]*r;
+          real[b]=real[a]-tr;imag[b]=imag[a]-ti;real[a]+=tr;imag[a]+=ti;
+          const nr=r*wr-im*wi;im=r*wi+im*wr;r=nr;
+        }
+      }
+    }
+    let bin=-1,power=1e-10;
+    for(let i=Math.max(1,Math.ceil(40*n/rate));i<=Math.min(n/2-1,Math.floor(4000*n/rate));i++){
+      const p=real[i]*real[i]+imag[i]*imag[i];if(p>power){power=p;bin=i}
+    }
+    if(bin<0)return null;
+    clip.frequency[index]=bin*rate/n;return clip.frequency[index];
+  }
+  function measure(s){
+    const near=nearest(s);let db=near&&Math.abs(near.sec-s)<=1.5?near.db:null;
+    let hz=near&&Math.abs(near.sec-s)<=1.5&&near.hz>0?near.hz:null;
+    if(db===null||hz===null){
+      const clip=clips.find(c=>s>=c.start&&s<c.start+c.length);
+      if(clip&&clip.envelope.length){
+        const index=clamp(Math.round((s-clip.start)*RATE),0,clip.envelope.length-1);
+        if(db===null)db=clip.envelope[index];
+        if(hz===null)hz=frequency(clip,index);
+      }
+    }
+    return {db,hz};
+  }
+  function metrics(s,t,d,h){
+    const m=measure(s);$(t).textContent=clock(s);
+    $(d).textContent=Number.isFinite(m.db)?`${m.db.toFixed(1)} dB`:'-- dB';
+    $(h).textContent=Number.isFinite(m.hz)&&m.hz>0?`${Math.round(m.hz)} Hz`:'-- Hz';
+  }
+  function updateLines(){
+    if(!canvas.height)return;
+    $('lineA').style.top=ya+'px';$('lineB').style.top=yb+'px';
+    const top=Math.min(ya,yb),bottom=Math.max(ya,yb),gap=bottom-top;
+    $('intervalBracket').style.top=top+'px';$('intervalBracket').style.height=gap+'px';
+    const a=yToSec(ya),b=yToSec(yb);
+    intervalStart=Math.min(a,b);intervalEnd=Math.max(a,b);
+    metrics(a,'labelATime','labelADb','labelAHz');metrics(b,'labelBTime','labelBDb','labelBHz');
+    $('intervalSec').textContent=(intervalEnd-intervalStart).toFixed(1);
+    $('lineA').querySelector('.lineLabel').style.display=playing?'none':'';
+    $('lineB').querySelector('.lineLabel').style.display=playing?'none':'';
+    $('replayMetrics').style.display=playing?'block':'none';$('seekButtons').style.display=playing?'grid':'none';
+    if(!seeking)$('audioStatusText').textContent=playing?'再生中・黄色線をドラッグ可能':'待機中';
+    if(!playing){
+      const height=75,y=gap>=height+6?top+(gap-height)/2:bottom+height+8<canvas.height?bottom+6:Math.max(0,top-height-6);
+      $('intervalHud').style.top=y+'px';
+    }
+  }
+  function showHead(s){
+    const y=clamp(secToY(s),Math.min(ya,yb),Math.max(ya,yb));
+    $('playheadLine').style.top=y+'px';
+    $('intervalHud').style.top=clamp(y+8,4,Math.max(4,canvas.height-145))+'px';
+  }
+  function currentCursor(){
+    if(playing&&!seeking&&audioCtx)cursor=clamp(anchorSec+Math.max(0,audioCtx.currentTime-anchorTime),intervalStart,intervalEnd);
+    return cursor;
+  }
+  function stopSources(){for(const source of sources){try{source.stop()}catch(_){}try{source.disconnect()}catch(_){}}sources=[]}
+  function stopPlayback(){
+    if(playing&&!seeking)currentCursor();
+    playing=false;seeking=false;resumeSeek=false;
+    if(frame)cancelAnimationFrame(frame);frame=0;stopSources();
+    $('playheadLine').style.display='none';$('playIcon').textContent='▶';$('playText').textContent='区間再生';
+    $('playIntervalBtn').classList.remove('stopping');$('playIntervalBtn').classList.add('primary');
+    document.body.style.cursor='';updateLines();
+  }
+  async function schedule(s){
+    const ac=audioContext();await ac.resume();updateLines();
+    const start=clamp(s,intervalStart,intervalEnd);
+    if(start>=intervalEnd-.01){stopPlayback();return}
+    stopSources();if(frame)cancelAnimationFrame(frame);frame=0;
+    const baseTime=ac.currentTime+.04;anchorSec=start;cursor=start;anchorTime=baseTime;
+    for(const clip of clips){
+      if(!clip.buffer||clip.start+clip.length<=start||clip.start>=intervalEnd)continue;
+      const offset=Math.max(0,start-clip.start),when=baseTime+Math.max(0,clip.start-start);
+      const length=Math.min(clip.length-offset,intervalEnd-Math.max(start,clip.start));
+      if(length<=0)continue;
+      const source=ac.createBufferSource();source.buffer=clip.buffer;source.connect(ac.destination);source.start(when,offset,length);sources.push(source);
+    }
+    playing=true;seeking=false;$('playheadLine').style.display='block';$('playIcon').textContent='■';$('playText').textContent='停止';
+    $('playIntervalBtn').classList.remove('primary');$('playIntervalBtn').classList.add('stopping');
+    updateLines();showHead(start);tick();
+  }
+  function tick(){
+    if(!playing||seeking)return;
+    currentCursor();if(cursor>=intervalEnd-.01){stopPlayback();return}
+    showHead(cursor);metrics(cursor,'replayTime','replayDb','replayHz');frame=requestAnimationFrame(tick);
+  }
+  function seekBy(delta){if(!playing)return;const next=clamp(currentCursor()+delta,intervalStart,intervalEnd);if(next>=intervalEnd-.01)stopPlayback();else schedule(next).catch(showPlaybackError)}
+  function showPlaybackError(err){stopPlayback();$('audioStatusText').textContent=err.message}
+
+  function candidates(){
+    if(!hasTracker)return {movement:0,low:0};
+    const points=bins.length?bins.map(b=>({sec:b.start+b.length/2,value:b.max})):logs.map(x=>({sec:x.sec,value:x.motion}));
+    let movement=0,last=-Infinity;
+    for(const p of points)if(p.value!==null&&p.value>=.025&&p.sec-last>=60){movement++;last=p.sec}
+    let low=0,begin=null,previous=null;
+    for(const x of logs){
+      if(begin!==null&&previous!==null&&x.sec-previous>2){if(previous-begin>=9)low++;begin=null}
+      if(x.db!==null&&x.db<22){if(begin===null)begin=x.sec}
+      else if(begin!==null){if(previous!==null&&previous-begin>=9)low++;begin=null}
+      previous=x.sec;
+    }
+    if(begin!==null&&previous!==null&&previous-begin>=9)low++;
+    return {movement,low};
+  }
+  function stageChart(){
+    const chart=$('stageChart'),rect=chart.getBoundingClientRect();chart.width=Math.max(1,Math.round(rect.width));chart.height=110;
+    const c=chart.getContext('2d');c.fillStyle='white';c.fillRect(0,0,chart.width,110);
+    if(!fitbit.stages.length){c.fillStyle='#64748b';c.font='12px monospace';c.fillText('睡眠ステージなし',10,25);return}
+    const first=fitbit.stages.reduce((a,b)=>Math.min(a,b.start),Infinity),last=fitbit.stages.reduce((a,b)=>Math.max(a,b.end),-Infinity),total=Math.max(1,last-first);
+    const rows={wake:0,rem:1,light:2,deep:3};
+    for(const s of fitbit.stages){const x=60+(s.start-first)/total*(chart.width-68),right=60+(s.end-first)/total*(chart.width-68);c.fillStyle=STAGE_COLORS[s.level];c.fillRect(x,rows[s.level]*25+5,Math.max(1,right-x),18)}
+    c.fillStyle='#334155';c.font='11px monospace';
+    for(const [label,row] of [['覚醒',0],['REM',1],['浅い',2],['深い',3]])c.fillText(label,7,row*25+19);
+  }
+  function report(){
+    $('reportPeriod').textContent=hasTracker?`${datetime(0)} ～ ${datetime(duration)}`:'セッション未読込';
+    $('reportMode').textContent=trackerDemo||fitbitDemo?'【デモを含む】架空データは表示確認用。実測結果ではありません。':!hasTracker?'SleepTrackerセッション未読込':fitbit.sourceCount===0?'SleepTracker単独モード。Fitbit未読込。':'実データ表示。ただしイベント候補の抽出は臨床的に未検証。';
+    $('fitbitScoreText').textContent=fitbit.score===null?'未取得':`${fitbit.score} / 100${fitbitDemo?'【デモ】':''}`;
+    const event=candidates();
+    $('eventCountText').textContent=hasTracker?`体動 ${event.movement} / 音量低下 ${event.low}`:'未解析';
+    $('correctedScoreText').textContent='未検証のため算出しない';
+    $('eventSummary').textContent=hasTracker?`体動候補 ${event.movement}件、連続音量低下候補 ${event.low}件。いずれも診断イベントではありません。`:'SleepTrackerログ未読込';
+    const totals={deep:0,light:0,rem:0,wake:0};
+    for(const s of fitbit.stages)totals[s.level]+=Math.max(0,(s.end-s.start)/60000);
+    $('stageSummary').textContent=fitbit.stages.length?`深い ${Math.round(totals.deep)}分 / 浅い ${Math.round(totals.light)}分 / REM ${Math.round(totals.rem)}分 / 覚醒 ${Math.round(totals.wake)}分`:'ステージデータなし';
+    $('fitbitSummary').textContent=fitbit.sourceCount?`心拍 ${fitbit.bpm.length}点 / 時系列SpO₂ ${fitbit.spo2.length}点${fitbit.spo2Range?` / SpO₂範囲 ${fitbit.spo2Range.min}–${fitbit.spo2Range.max}%`:''}。範囲値だけでは時系列波形は描きません。`:'Fitbitデータ未読込';
+    if(!$('reportPage').hidden)stageChart();
+  }
+  function offset(v){
+    motionOffset=clamp(num(v,0),-3600,3600);
+    $('motionOffsetSlider').value=String(clamp(motionOffset,-300,300));$('motionOffsetInput').value=motionOffset.toFixed(1);
+    $('motionOffsetDirection').textContent=Math.abs(motionOffset)<.001?'補正なし':`体動を${Math.abs(motionOffset).toFixed(1)}秒${motionOffset>0?'後':'前'}へ`;
+    try{localStorage.setItem('sleepScopeMotionOffsetSec',String(motionOffset))}catch(_){}
+    draw();
+  }
+  function scale(v){
+    motionSetting=['auto',...SCALES.map(String)].includes(String(v))?String(v):'auto';
+    $('motionScaleSelect').value=motionSetting;
+    try{localStorage.setItem('sleepScopeMotionScale',motionSetting)}catch(_){}
+    draw();
+  }
+  function page(reportPage){
+    $('scopePage').hidden=reportPage;$('reportPage').hidden=!reportPage;
+    $('scopeTab').setAttribute('aria-selected',String(!reportPage));$('reportTab').setAttribute('aria-selected',String(reportPage));
+    if(reportPage){report();stageChart()}else requestAnimationFrame(resize);
+  }
+
+  $('masterInput').addEventListener('change',async e=>{
+    const file=e.target.files?.[0];if(!file)return;const generation=++trackerGeneration;
+    try{await loadTracker(file,generation)}
+    catch(error){if(generation===trackerGeneration){console.error(error);$('loadStatusBadge').textContent='読込失敗: '+error.message}}
+  });
+  $('fitbitInput').addEventListener('change',async e=>{
+    const files=Array.from(e.target.files||[]);if(!files.length)return;const generation=++fitbitGeneration;
+    try{await loadFitbit(files,generation)}
+    catch(error){if(generation===fitbitGeneration){console.error(error);$('fitbitStatus').textContent='読込失敗: '+error.message}}
+  });
+  $('demoBtn').addEventListener('click',demo);
+  $('scopeTab').addEventListener('click',()=>page(false));
+  $('reportTab').addEventListener('click',()=>page(true));
+  $('printBtn').addEventListener('click',()=>window.print());
+  $('windowScaleSelect').addEventListener('change',e=>{
+    if(playing||seeking)stopPlayback();
+    const a=yToSec(ya),b=yToSec(yb),first=Math.min(a,b),last=Math.max(a,b),aAbove=ya<=yb;
+    span=Number(e.target.value);center=clamp((first+last)/2,0,duration);$('timeSlider').value=String(center);
+    const h=Math.max(1,canvas.height),visible=span*Math.max(0,h-20)/h;
+    if(last-first<=visible&&h>20){ya=clamp(secToY(a),10,h-10);yb=clamp(secToY(b),10,h-10)}
+    else{const top=clamp(h*.32,10,h-10),bottom=clamp(h*.68,10,h-10);ya=aAbove?top:bottom;yb=aAbove?bottom:top}
+    draw();updateLines();
+  });
+  $('timeSlider').addEventListener('input',e=>{if(playing||seeking)return;center=clamp(Number(e.target.value),0,duration);draw();updateLines()});
+  viewport.addEventListener('wheel',e=>{e.preventDefault();if(playing||seeking)return;center=clamp(center+Math.sign(e.deltaY)*Math.max(1,Math.floor(span/30)),0,duration);$('timeSlider').value=String(center);draw();updateLines()},{passive:false});
+  $('motionOffsetSlider').addEventListener('input',e=>offset(e.target.value));
+  $('motionOffsetInput').addEventListener('input',e=>offset(e.target.value));
+
+    $('motionOffsetMinusBtn').addEventListener('click',()=>offset(motionOffset-1));
+    $('motionOffsetPlusBtn').addEventListener('click',()=>offset(motionOffset+1));
+    $('motionOffsetResetBtn').addEventListener('click',()=>offset(0));
+    $('motionScaleSelect').addEventListener('change',e=>scale(e.target.value));
+
+    function beginLineDrag(which,event){
+      if(playing||seeking)return;
+      event.preventDefault();
+      event.stopPropagation();
+      drag=which;
+      document.body.style.cursor='row-resize';
+      event.currentTarget.setPointerCapture?.(event.pointerId);
+    }
+
+    $('lineA').addEventListener('pointerdown',event=>beginLineDrag('A',event));
+    $('lineB').addEventListener('pointerdown',event=>beginLineDrag('B',event));
+
+    window.addEventListener('pointermove',event=>{
+      if(drag&&!playing&&!seeking){
+        const rect=canvas.getBoundingClientRect();
+        const y=clamp(event.clientY-rect.top,10,Math.max(10,canvas.height-10));
+        if(drag==='A')ya=y;
+        else yb=y;
+        updateLines();
+        return;
+      }
+
+      if(seeking){
+        event.preventDefault();
+        const rect=canvas.getBoundingClientRect();
+        const y=clamp(
+          event.clientY-rect.top,
+          Math.min(ya,yb),
+          Math.max(ya,yb)
+        );
+        cursor=clamp(yToSec(y),intervalStart,intervalEnd);
+        showHead(cursor);
+        metrics(cursor,'replayTime','replayDb','replayHz');
+      }
+    });
+
+    window.addEventListener('pointerup',()=>{
+      if(drag){
+        drag=null;
+        document.body.style.cursor='';
+      }
+
+      if(seeking){
+        seeking=false;
+        document.body.style.cursor='';
+        const shouldResume=resumeSeek&&cursor<intervalEnd-.01;
+        resumeSeek=false;
+
+        if(shouldResume){
+          schedule(cursor).catch(showPlaybackError);
+        }else{
+          stopPlayback();
+        }
+      }
+    });
+
+    window.addEventListener('pointercancel',()=>{
+      if(drag){
+        drag=null;
+        document.body.style.cursor='';
+      }
+      if(seeking){
+        stopPlayback();
+      }
+    });
+
+    $('playheadLine').addEventListener('pointerdown',event=>{
+      if(!playing)return;
+      event.preventDefault();
+      event.stopPropagation();
+
+      currentCursor();
+      seeking=true;
+      resumeSeek=true;
+      stopSources();
+
+      if(frame)cancelAnimationFrame(frame);
+      frame=0;
+
+      $('audioStatusText').textContent='位置を選択中';
+      document.body.style.cursor='row-resize';
+      event.currentTarget.setPointerCapture?.(event.pointerId);
+    });
+
+    $('playIntervalBtn').addEventListener('click',()=>{
+      if(playing){
+        stopPlayback();
+        return;
+      }
+
+      updateLines();
+
+      if(intervalEnd-intervalStart<=.05){
+        $('audioStatusText').textContent='計測区間が短すぎます';
+        return;
+      }
+
+      schedule(intervalStart).catch(showPlaybackError);
+    });
+
+    $('rewindBtn').addEventListener('click',()=>seekBy(-5));
+    $('forwardBtn').addEventListener('click',()=>seekBy(5));
+
+    window.addEventListener('resize',()=>{
+      resize();
+      if(!$('reportPage').hidden)stageChart();
+    });
+
+    try{
+      scale(localStorage.getItem('sleepScopeMotionScale')||'auto');
+    }catch(_){
+      scale('auto');
+    }
+
+    try{
+      offset(num(localStorage.getItem('sleepScopeMotionOffsetSec'),0));
+    }catch(_){
+      offset(0);
+    }
+
+    resize();
+    requestAnimationFrame(resize);
+    report();
+  })();
+  </script>
+  </body>
+  </html>
