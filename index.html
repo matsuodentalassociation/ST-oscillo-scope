@@ -70,6 +70,24 @@ main{flex:1;min-height:0;padding:7px}
 .reportActions{text-align:right}
 @media(max-width:720px){header{font-size:10px}#soundHeader{font-size:7px}.lineLabel{font-size:9px}.cards{grid-template-columns:1fr}}
 @media print{body{display:block;height:auto;overflow:visible;background:white}header,#scopePage,.reportActions{display:none!important}main,#reportPage{display:block!important;height:auto;overflow:visible;padding:0}.paper{max-width:none;border:0;padding:0}#doctorNotes{border:0}}
+<script>
+(function () {
+  const ver = Date.now().toString();
+
+  document.querySelectorAll('link[rel="stylesheet"][href]').forEach(link => {
+    const u = new URL(link.getAttribute('href'), location.href);
+    u.searchParams.set('v', ver);
+    link.setAttribute('href', u.toString());
+  });
+
+  document.querySelectorAll('script[src]').forEach(s => {
+    const u = new URL(s.getAttribute('src'), location.href);
+    u.searchParams.set('v', ver);
+    s.setAttribute('src', u.toString());
+  });
+})();
+</script>
+
 </style>
 </head>
 <body>
