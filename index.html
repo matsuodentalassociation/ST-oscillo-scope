@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>ST-SCOPE-V28-20261001-02</title>
-<meta name="st-scope-build" content="ST-SCOPE-V28-20261001-02">
+<title>ST-SCOPE-V30-20261002-02</title>
+<meta name="st-scope-build" content="ST-SCOPE-V30-20261002-02">
 <style>
 *{box-sizing:border-box}
 body{margin:0;height:100vh;overflow:hidden;display:flex;flex-direction:column;background:#e2e8f0;color:#1e293b;font:11px Consolas,"Noto Sans JP",monospace;user-select:none}
@@ -78,7 +78,7 @@ main{flex:1;min-height:0;padding:7px}
 </head>
 <body>
 <header>
-<div class="brand">睡眠音響・体動オシロスコープ<small>ST-SCOPE-V28-20261001-02</small></div>
+<div class="brand">睡眠音響・体動オシロスコープ V30<small>ST-SCOPE-V30-20261002-02</small></div>
 <label class="group">完全ログ: <input id="masterInput" type="file" accept=".json,.zip"></label>
 <span id="loadStatusBadge" class="status">待機中</span>
 <label class="group">Fitbit JSON: <input id="fitbitInput" type="file" accept=".json,.zip" multiple></label>
@@ -88,7 +88,7 @@ main{flex:1;min-height:0;padding:7px}
 <div class="badge">いびき録音 <span id="snoreCountText">0</span> 本</div>
 <label>時間幅: <select id="windowScaleSelect"><option value="60">1分</option><option value="120">2分</option><option value="300">5分</option><option value="600">10分</option><option value="1800">30分</option><option value="3600" selected>1時間</option></select></label>
 <div class="tabs"><button id="scopeTab" type="button" aria-selected="true">オシロスコープ</button><button id="reportTab" type="button" aria-selected="false">統合レポート</button></div>
-<div id="updatePanel"><button id="checkUpdateBtn" type="button">更新を確認</button><span id="updateStatus" role="status" aria-live="polite"></span><button id="applyUpdateBtn" type="button" hidden>新版を開く</button></div>
+<div id="updatePanel"><button id="configureUpdateBtn" type="button">取得先設定</button><button id="checkUpdateBtn" type="button">更新を確認</button><span id="updateStatus" role="status" aria-live="polite"></span><button id="applyUpdateBtn" type="button" hidden>新版を開く</button></div>
 </header>
 <main>
 <section id="scopePage" class="page">
@@ -190,19 +190,44 @@ function datetime(sec){const d=new Date(startMs+sec*1000);return `${d.getFullYea
 function rawLogs(d){return [d?.session?.timeSeriesLogs,d?.timeSeriesLogs,d?.session?.logs,d?.logs,d?.session?.measurements,d?.measurements,d?.session?.samples,d?.samples].find(Array.isArray)||[]}
 function rawBins(d){return [d?.session?.profileBins,d?.profileBins].find(Array.isArray)||[]}
 function rawClips(d){return [d?.clips,d?.session?.clips,d?.session?.recordingClips,d?.recordingClips].find(Array.isArray)||[]}
-function path(v){return String(v||'').replace(/\\/g,'/').toLowerCase()}
+function path(v){let s=String(v??'').replace(/\\/g,'/');try{s=decodeURIComponent(s)}catch(_){}return s.replace(/^\.\//,'').split(/[?#]/)[0].toLowerCase()}
 function base(v){return path(v).split('/').pop()}
-function clipStart(m,name){
-  const t=ms(m?.startedAt);if(t!==null)return Math.max(0,(t-startMs)/1000);
-  const n=num(m?.startSec);if(n!==null)return Math.max(0,n);
-  const id=ms(m?.id);if(id!==null)return Math.max(0,(id-startMs)/1000);
-  const s=base(name).match(/(?:^|[_-])(\d+(?:\.\d+)?)s(?:[_-]|\.)/i);
-  if(s)return Number(s[1]);
-  const unix=base(name).match(/(?:^|[_-])(\d{10,13})(?:[_-]|\.)/);
-  return unix?Math.max(0,(ms(Number(unix[1]))-startMs)/1000):0;
+function clipFiles(m){return [m?.audioFile,m?.audioFilename,m?.audioFileName,m?.fileName,m?.file,m?.filename,m?.path,m?.url,m?.name,m?.audio?.file,m?.audio?.path].filter(v=>typeof v==='string'&&v)}
+function clipList(d){
+  if(Array.isArray(d))return d.filter(m=>m&&typeof m==='object');
+  if(!d||typeof d!=='object')return [];
+  for(const k of ['clips','recordingClips','recordings','audioClips','items','data']){
+    const v=d[k];if(Array.isArray(v))return clipList(v);
+    if(v&&typeof v==='object'){const found=clipList(v);if(found.length)return found}
+  }
+  if(d.session){const found=clipList(d.session);if(found.length)return found}
+  if(clipFiles(d).length)return [d];
+  return Object.entries(d).filter(([k,v])=>/\.(wav|webm|mp3|ogg|m4a|mp4|aac)$/i.test(k)&&v&&typeof v==='object').map(([k,v])=>({...v,audioFile:k}));
 }
-function findMeta(name){return metadata.find(m=>[m?.audioFile,m?.file,m?.filename,m?.path,m?.url].filter(Boolean).some(p=>path(p)===path(name)||base(p)===base(name)))||{}}
-function snore(m){return /snore|いびき/i.test(String(m?.category??m?.type??m?.label??''))}
+function categoryOf(m){const v=m?.category??m?.type??m?.label??m?.classification??m?.audio?.category;return typeof v==='object'?(v?.category??v?.label??v?.type??'unknown'):(v??'unknown')}
+function clipStart(m,name){
+  // 明示されたセッション相対時刻を最優先。欠損を0秒へ置き換えない。
+  for(const k of ['startSec','elapsedSec','offsetSec','timeSec','startSeconds']){const n=num(m?.[k]);if(n!==null&&n>=0)return n}
+  for(const k of ['startMs','offsetMs','elapsedMs']){const n=num(m?.[k]);if(n!==null){const s=n>=1e11?(n-startMs)/1000:n/1000;if(s>=0)return s}}
+  for(const k of ['startedAt','startTime','startAt','timestamp','recordedAt','createdAt']){const t=ms(m?.[k]);if(t!==null&&t>=startMs)return (t-startMs)/1000}
+  const id=num(m?.id);if(id!==null&&id>=1e9){const t=ms(id);if(t>=startMs)return (t-startMs)/1000}
+  // Tracker通常ZIP: clip_000020_snore.m4a の数字は保存された開始秒。
+  const trackerName=base(name).match(/^clip_(\d+(?:\.\d+)?)_[^/]+\.(?:wav|webm|mp3|ogg|m4a|mp4|aac)$/i);
+  if(trackerName)return Number(trackerName[1]);
+  const s=base(name).match(/(?:^|[_-])(\d+(?:\.\d+)?)s(?:[_-]|\.)/i);if(s)return Number(s[1]);
+  const unix=base(name).match(/(?:^|[_-])(\d{10,13})(?:[_-]|\.)/);if(unix){const t=ms(Number(unix[1]));if(t>=startMs)return (t-startMs)/1000}
+  return null;
+}
+function findMeta(name){
+  const exact=metadata.filter(m=>clipFiles(m).some(p=>path(p)===path(name)));
+  if(exact.length)return Object.assign({},...exact);
+  const same=metadata.filter(m=>clipFiles(m).some(p=>base(p)===base(name)));
+  if(same.length)return Object.assign({},...same);
+  const stem=base(name).replace(/\.[^.]+$/,'');
+  const ids=metadata.filter(m=>m?.id!==undefined&&String(m.id).toLowerCase()===stem);
+  return ids.length===1?ids[0]:{};
+}
+function snore(m){return /snore|snoring|いびき/i.test(String(categoryOf(m)))}
 function parseTracker(data){
   if(!data||typeof data!=='object'||Array.isArray(data))throw Error('セッションJSONが不正です');
   const source=rawLogs(data);
@@ -213,7 +238,7 @@ function parseTracker(data){
   }
   if(t===null)throw Error('セッション開始時刻がありません（startedAt等）');
   startMs=t;
-  metadata=rawClips(data).slice();
+  metadata=clipList(data).slice();
   logs=source.map(item=>{
     let sec=num(item?.sec??item?.elapsedSec??item?.timeSec??item?.seconds??item?.offsetSec);
     if(sec===null){const at=ms(item?.timestamp??item?.time??item?.recordedAt??item?.createdAt);if(at!==null)sec=(at-startMs)/1000}
@@ -328,7 +353,7 @@ async function unzip(file){
     const flags=u16(p+8),method=u16(p+10),compressed=u32(p+20),expanded=u32(p+24);
     const nl=u16(p+28),extra=u16(p+30),comment=u16(p+32),local=u32(p+42);
     const name=decoder.decode(bytes.subarray(p+46,p+46+nl));
-    if(!(flags&1)&&!name.endsWith('/')&&/\.(json|wav|webm|mp3|ogg|m4a)$/i.test(name)){
+    if(!(flags&1)&&!name.endsWith('/')&&/\.(json|wav|webm|mp3|ogg|m4a|mp4|aac)$/i.test(name)){
       entries.push({name,async data(){
         if(local+30>bytes.length||u32(local)!==0x04034b50)throw Error('ZIPローカルヘッダーが不正');
         const begin=local+30+u16(local+26)+u16(local+28);
@@ -389,7 +414,7 @@ function features(buffer){
   return {envelope,minimum,maximum,frequency};
 }
 async function decodeAudio(entries,generation){
-  const ac=audioContext();let next=0,done=0,success=0;
+  const ac=audioContext();let next=0,done=0,success=0,unplaced=0,failed=0;
   async function worker(){
     while(generation===trackerGeneration){
       const index=next++;if(index>=entries.length)return;
@@ -397,17 +422,20 @@ async function decodeAudio(entries,generation){
       try{
         const bytes=await entry.data();if(generation!==trackerGeneration)return;
         const buffer=await ac.decodeAudioData(bytes.slice(0));if(generation!==trackerGeneration)return;
-        const meta=findMeta(entry.name),f=features(buffer);
+        const meta=findMeta(entry.name),position=clipStart(meta,entry.name);
+        if(position===null){unplaced++;console.warn("開始時刻不明のため配置しません",entry.name);continue}
+        const f=features(buffer);
         if(generation!==trackerGeneration)return;
         clips.push({
-          start:clipStart(meta,entry.name),
+          start:position,
+          name:entry.name,
           length:buffer.duration,
-          category:meta.category??meta.type??meta.label??'other',
+          category:categoryOf(meta),
           loadBuffer:async()=>ac.decodeAudioData((await entry.data()).slice(0)),
           ...f
         });
         success++;
-      }catch(error){console.warn('音声をスキップ',entry.name,error)}
+      }catch(error){failed++;console.warn('音声をスキップ',entry.name,error)}
       finally{
         done++;
         if(generation===trackerGeneration){
@@ -422,31 +450,45 @@ async function decodeAudio(entries,generation){
     }
   }
   await Promise.all(Array.from({length:Math.min(2,entries.length)},worker));
-  if(generation===trackerGeneration){clips.sort((a,b)=>a.start-b.start);refresh();$('loadStatusBadge').textContent=`同期完了: ログ${logs.length}点 / 録音${clips.length}本`;}
+  if(generation===trackerGeneration){clips.sort((a,b)=>a.start-b.start);refresh();$('loadStatusBadge').textContent=`読込完了: ログ${logs.length}点 / 配置${clips.length}本 / 時刻不明${unplaced}本 / 失敗${failed}本`;}
 }
 async function loadTracker(file,generation){
   stopPlayback();$('loadStatusBadge').textContent='JSONを解析中…';
-  let data=null,entries=[];
+  let entries=[],data=null;const documents=[];
   if(/\.zip$/i.test(file.name)){
-    entries=await unzip(file);
-    let best=-1,errors=[];
+    entries=await unzip(file);if(generation!==trackerGeneration)return;
     for(const e of entries.filter(x=>/\.json$/i.test(x.name))){
-      try{
-        const candidate=JSON.parse(new TextDecoder().decode(await e.data()));
-        const rank=candidate&&typeof candidate==='object'&&!Array.isArray(candidate)
-          ?rawLogs(candidate).length*2+rawBins(candidate).length+rawClips(candidate).length+
-            (candidate?.session||candidate?.startedAt?1:0):-1;
-        if(rank>best){best=rank;data=candidate}
-      }catch(error){errors.push(`${e.name}: ${error.message}`)}
+      try{const obj=JSON.parse(new TextDecoder().decode(await e.data()).replace(/^\uFEFF/,''));documents.push({name:e.name,obj})}
+      catch(err){console.warn(e.name,err)}
+      if(generation!==trackerGeneration)return;
     }
-    if(!data)throw Error(errors.length?errors[0]:'ZIP内にセッションJSONがありません');
-  }else if(/\.json$/i.test(file.name))data=JSON.parse(await file.text());
+    // clips.jsonの件数にセッション選択を左右させない。
+    const candidates=documents.filter(d=>d.obj&&typeof d.obj==='object'&&!Array.isArray(d.obj)&&base(d.name)!=='clips.json');
+    candidates.sort((a,b)=>rank(b)-rank(a));
+    function rank(d){return (base(d.name)==='session.json'?1000000:0)+rawLogs(d.obj).length*2+rawBins(d.obj).length+(d.obj.session||d.obj.startedAt||d.obj.startTime?1000:0)}
+    data=candidates[0]?.obj;
+    if(!data)throw Error('ZIP内にセッションJSONがありません');
+  }else if(/\.json$/i.test(file.name)){data=JSON.parse((await file.text()).replace(/^\uFEFF/,''));documents.push({name:file.name,obj:data})}
   else throw Error('JSONかZIPを選択してください');
   if(generation!==trackerGeneration)return;
   parseTracker(data);
-  const audio=entries.filter(e=>/\.(wav|webm|mp3|ogg|m4a)$/i.test(e.name));
-  $('loadStatusBadge').textContent=audio.length?`ログ${logs.length}点表示済み / 音声読込開始`:`ログ${logs.length}点 / 録音なし`;
-  if(audio.length)decodeAudio(audio,generation).catch(err=>{if(generation===trackerGeneration)$('loadStatusBadge').textContent='音声読込失敗: '+err.message});
+  // 同じファイルの情報を統合。独立したclips.jsonを最後に適用。
+  const ordered=documents.slice().sort((a,b)=>(base(a.name)==='clips.json')-(base(b.name)==='clips.json'));
+  const merged=new Map(),anonymous=[];
+  for(const m of [...metadata,...ordered.flatMap(d=>clipList(d.obj))]){
+    const names=clipFiles(m),key=names.length?base(names[0]):m?.id!==undefined?'id:'+m.id:null;
+    if(!key){anonymous.push(m);continue}
+    const clean=Object.fromEntries(Object.entries(m).filter(([k,v])=>v!==null&&v!==undefined&&v!==''));
+    merged.set(key,{...(merged.get(key)||{}),...clean});
+  }
+  metadata=[...merged.values(),...anonymous];
+  for(const m of metadata){const s=clipStart(m,clipFiles(m)[0]);if(s!==null)duration=Math.max(duration,s+num(m.durationSec??m.duration,0))}
+  center=duration/2;refresh();
+  const audio=entries.filter(e=>/\.(wav|webm|mp3|ogg|m4a|mp4|aac)$/i.test(e.name));
+  const missing=audio.filter(e=>clipStart(findMeta(e.name),e.name)===null);
+  $('loadStatusBadge').title=missing.length?'開始時刻不明（0秒には配置しません）: '+missing.map(e=>e.name).join(', '):'全音声の開始時刻を取得';
+  $('loadStatusBadge').textContent=audio.length?`ログ${logs.length}点 / 音声${audio.length}本を読込開始`:`ログ${logs.length}点 / 録音なし`;
+  if(audio.length)await decodeAudio(audio,generation);
 }
 
 function stage(v){const s=String(v||'').toLowerCase();return ['deep','light','rem'].includes(s)?s:(s==='wake'||s==='awake'?'wake':null)}
@@ -564,6 +606,7 @@ function waveGraph(start,end,col){
   const centerX=col.sl+col.sw/2,amp=col.sw/2;
   ctx.save();ctx.strokeStyle='#2563eb';ctx.lineWidth=1;ctx.globalAlpha=.9;
   for(const clip of clips){
+    ctx.strokeStyle='#2563eb'; // 保存分類による色分けはしない
     if(clip.start+clip.length<start||clip.start>end)continue;
     const first=Math.max(0,Math.floor((start-clip.start)*PEAK_RATE));
     const last=Math.min(clip.minimum.length-1,Math.ceil((end-clip.start)*PEAK_RATE));
@@ -995,6 +1038,11 @@ report();
   const applyButton = document.getElementById('applyUpdateBtn');
   const build = document.querySelector('meta[name="st-scope-build"]')?.content || '版不明';
 
+  const settingsKey = 'st-scope-update-source:' + location.origin + location.pathname;
+  function savedSettings() {
+    try { return JSON.parse(localStorage.getItem(settingsKey) || '{}'); }
+    catch (_) { return {}; }
+  }
   let checking = false;
   let applying = false;
   let candidate = null;
@@ -1016,8 +1064,9 @@ report();
   function sourceConfig() {
     const savedURL = document.querySelector('meta[name="st-scope-source-url"]')?.content;
     const url = new URL(savedURL || location.href);
-    const repoMeta = document.querySelector('meta[name="st-scope-repository"]')?.content;
-    const pathMeta = document.querySelector('meta[name="st-scope-path"]')?.content;
+    const saved = savedSettings();
+    const repoMeta = document.querySelector('meta[name="st-scope-repository"]')?.content || saved.repo;
+    const pathMeta = document.querySelector('meta[name="st-scope-path"]')?.content || saved.path;
     let repo = repoMeta;
     let path = pathMeta;
 
@@ -1055,7 +1104,8 @@ report();
         path.split('/').some(part => part === '..' || part === '.')) {
       throw new Error('HTMLファイルのパスが不正です');
     }
-    return {repo, path, url: url.href};
+    const branch = document.querySelector('meta[name="st-scope-branch"]')?.content || saved.branch || '';
+    return {repo, path, branch, url: url.href};
   }
 
   async function getText(url, accept) {
@@ -1158,7 +1208,7 @@ report();
 
       const commit = await getJSON(
         'https://api.github.com/repos/' + config.repo + '/commits/' +
-        encodeURIComponent(repository.default_branch) + '?cb=' + nonce()
+        encodeURIComponent(config.branch || repository.default_branch) + '?cb=' + nonce()
       );
       const sha = commit.sha;
       if (!/^[a-f0-9]{40}$/.test(sha || '')) {
@@ -1179,6 +1229,17 @@ report();
         'text/html'
       );
       const checked = validate(html);
+      // 公開先に古い版が残っていてもV30から旧版へ戻さない。
+      const currentVersion = build.match(/^ST-SCOPE-V(\d+)-(\d{8})-(\d+)/);
+      const remoteVersion = checked.remoteBuild.match(/^ST-SCOPE-V(\d+)-(\d{8})-(\d+)/);
+      if (currentVersion && remoteVersion) {
+        for (let i = 1; i <= 3; i++) {
+          if (+remoteVersion[i] < +currentVersion[i]) {
+            throw new Error('取得先の版が現在より古いため適用を停止しました');
+          }
+          if (+remoteVersion[i] > +currentVersion[i]) break;
+        }
+      }
 
       // ビルド名が同じでもコミット指定で取得した内容を適用候補にする。
       candidate = {
@@ -1235,6 +1296,7 @@ report();
       setMeta(parsed, 'st-scope-source-url', selected.config.url);
       setMeta(parsed, 'st-scope-repository', selected.config.repo);
       setMeta(parsed, 'st-scope-path', selected.config.path);
+      setMeta(parsed, 'st-scope-branch', selected.config.branch || '');
       setMeta(parsed, 'st-scope-applied-commit', selected.sha);
 
       // 相対参照は元の公開ページを基準にする。
@@ -1265,6 +1327,32 @@ report();
       console.error('[ST-SCOPE apply]', error);
     }
   }
+
+  document.getElementById('configureUpdateBtn')?.addEventListener('click', () => {
+    if (checking || applying) return;
+    let current;
+    try { current = sourceConfig(); } catch (_) { current = savedSettings(); }
+    const repo = prompt('GitHub取得先：所有者/リポジトリ（公開リポジトリ）', current.repo || '');
+    if (repo === null) return;
+    const path = prompt('対象HTMLのリポジトリ内パス（例：ST-SCOPE-V30.html または docs/index.html）', current.path || 'ST-SCOPE-V30.html');
+    if (path === null) return;
+    const branch = prompt('取得ブランチ（空欄＝リポジトリの既定ブランチ。Pagesが別ブランチなら指定）', current.branch || '');
+    if (branch === null) return;
+    const value = {repo: repo.trim(), path: path.trim(), branch: branch.trim()};
+    if (!/^[a-z0-9_.-]+\/[a-z0-9_.-]+$/i.test(value.repo) || !value.path ||
+        value.path.startsWith('/') || value.path.split('/').some(p => p === '..' || p === '.')) {
+      say('取得先設定が不正です'); return;
+    }
+    try { localStorage.setItem(settingsKey, JSON.stringify(value)); } catch (_) {
+      // 保存できなくてもこの画面ではmetaで設定を保持する。
+    }
+    setMeta(document, 'st-scope-repository', value.repo);
+    setMeta(document, 'st-scope-path', value.path);
+    setMeta(document, 'st-scope-branch', value.branch);
+    candidate = null;
+    applyButton.hidden = true;
+    checkUpdate(true);
+  }, {signal: controller.signal});
 
   checkButton.addEventListener('click', () => checkUpdate(true), {
     signal: controller.signal
