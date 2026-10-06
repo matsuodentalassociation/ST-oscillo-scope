@@ -3,64 +3,63 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>ST-SCOPE-V30-20261002-02</title>
-<meta name="st-scope-build" content="ST-SCOPE-V30-20261002-02">
+<meta name="st-scope-build" content="ST-SCOPE-V32-20261005-01">
+<title>ST-SCOPE-V32-20261005-01</title>
 <style>
 *{box-sizing:border-box}
-body{margin:0;height:100vh;overflow:hidden;display:flex;flex-direction:column;background:#e2e8f0;color:#1e293b;font:11px Consolas,"Noto Sans JP",monospace;user-select:none}
+body{margin:0;height:100dvh;display:flex;flex-direction:column;overflow:hidden;background:#e2e8f0;color:#1e293b;font:11px Consolas,"Noto Sans JP",monospace;user-select:none}
 button,input,select,textarea{font:inherit}
-button{border:1px solid #94a3b8;border-radius:4px;background:white;padding:4px 7px;font-weight:bold;cursor:pointer}
+button{border:1px solid #94a3b8;border-radius:4px;background:#fff;padding:4px 7px;font-weight:bold;cursor:pointer}
 button:hover{background:#eff6ff}
-button.primary{background:#2563eb;border-color:#2563eb;color:white}
-button.stopping{background:#dc2626;border-color:#dc2626;color:white}
-input[type=range]{accent-color:#2563eb}
-input[type=file]{max-width:160px;font-size:10px}
-select,input[type=number]{border:1px solid #94a3b8;border-radius:4px;padding:3px;color:#1d4ed8;background:white;font-weight:bold}
-header{flex:none;display:flex;align-items:center;flex-wrap:wrap;gap:5px 10px;padding:6px 10px;background:white;border-bottom:1px solid #cbd5e1;z-index:10}
-.brand{font-weight:900;min-width:153px}
-.brand small{display:block;color:#1d4ed8}
-.group{display:flex;align-items:center;gap:4px}
-.status{display:inline-block;max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.badge{background:#eff6ff;border:1px solid #bfdbfe;border-radius:4px;padding:4px 6px;color:#1e40af;font-weight:bold}
-.tabs{margin-left:auto;display:flex;gap:4px}
-.tabs button[aria-selected=true]{background:#1e40af;color:white}
+button:disabled{opacity:.5;cursor:default}
+button.primary{background:#2563eb;color:#fff}
+button.stopping{background:#dc2626;color:#fff}
+input[type=range]{accent-color:#2563eb;min-width:50px}
+input[type=file]{max-width:155px;font-size:10px}
+select,input[type=number]{border:1px solid #94a3b8;border-radius:4px;padding:3px;color:#1d4ed8;background:#fff}
+header{flex:none;display:flex;align-items:center;flex-wrap:wrap;gap:5px 10px;padding:6px 10px;background:#fff;border-bottom:1px solid #cbd5e1}
+.brand{font-weight:900}.brand small{display:block;color:#1d4ed8}
+.group,.tabs,#updatePanel{display:flex;align-items:center;gap:4px}
+.status{max-width:260px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.badge{background:#eff6ff;border:1px solid #bfdbfe;border-radius:4px;padding:4px 6px;color:#1e40af}
+.tabs{margin-left:auto}.tabs button[aria-selected=true]{background:#1e40af;color:#fff}
+#updatePanel{flex-wrap:wrap}#updateStatus{font-size:10px}
 main{flex:1;min-height:0;padding:7px}
-.page{height:100%;min-height:0}
-.page[hidden]{display:none!important}
+.page{height:100%;min-height:0}.page[hidden]{display:none!important}
 #scopePage{display:flex;justify-content:center}
-#scopeContainer{width:1120px;max-width:100%;height:100%;min-height:0;background:white;border:2px solid #94a3b8;border-radius:7px;box-shadow:0 7px 20px #33415525;display:flex;flex-direction:column;overflow:hidden}
-#scaleHeader{flex:none;height:30px;display:grid;grid-template-columns:16% 44% 12% 10% 10% 8%;border-bottom:2px solid #94a3b8;font-size:9px;font-weight:900;white-space:nowrap}
+#scopeContainer{width:1120px;max-width:100%;height:100%;background:#fff;border:2px solid #94a3b8;border-radius:7px;display:flex;flex-direction:column;overflow:hidden}
+#scaleHeader{flex:none;min-height:30px;display:grid;grid-template-columns:16% 44% 12% 10% 10% 8%;border-bottom:2px solid #94a3b8;font-size:9px;font-weight:bold}
 #scaleHeader>div{display:flex;align-items:center;justify-content:center;min-width:0;border-right:1px solid #cbd5e1}
-#motionHeader,#soundHeader{justify-content:space-between!important;padding:0 4px}
-#screenViewport{position:relative;flex:1;min-height:0;overflow:hidden;background:white;touch-action:none;cursor:grab}
-#screenViewport:active{cursor:grabbing}
+#motionHeader{justify-content:space-between!important;padding:0 4px}
+#soundHeader{flex-wrap:wrap;gap:2px;color:#1d4ed8}
+#screenViewport{position:relative;flex:1;min-height:80px;overflow:hidden;background:#fff;touch-action:none;cursor:grab}
 #waveCanvas{display:block;width:100%;height:100%}
-.measureLine{position:absolute;left:0;width:100%;height:28px;margin-top:-14px;display:flex;align-items:center;z-index:5;cursor:row-resize;touch-action:none}
-.measureLine:before{content:"";width:100%;height:2px;background:#0f172a}
+.measureLine{position:absolute;left:0;width:100%;height:24px;margin-top:-12px;z-index:5;cursor:row-resize;touch-action:none}
+.measureLine:before{content:"";position:absolute;top:11px;width:100%;height:2px;background:#0f172a}
 #lineB:before{background:#dc2626}
-.lineLabel{position:absolute;right:14%;display:flex;gap:5px;white-space:nowrap;padding:3px 5px;background:white;border:1px solid #0f172a;border-radius:4px;font-weight:900;pointer-events:none;box-shadow:0 2px 5px #0003}
+.lineLabel{position:absolute;right:14%;top:1px;display:flex;gap:5px;white-space:nowrap;padding:3px 5px;background:#fff;border:1px solid #0f172a;border-radius:4px;font-weight:bold;pointer-events:none}
 #lineB .lineLabel{border-color:#dc2626;color:#b91c1c}
-.clockLabel{color:#1d4ed8}
-.hzLabel{color:#4338ca;background:#eef2ff}
+.clockLabel{color:#1d4ed8}.hzLabel{color:#4338ca}
 #intervalBracket{position:absolute;right:14%;border-right:2px dashed #3b82f6;pointer-events:none;z-index:3}
-#playheadLine{position:absolute;left:0;width:100%;height:24px;margin-top:-12px;display:none;z-index:7;cursor:row-resize;touch-action:none}
-#playheadLine:before{content:"";position:absolute;top:10px;left:0;width:100%;height:3px;background:#fbbf24;box-shadow:0 1px 3px #0006}
-#playheadLine:after{content:"";position:absolute;right:4px;top:2px;width:18px;height:18px;background:#f59e0b;border:2px solid white;border-radius:50%}
-#playheadLine span{position:absolute;left:5px;top:13px;padding:2px 4px;background:#fbbf24;font-weight:900}
-#intervalHud{position:absolute;right:4px;width:12%;min-width:108px;max-width:145px;z-index:6;padding:5px;background:white;border:1px solid #3b82f6;border-radius:4px;box-shadow:0 2px 6px #0003;display:flex;flex-direction:column;gap:4px;text-align:center;font-weight:bold}
+#playheadLine{position:absolute;left:0;width:100%;height:24px;margin-top:-12px;z-index:7;cursor:row-resize;touch-action:none}
+#playheadLine:before{content:"";position:absolute;top:11px;width:100%;height:3px;background:#fbbf24;box-shadow:0 1px 3px #0006}
+#playheadLine:after{content:"";position:absolute;left:2px;top:3px;width:18px;height:18px;background:#f59e0b;border:2px solid #fff;border-radius:50%}
+#playheadLine span{position:absolute;left:24px;top:13px;padding:2px 4px;background:#fbbf24;font-weight:bold;pointer-events:none}
+#intervalHud{position:absolute;right:4px;width:12%;min-width:108px;max-width:145px;z-index:8;padding:5px;background:#fff;border:1px solid #3b82f6;border-radius:4px;display:flex;flex-direction:column;gap:4px;text-align:center}
 #intervalSec{color:#1d4ed8}
-#replayMetrics,#seekButtons{display:none}
-#seekButtons{grid-template-columns:1fr 1fr;gap:3px}
+#seekButtons{display:grid;grid-template-columns:1fr 1fr;gap:3px}
 #audioStatusText{color:#64748b;font-size:9px}
-#controls{flex:none;display:flex;flex-direction:column;gap:5px;padding:5px 8px;background:#f8fafc;border-top:2px solid #cbd5e1}
-.controlRow{display:flex;align-items:center;gap:5px;white-space:nowrap;min-width:0}
-.controlRow input[type=range]{min-width:20px;flex:1}
+#controls{flex:none;max-height:45%;overflow:auto;display:flex;flex-direction:column;gap:5px;padding:6px 8px;background:#f8fafc;border-top:2px solid #cbd5e1}
+.controlRow{display:flex;align-items:center;flex-wrap:wrap;gap:5px}
+.controlRow input[type=range]{flex:1}
 #motionOffsetInput{width:70px}
-#motionOffsetDirection{min-width:80px;color:#1d4ed8}
-#currentCenterTime{padding:3px 6px;background:white;border:1px solid #cbd5e1;border-radius:4px;color:#1d4ed8;font-weight:bold}
+#currentCenterTime{padding:3px 6px;background:#fff;border:1px solid #cbd5e1;color:#1d4ed8}
+#signalControls{padding:7px;background:#eff6ff;border:1px solid #93c5fd;border-radius:4px;gap:12px}
+#signalControls label{display:flex;align-items:center;gap:5px;flex:1;min-width:230px;color:#1d4ed8}
+#signalControls output{min-width:55px}
 #dataNotice{color:#64748b;font-size:10px}
 #reportPage{overflow:auto;background:#f1f5f9;padding:5px}
-.paper{max-width:950px;margin:auto;padding:20px;background:white;border:1px solid #cbd5e1;user-select:text}
+.paper{max-width:950px;margin:auto;padding:20px;background:#fff;border:1px solid #cbd5e1;user-select:text}
 .paper h1{margin:0;font-size:20px}
 .paper h2{font-size:14px;margin:18px 0 7px;border-bottom:1px solid #94a3b8}
 .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
@@ -68,1316 +67,1811 @@ main{flex:1;min-height:0;padding:7px}
 .card strong{display:block;margin-top:7px;font-size:16px}
 .warning{padding:8px;background:#fff7ed;border:1px solid #fdba74;color:#9a3412}
 #stageChart{width:100%;height:110px;border:1px solid #cbd5e1}
-#doctorNotes{width:100%;min-height:110px;resize:vertical;padding:8px;border:1px solid #94a3b8}
+#doctorNotes{width:100%;min-height:110px;resize:vertical;padding:8px}
 .reportActions{text-align:right}
-@media(max-width:720px){header{font-size:10px}#soundHeader{font-size:7px}.lineLabel{font-size:9px}.cards{grid-template-columns:1fr}}
-@media print{body{display:block;height:auto;overflow:visible;background:white}header,#scopePage,.reportActions{display:none!important}main,#reportPage{display:block!important;height:auto;overflow:visible;padding:0}.paper{max-width:none;border:0;padding:0}#doctorNotes{border:0}}
-#updatePanel{display:flex;align-items:center;gap:5px}
-#updateStatus{font-size:10px;white-space:normal}
+@media(max-width:720px){header{font-size:10px}.lineLabel{font-size:9px}.cards{grid-template-columns:1fr}#scaleHeader{font-size:8px}}
+@media print{body{display:block;height:auto;overflow:visible;background:#fff}header,#scopePage,.reportActions{display:none!important}main,#reportPage{display:block!important;height:auto;overflow:visible;padding:0}.paper{max-width:none;border:0;padding:0}#doctorNotes{border:0}}
 </style>
 </head>
 <body>
 <header>
-<div class="brand">睡眠音響・体動オシロスコープ V30<small>ST-SCOPE-V30-20261002-02</small></div>
+<div class="brand">睡眠音響・体動オシロスコープ V32<small>ST-SCOPE-V32-20261005-01</small></div>
 <label class="group">完全ログ: <input id="masterInput" type="file" accept=".json,.zip"></label>
-<span id="loadStatusBadge" class="status">待機中</span>
+<span id="loadStatusBadge" class="status" role="status">待機中</span>
 <label class="group">Fitbit JSON: <input id="fitbitInput" type="file" accept=".json,.zip" multiple></label>
-<span id="fitbitStatus" class="status">未読込</span>
-<button id="demoBtn" type="button">デモ表示</button>
+<span id="fitbitStatus" class="status" role="status">未読込</span>
+<button id="demoBtn">デモ表示</button>
 <div class="badge">開始: <span id="sessionStartText">--</span><br>終了: <span id="sessionEndText">--</span></div>
 <div class="badge">いびき録音 <span id="snoreCountText">0</span> 本</div>
 <label>時間幅: <select id="windowScaleSelect"><option value="60">1分</option><option value="120">2分</option><option value="300">5分</option><option value="600">10分</option><option value="1800">30分</option><option value="3600" selected>1時間</option></select></label>
-<div class="tabs"><button id="scopeTab" type="button" aria-selected="true">オシロスコープ</button><button id="reportTab" type="button" aria-selected="false">統合レポート</button></div>
-<div id="updatePanel"><button id="configureUpdateBtn" type="button">取得先設定</button><button id="checkUpdateBtn" type="button">更新を確認</button><span id="updateStatus" role="status" aria-live="polite"></span><button id="applyUpdateBtn" type="button" hidden>新版を開く</button></div>
+<div class="tabs"><button id="scopeTab" aria-selected="true">オシロスコープ</button><button id="reportTab" aria-selected="false">統合レポート</button></div>
+<div id="updatePanel"><button id="configureUpdateBtn">取得先設定</button><button id="checkUpdateBtn">更新を確認</button><span id="updateStatus" role="status" aria-live="polite"></span><button id="applyUpdateBtn" hidden>最新版を適用</button></div>
 </header>
 <main>
 <section id="scopePage" class="page">
-  <div id="scopeContainer">
-    <div id="scaleHeader">
-      <div id="motionHeader"><span>0G</span><span id="motionMidLabel">0.1G</span><span id="motionMaxLabel">0.2G</span></div>
-      <div id="soundHeader"><span>-1.0</span><span>-.8</span><span>-.6</span><span>-.4</span><span>-.2</span><span style="color:#2563eb">0</span><span>.2</span><span>.4</span><span>.6</span><span>.8</span><span>1.0</span></div>
-      <div>時計時刻 ↓</div><div>SpO₂ 90–100%</div><div>心拍 bpm</div><div>睡眠段階</div>
-    </div>
-    <div id="screenViewport">
-      <canvas id="waveCanvas"></canvas>
-      <div id="lineA" class="measureLine" style="top:32%">
-        <div class="lineLabel"><span id="labelATime" class="clockLabel">--:--:--</span><span id="labelADb">-- dB</span><span id="labelAHz" class="hzLabel">-- Hz</span></div>
-      </div>
-      <div id="lineB" class="measureLine" style="top:48%">
-        <div class="lineLabel"><span id="labelBTime" class="clockLabel">--:--:--</span><span id="labelBDb">-- dB</span><span id="labelBHz" class="hzLabel">-- Hz</span></div>
-      </div>
-      <div id="playheadLine"><span>↕ REPLAY</span></div>
-      <div id="intervalBracket"></div>
-      <div id="intervalHud">
-        <div>計測区間 <span id="intervalSec">0.0</span> 秒</div>
-        <div id="replayMetrics"><span id="replayTime">--:--:--</span><br><span id="replayDb">-- dB</span> / <span id="replayHz">-- Hz</span></div>
-        <div id="seekButtons"><button id="rewindBtn" type="button">−5秒</button><button id="forwardBtn" type="button">＋5秒</button></div>
-        <button id="playIntervalBtn" class="primary" type="button"><span id="playIcon">▶</span> <span id="playText">区間再生</span></button>
-        <div id="audioStatusText">待機中</div>
-      </div>
-    </div>
-    <div id="controls">
-      <div class="controlRow">
-        <b>タイムライン:</b>
-        <button id="timePrevBtn" type="button" title="前へスクロール">◀ 後進</button>
-        <input id="timeSlider" type="range" min="0" max="1" step="0.1" value="0">
-        <button id="timeNextBtn" type="button" title="次へスクロール">前進 ▶</button>
-        <span>中央時計時刻:</span><span id="currentCenterTime">--:--:--</span>
-      </div>
-      <div class="controlRow">
-        <b>体動:</b><span style="color:#2563eb">折れ線＝平均</span><span style="color:#ea580c">横棒＝最大</span>
-        <label>スケール: <select id="motionScaleSelect"><option value="auto">自動</option><option value="0.005">0.005G</option><option value="0.01">0.01G</option><option value="0.02">0.02G</option><option value="0.05">0.05G</option><option value="0.1">0.1G</option><option value="0.2">0.2G</option></select></label>
-        <b>体動位置補正:</b><input id="motionOffsetSlider" type="range" min="-300" max="300" step="0
-        <b>体動位置補正:</b><input id="motionOffsetSlider" type="range" min="-300" max="300" step="0.5" value="0">
-        <input id="motionOffsetInput" type="number" min="-3600" max="3600" step="0.5" value="0"><span>秒</span>
-        <button id="motionOffsetMinusBtn" type="button">−1秒</button><button id="motionOffsetPlusBtn" type="button">＋1秒</button><button id="motionOffsetResetBtn" type="button">0に戻す</button><span id="motionOffsetDirection">補正なし</span>
-      </div>
-      <div id="dataNotice">青いPCM波形は録音のある範囲だけです。画面の上下スワイプやスライダー左右のボタンで前後に移動できます。</div>
-    </div>
-  </div>
+<div id="scopeContainer">
+<div id="scaleHeader">
+<div id="motionHeader"><span>0G</span><span id="motionMidLabel">0.1G</span><span id="motionMaxLabel">0.2G</span></div>
+<div id="soundHeader">青：音響波形 ／ 環境音＝表示0 ／ 合成倍率 <span id="pcmScaleText">1.00</span>倍</div>
+<div>時計時刻 ↓</div><div>SpO₂ 90–100%</div><div>心拍 bpm</div><div>睡眠段階</div>
+</div>
+<div id="screenViewport">
+<canvas id="waveCanvas"></canvas>
+<div id="lineA" class="measureLine"><div class="lineLabel"><span id="labelATime" class="clockLabel">--:--:--</span><span id="labelADb">-- dB</span><span id="labelAHz" class="hzLabel">-- Hz</span></div></div>
+<div id="lineB" class="measureLine"><div class="lineLabel"><span id="labelBTime" class="clockLabel">--:--:--</span><span id="labelBDb">-- dB</span><span id="labelBHz" class="hzLabel">-- Hz</span></div></div>
+<div id="playheadLine" role="slider" tabindex="0" aria-label="区間内の再生位置" aria-orientation="vertical" aria-valuemin="0" aria-valuemax="1" aria-valuenow="0"><span>↕ 再生位置</span></div>
+<div id="intervalBracket"></div>
+<div id="intervalHud">
+<div>計測区間 <span id="intervalSec">0.0</span> 秒</div>
+<div><span id="replayTime">--:--:--</span><br><span id="replayDb">-- dB</span> / <span id="replayHz">-- Hz</span></div>
+<div id="seekButtons"><button id="rewindBtn">−5秒</button><button id="forwardBtn">＋5秒</button></div>
+<button id="playIntervalBtn" class="primary"><span id="playIcon">▶</span> <span id="playText">区間再生</span></button>
+<div id="audioStatusText" role="status">待機中</div>
+</div>
+</div>
+<div id="controls">
+<div class="controlRow">
+<b>タイムライン:</b><button id="timePrevBtn">◀ 後進</button>
+<input id="timeSlider" aria-label="タイムライン中央時刻" type="range" min="0" max="1" step="0.1" value="0">
+<button id="timeNextBtn">前進 ▶</button><span>中央時計時刻:</span><span id="currentCenterTime">--:--:--</span>
+</div>
+<div id="signalControls" class="controlRow">
+<label><b>波形倍率</b><input id="waveformGainSlider" aria-label="波形倍率" type="range" min="0.25" max="10" step="0.25" value="1"><output id="waveformGainValue">1.00倍</output></label>
+<label><b>音量スケール</b><input id="volumeGainSlider" aria-label="青い波形の音量表示倍率" type="range" min="1" max="100" step="1" value="1"><output id="volumeGainValue">1倍</output></label>
+</div>
+<div class="controlRow">
+<b>体動:</b><span style="color:#2563eb">折れ線＝平均</span><span style="color:#ea580c">横棒＝最大</span>
+<label>スケール: <select id="motionScaleSelect"><option value="auto">自動</option><option value="0.005">0.005G</option><option value="0.01">0.01G</option><option value="0.02">0.02G</option><option value="0.05">0.05G</option><option value="0.1">0.1G</option><option value="0.2">0.2G</option></select></label>
+</div>
+<div class="controlRow">
+<b>体動位置補正:</b><input id="motionOffsetSlider" aria-label="体動位置補正秒" type="range" min="-300" max="300" step="0.5" value="0">
+<input id="motionOffsetInput" aria-label="体動位置補正秒の数値入力" type="number" min="-3600" max="3600" step="0.5" value="0"><span>秒</span>
+<button id="motionOffsetMinusBtn">−1秒</button><button id="motionOffsetPlusBtn">＋1秒</button><button id="motionOffsetResetBtn">0に戻す</button><span id="motionOffsetDirection">補正なし</span>
+</div>
+<div id="dataNotice">青い波形は録音範囲のみ。推定環境音を表示0として差し引き、波形倍率×音量スケールで拡大します。再生音量・dB／Hz計測値は変更しません。環境音推定は音源分離ではなく、小さい目的音も抑制される場合があります。dBは未校正の参考値です。</div>
+</div>
+</div>
 </section>
 <section id="reportPage" class="page" hidden>
-  <div class="paper">
-    <div class="reportActions"><button id="printBtn" type="button">印刷 / PDF保存</button></div>
-    <h1>統合睡眠スコアレポート</h1>
-    <p id="reportPeriod">セッション未読込</p>
-    <p id="reportMode" class="warning">データ未読込</p>
-    <div class="cards">
-      <div class="card">Fitbit睡眠スコア<strong id="fitbitScoreText">未取得</strong></div>
-      <div class="card">音響・体動の参考候補<strong id="eventCountText">未解析</strong></div>
-      <div class="card">統合睡眠補正スコア<strong id="correctedScoreText">未検証</strong></div>
-    </div>
-    <h2>Fitbit睡眠ステージ</h2><canvas id="stageChart"></canvas><p id="stageSummary">ステージデータなし</p>
-    <h2>参照情報</h2><p id="eventSummary">SleepTrackerログ未読込</p><p id="fitbitSummary">Fitbitデータ未読込</p>
-    <h2>医師所見</h2><textarea id="doctorNotes" placeholder="医師が所見を入力してください。自動診断文ではありません。"></textarea>
-    <p class="warning">体動と音量低下は観察候補であり、無呼吸・中途覚醒の診断ではありません。補正スコアの臨床的妥当性は未検証です。</p>
-  </div>
+<div class="paper">
+<div class="reportActions"><button id="printBtn">印刷 / PDF保存</button></div>
+<h1>統合睡眠スコアレポート</h1>
+<p id="reportPeriod">セッション未読込</p><p id="reportMode" class="warning">データ未読込</p>
+<div class="cards">
+<div class="card">Fitbit睡眠スコア<strong id="fitbitScoreText">未取得</strong></div>
+<div class="card">音響・体動の参考候補<strong id="eventCountText">未解析</strong></div>
+<div class="card">統合睡眠補正スコア<strong>未検証のため算出しない</strong></div>
+</div>
+<h2>Fitbit睡眠ステージ</h2><canvas id="stageChart"></canvas><p id="stageSummary">ステージデータなし</p>
+<h2>参照情報</h2><p id="eventSummary">SleepTrackerログ未読込</p><p id="fitbitSummary">Fitbitデータ未読込</p>
+<h2>医師所見</h2><textarea id="doctorNotes" placeholder="医師が所見を入力してください。自動診断文ではありません。"></textarea>
+<p class="warning">体動と音量低下は観察候補であり、無呼吸・中途覚醒の診断ではありません。補正スコアの臨床的妥当性は未検証です。</p>
+</div>
 </section>
 </main>
 <script>
 'use strict';
 (() => {
-const $ = id => document.getElementById(id);
-const canvas = $('waveCanvas');
-const ctx = canvas.getContext('2d');
-const viewport = $('screenViewport');
-const SCALES = [.005,.01,.02,.05,.1,.2];
-const STAGE_COLORS = {deep:'#4338ca',light:'#60a5fa',rem:'#a855f7',wake:'#f97316'};
-const RATE = 10, PEAK_RATE = 200;
-let logs=[], bins=[], metadata=[], clips=[], fitbit=emptyFitbit();
-let hasTracker=false, trackerDemo=false, fitbitDemo=false;
-let startMs=Date.now(), duration=1, center=0, span=3600;
-let motionOffset=0, motionSetting='auto';
-let ya=140, yb=240, drag=null;
-let audioCtx=null, sources=[], playing=false, seeking=false, resumeSeek=false, frame=0;
-let cursor=0, anchorSec=0, anchorTime=0, intervalStart=0, intervalEnd=0;
-let trackerGeneration=0, fitbitGeneration=0;
+  const $=id=>document.getElementById(id);
+  const canvas=$('waveCanvas'),ctx=canvas.getContext('2d');
+  const viewport=$('screenViewport');
+  const RATE=10,PEAK_RATE=200;
+  const SCALES=[.005,.01,.02,.05,.1,.2];
+  const COLORS={deep:'#4338ca',light:'#60a5fa',rem:'#a855f7',wake:'#f97316'};
+  const lifetime=new AbortController();
+  let logs=[],bins=[],clips=[],metadata=[],motionPoints=[],motionPeak=0;
+  let fitbit=emptyFitbit();
+  let startMs=Date.now(),duration=1,center=0,span=3600;
+  let motionOffset=0,motionSetting='auto',waveGain=1,volumeGain=1;
+  let ya=0,yb=0,cursor=0,intervalStart=0,intervalEnd=1,initialized=false;
+  let hasTracker=false,trackerDemo=false,fitbitDemo=false;
+  let trackerLoading=false,fitbitLoading=false;
+  let trackerGeneration=0,fitbitGeneration=0,playGeneration=0;
+  let ac=null,sources=[],playing=false,preparing=false;
+  let anchorSec=0,anchorTime=0,playFrame=0,drawFrame=0,gesture=null;
+  let observer=null,disposed=false;
 
-// 画面上下スワイプ用
-let swipeStartY=0, swipeStartCenter=0, isSwiping=false;
+  const on=(target,event,fn,options={})=>
+    target.addEventListener(event,fn,{...options,signal:lifetime.signal});
+  const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+  function num(v,f=null) {
+    if(v===null||v===undefined||v==='') return f;
+    const n=Number(v);
+    return Number.isFinite(n)?n:f;
+  }
+  function ms(v) {
+    if(v===null||v===undefined||v==='') return null;
+    const n=Number(v);
+    if(Number.isFinite(n)) return n<1e11?n*1000:n;
+    const t=Date.parse(v);
+    return Number.isFinite(t)?t:null;
+  }
+  function clock(s) {
+    const d=new Date(startMs+s*1000);
+    return [d.getHours(),d.getMinutes(),d.getSeconds()]
+      .map(v=>String(v).padStart(2,'0')).join(':');
+  }
+  function datetime(s) {
+    const d=new Date(startMs+s*1000);
+    return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')} ${clock(s)}`;
+  }
+  function save(key,value) {
+    try { localStorage.setItem(key,String(value)); } catch(_) {}
+  }
+  function stored(key,fallback) {
+    try { return localStorage.getItem(key)??fallback; }
+    catch(_) { return fallback; }
+  }
+  function emptyFitbit() {
+    return {stages:[],bpm:[],spo2:[],temperature:[],score:null,spo2Range:null,sourceCount:0};
+  }
+  function audioContext() {
+    if(!ac) {
+      const C=window.AudioContext||window.webkitAudioContext;
+      if(!C) throw Error('Web Audio非対応');
+      ac=new C();
+    }
+    return ac;
+  }
 
-function emptyFitbit(){return {stages:[],bpm:[],spo2:[],score:null,spo2Range:null,temperature:[],sourceCount:0}}
-function num(v,f=null){if(v===null||v===undefined||v==='')return f;const n=Number(v);return Number.isFinite(n)?n:f}
-function clamp(v,a,b){return Math.max(a,Math.min(b,v))}
-function ms(v){
-  if(v===null||v===undefined||v==='')return null;
-  if(typeof v==='number')return Number.isFinite(v)?(v<1e11?v*1000:v):null;
-  const n=Number(v);if(Number.isFinite(n))return n<1e11?n*1000:n;
-  const t=Date.parse(v);return Number.isFinite(t)?t:null;
-}
-function clock(sec){const d=new Date(startMs+(Number.isFinite(sec)?sec:0)*1000);return [d.getHours(),d.getMinutes(),d.getSeconds()].map(x=>String(x).padStart(2,'0')).join(':')}
-function datetime(sec){const d=new Date(startMs+sec*1000);return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')} ${clock(sec)}`}
-function rawLogs(d){return [d?.session?.timeSeriesLogs,d?.timeSeriesLogs,d?.session?.logs,d?.logs,d?.session?.measurements,d?.measurements,d?.session?.samples,d?.samples].find(Array.isArray)||[]}
-function rawBins(d){return [d?.session?.profileBins,d?.profileBins].find(Array.isArray)||[]}
-function rawClips(d){return [d?.clips,d?.session?.clips,d?.session?.recordingClips,d?.recordingClips].find(Array.isArray)||[]}
-function path(v){let s=String(v??'').replace(/\\/g,'/');try{s=decodeURIComponent(s)}catch(_){}return s.replace(/^\.\//,'').split(/[?#]/)[0].toLowerCase()}
-function base(v){return path(v).split('/').pop()}
-function clipFiles(m){return [m?.audioFile,m?.audioFilename,m?.audioFileName,m?.fileName,m?.file,m?.filename,m?.path,m?.url,m?.name,m?.audio?.file,m?.audio?.path].filter(v=>typeof v==='string'&&v)}
-function clipList(d){
-  if(Array.isArray(d))return d.filter(m=>m&&typeof m==='object');
-  if(!d||typeof d!=='object')return [];
-  for(const k of ['clips','recordingClips','recordings','audioClips','items','data']){
-    const v=d[k];if(Array.isArray(v))return clipList(v);
-    if(v&&typeof v==='object'){const found=clipList(v);if(found.length)return found}
-  }
-  if(d.session){const found=clipList(d.session);if(found.length)return found}
-  if(clipFiles(d).length)return [d];
-  return Object.entries(d).filter(([k,v])=>/\.(wav|webm|mp3|ogg|m4a|mp4|aac)$/i.test(k)&&v&&typeof v==='object').map(([k,v])=>({...v,audioFile:k}));
-}
-function categoryOf(m){const v=m?.category??m?.type??m?.label??m?.classification??m?.audio?.category;return typeof v==='object'?(v?.category??v?.label??v?.type??'unknown'):(v??'unknown')}
-function clipStart(m,name){
-  // 明示されたセッション相対時刻を最優先。欠損を0秒へ置き換えない。
-  for(const k of ['startSec','elapsedSec','offsetSec','timeSec','startSeconds']){const n=num(m?.[k]);if(n!==null&&n>=0)return n}
-  for(const k of ['startMs','offsetMs','elapsedMs']){const n=num(m?.[k]);if(n!==null){const s=n>=1e11?(n-startMs)/1000:n/1000;if(s>=0)return s}}
-  for(const k of ['startedAt','startTime','startAt','timestamp','recordedAt','createdAt']){const t=ms(m?.[k]);if(t!==null&&t>=startMs)return (t-startMs)/1000}
-  const id=num(m?.id);if(id!==null&&id>=1e9){const t=ms(id);if(t>=startMs)return (t-startMs)/1000}
-  // Tracker通常ZIP: clip_000020_snore.m4a の数字は保存された開始秒。
-  const trackerName=base(name).match(/^clip_(\d+(?:\.\d+)?)_[^/]+\.(?:wav|webm|mp3|ogg|m4a|mp4|aac)$/i);
-  if(trackerName)return Number(trackerName[1]);
-  const s=base(name).match(/(?:^|[_-])(\d+(?:\.\d+)?)s(?:[_-]|\.)/i);if(s)return Number(s[1]);
-  const unix=base(name).match(/(?:^|[_-])(\d{10,13})(?:[_-]|\.)/);if(unix){const t=ms(Number(unix[1]));if(t>=startMs)return (t-startMs)/1000}
-  return null;
-}
-function findMeta(name){
-  const exact=metadata.filter(m=>clipFiles(m).some(p=>path(p)===path(name)));
-  if(exact.length)return Object.assign({},...exact);
-  const same=metadata.filter(m=>clipFiles(m).some(p=>base(p)===base(name)));
-  if(same.length)return Object.assign({},...same);
-  const stem=base(name).replace(/\.[^.]+$/,'');
-  const ids=metadata.filter(m=>m?.id!==undefined&&String(m.id).toLowerCase()===stem);
-  return ids.length===1?ids[0]:{};
-}
-function snore(m){return /snore|snoring|いびき/i.test(String(categoryOf(m)))}
-function parseTracker(data){
-  if(!data||typeof data!=='object'||Array.isArray(data))throw Error('セッションJSONが不正です');
-  const source=rawLogs(data);
-  let t=ms(data?.session?.startedAt??data?.session?.startTime??data?.session?.startAt??data?.startedAt??data?.startTime);
-  if(t===null){
-    const times=source.map(x=>ms(x?.timestamp??x?.time??x?.recordedAt??x?.createdAt)).filter(x=>x!==null);
-    if(times.length)t=times.reduce((a,b)=>Math.min(a,b),Infinity);
-  }
-  if(t===null)throw Error('セッション開始時刻がありません（startedAt等）');
-  startMs=t;
-  metadata=clipList(data).slice();
-  logs=source.map(item=>{
-    let sec=num(item?.sec??item?.elapsedSec??item?.timeSec??item?.seconds??item?.offsetSec);
-    if(sec===null){const at=ms(item?.timestamp??item?.time??item?.recordedAt??item?.createdAt);if(at!==null)sec=(at-startMs)/1000}
-    if(sec===null||sec<0)return null;
-    return {sec,
-      db:num(item?.db??item?.dB??item?.peakDb??item?.soundDb??item?.soundPressureDb??item?.decibel??item?.decibels??item?.audioDb??item?.audio?.db??item?.audio?.peakDb),
-      hz:num(item?.peakHz??item?.hz??item?.Hz??item?.frequency??item?.frequencyHz??item?.dominantHz??item?.peakFrequency??item?.peakFrequencyHz??item?.audio?.peakHz??item?.audio?.frequencyHz),
-      motion:num(item?.motionG??item?.accelerationG??item?.g??item?.motion?.g)
-    };
-  }).filter(Boolean).sort((a,b)=>a.sec-b.sec);
-  bins=rawBins(data).map((b,i)=>{const avg=Math.max(0,num(b?.avgMotion,0));return {start:Math.max(0,num(b?.startSec,i*30)),length:Math.max(.001,num(b?.durationSec,30)),avg,max:Math.max(avg,num(b?.maxMotion,avg))}}).sort((a,b)=>a.start-b.start);
-  let end=Math.max(1,num(data?.session?.durationSec??data?.durationSec,0));
-  if(logs.length)end=Math.max(end,logs[logs.length-1].sec+1);
-  for(const b of bins)end=Math.max(end,b.start+b.length);
-  for(const m of metadata)end=Math.max(end,clipStart(m,m.audioFile||m.file||m.filename||'')+num(m.durationSec??m.duration,0));
-  duration=end;center=end/2;clips=[];hasTracker=true;trackerDemo=false;refresh();
-}
-function refresh(){
-  for(const c of clips)duration=Math.max(duration,c.start+c.length);
-  center=clamp(center,0,duration);
-  $('timeSlider').max=String(duration);$('timeSlider').value=String(center);
-  $('sessionStartText').textContent=datetime(0);$('sessionEndText').textContent=datetime(duration);
-  $('snoreCountText').textContent=String(clips.filter(snore).length||metadata.filter(snore).length);
-  draw();updateLines();report();
-}
+  window.STScope={
+    busy:()=>trackerLoading||fitbitLoading||playing||preparing||!!gesture,
+    dispose() {
+      if(disposed) return;
+      disposed=true;
+      trackerGeneration++;fitbitGeneration++;
+      stopPlayback();
+      lifetime.abort();
+      observer?.disconnect();
+      cancelAnimationFrame(drawFrame);
+      ac?.close().catch(()=>{});
+      logs=[];bins=[];clips=[];metadata=[];motionPoints=[];
+    }
+  };
 
-function inflate(input,expected){
-  const LB=[3,4,5,6,7,8,9,10,11,13,15,17,19,23,27,31,35,43,51,59,67,83,99,115,131,163,195,227,258];
-  const LE=[0,0,0,0,0,0,0,0,1,1,1,1,2,2,2,2,3,3,3,3,4,4,4,4,5,5,5,5,0];
-  const DB=[1,2,3,4,5,7,9,13,17,25,33,49,65,97,129,193,257,385,513,769,1025,1537,2049,3073,4097,6145,8193,12289,16385,24577];
-  const DE=[0,0,0,0,1,1,2,2,3,3,4,4,5,5,6,6,7,7,8,8,9,9,10,10,11,11,12,12,13,13];
-  let pos=0,buffer=0,count=0,used=0,out=new Uint8Array(Math.max(1024,Math.min(expected||1024,262144)));
-  function bits(n){
-    while(count<n){if(pos>=input.length)throw Error('ZIP圧縮データが途中で終了');buffer|=input[pos++]<<count;count+=8}
-    const value=buffer&((1<<n)-1);buffer>>>=n;count-=n;return value;
+  function path(v) {
+    let s=String(v??'').replace(/\\/g,'/');
+    try { s=decodeURIComponent(s); } catch(_) {}
+    return s.replace(/^\.\//,'').split(/[?#]/)[0].toLowerCase();
   }
-  function put(v){
-    if(used>=268435456)throw Error('ZIPエントリーが256MBを超えます');
-    if(used===out.length){const grown=new Uint8Array(Math.min(out.length*2,268435456));grown.set(out);out=grown}
-    out[used++]=v;
+  const base=v=>path(v).split('/').pop();
+  function rawLogs(d) {
+    return [d?.session?.timeSeriesLogs,d?.timeSeriesLogs,
+      d?.session?.logs,d?.logs,d?.session?.measurements,
+      d?.measurements,d?.session?.samples,d?.samples]
+      .find(Array.isArray)||[];
   }
-  function tree(lengths){
-    const counts=new Uint16Array(16),next=new Uint16Array(16),tables=Array.from({length:16},()=>new Map());let max=0,code=0;
-    for(const n of lengths){if(n>15)throw Error('ZIP符号長が不正');if(n){counts[n]++;max=Math.max(max,n)}}
-    for(let i=1;i<=15;i++){code=(code+counts[i-1])<<1;next[i]=code}
-    lengths.forEach((n,s)=>{if(n)tables[n].set(next[n]++,s)});
-    return {tables,max};
+  function rawBins(d) {
+    return [d?.session?.profileBins,d?.profileBins].find(Array.isArray)||[];
   }
-  function symbol(t){let code=0;for(let n=1;n<=t.max;n++){code=(code<<1)|bits(1);if(t.tables[n].has(code))return t.tables[n].get(code)}throw Error('ZIP Huffman符号が不正')}
-  let final=false;
-  while(!final){
-    final=bits(1)===1;const type=bits(2);
-    if(type===0){
-      if(count%8)bits(count%8);
-      const length=bits(16),inverse=bits(16);
-      if(((length^inverse)&65535)!==65535)throw Error('ZIP無圧縮ブロックが不正');
-      for(let i=0;i<length;i++)put(bits(8));
-      continue;
-    }
-    if(type===3)throw Error('ZIPブロック形式が不正');
-    let literal,distance;
-    if(type===1){
-      literal=tree(Array.from({length:288},(_,i)=>i<=143?8:i<=255?9:i<=279?7:8));
-      distance=tree(Array(32).fill(5));
-    }else{
-      const nl=bits(5)+257,nd=bits(5)+1,nc=bits(4)+4;
-      const order=[16,17,18,0,8,7,9,6,10,5,11,4,12,3,13,2,14,1,15];
-      const lengths=Array(19).fill(0);
-      for(let i=0;i<nc;i++)lengths[order[i]]=bits(3);
-      const ct=tree(lengths),all=[];
-      while(all.length<nl+nd){
-        const v=symbol(ct);
-        if(v<=15)all.push(v);
-        else{
-          let repeat,value;
-          if(v===16){if(!all.length)throw Error('ZIP反復符号が不正');repeat=bits(2)+3;value=all[all.length-1]}
-          else if(v===17){repeat=bits(3)+3;value=0}
-          else{repeat=bits(7)+11;value=0}
-          for(let i=0;i<repeat;i++)all.push(value);
-        }
-        if(all.length>nl+nd)throw Error('ZIP符号長の個数が不正');
-      }
-      literal=tree(all.slice(0,nl));distance=tree(all.slice(nl));
-    }
-    for(;;){
-      const v=symbol(literal);
-      if(v<256){put(v);continue}
-      if(v===256)break;
-      const li=v-257;
-      if(li<0||li>=LB.length)throw Error('ZIP長さ符号が不正');
-      const length=LB[li]+bits(LE[li]),di=symbol(distance);
-      if(di<0||di>=DB.length)throw Error('ZIP距離符号が不正');
-      const dist=DB[di]+bits(DE[di]);
-      if(dist>used)throw Error('ZIPコピー距離が不正');
-      for(let i=0;i<length;i++)put(out[used-dist]);
-    }
+  function clipFiles(m) {
+    return [m?.audioFile,m?.audioFilename,m?.audioFileName,m?.fileName,
+      m?.file,m?.filename,m?.path,m?.url,m?.name,m?.audio?.file,m?.audio?.path]
+      .filter(v=>typeof v==='string'&&v);
   }
-  if(used!==expected)throw Error('ZIP展開後のサイズが一致しません');
-  return out.slice(0,used).buffer;
-}
-async function unzip(file){
-  const bytes=new Uint8Array(await file.arrayBuffer()),view=new DataView(bytes.buffer);
-  const u16=p=>view.getUint16(p,true),u32=p=>view.getUint32(p,true);
-  let end=-1;
-  for(let p=bytes.length-22;p>=Math.max(0,bytes.length-65557);p--){if(u32(p)===0x06054b50){end=p;break}}
-  if(end<0)throw Error('ZIP中央ディレクトリがありません');
-  const count=u16(end+10),offset=u32(end+16);
-  if(count===65535||offset===0xffffffff)throw Error('ZIP64は非対応です');
-  let p=offset;const entries=[],decoder=new TextDecoder();
-  for(let i=0;i<count;i++){
-    if(p+46>bytes.length||u32(p)!==0x02014b50)throw Error('ZIP中央ディレクトリが不正');
-    const flags=u16(p+8),method=u16(p+10),compressed=u32(p+20),expanded=u32(p+24);
-    const nl=u16(p+28),extra=u16(p+30),comment=u16(p+32),local=u32(p+42);
-    const name=decoder.decode(bytes.subarray(p+46,p+46+nl));
-    if(!(flags&1)&&!name.endsWith('/')&&/\.(json|wav|webm|mp3|ogg|m4a|mp4|aac)$/i.test(name)){
-      entries.push({name,async data(){
-        if(local+30>bytes.length||u32(local)!==0x04034b50)throw Error('ZIPローカルヘッダーが不正');
-        const begin=local+30+u16(local+26)+u16(local+28);
-        if(begin+compressed>bytes.length||expanded>268435456)throw Error('ZIPエントリーが破損または大きすぎます');
-        const contents=bytes.subarray(begin,begin+compressed);
-        if(method===0){if(compressed!==expanded)throw Error('ZIP格納サイズが不一致');return contents.slice().buffer}
-        if(method===8)return inflate(contents,expanded);
-        throw Error('未対応のZIP圧縮方式: '+method);
-      }});
-    }
-    p+=46+nl+extra+comment;
-  }
-  return entries;
-}
-function audioContext(){
-  if(!audioCtx){const C=window.AudioContext||window.webkitAudioContext;if(!C)throw Error('Web Audio非対応');audioCtx=new C()}
-  return audioCtx;
-}
-function features(buffer){
-  const channels=Array.from({length:buffer.numberOfChannels},(_,i)=>buffer.getChannelData(i));
-  const mix=i=>{let v=0;for(const c of channels)v+=c[i];return v/channels.length};
-  const fw=Math.max(1,Math.floor(buffer.sampleRate/RATE)),pw=Math.max(1,Math.floor(buffer.sampleRate/PEAK_RATE));
-  const envelope=new Float32Array(Math.ceil(buffer.length/fw)),minimum=new Float32Array(Math.ceil(buffer.length/pw)),maximum=new Float32Array(minimum.length);
-  for(let k=0;k<envelope.length;k++){let sum=0,n=0;for(let i=k*fw;i<Math.min(buffer.length,(k+1)*fw);i++){const v=mix(i);sum+=v*v;n++}const rms=n?Math.sqrt(sum/n):0;envelope[k]=clamp(rms>1e-7?20*Math.log10(rms)+72:0,0,60)}
-  for(let k=0;k<minimum.length;k++){let low=1,high=-1;for(let i=k*pw;i<Math.min(buffer.length,(k+1)*pw);i++){const v=mix(i);low=Math.min(low,v);high=Math.max(high,v)}minimum[k]=low<=high?low:0;maximum[k]=low<=high?high:0}
-  
-  const frequency=new Float32Array(envelope.length);
-  const n=2048, rate=buffer.sampleRate;
-  const real=new Float64Array(n),imag=new Float64Array(n);
-  for(let k=0;k<envelope.length;k++){
-    if(envelope[k]<15)continue;
-    const center=Math.round(k/RATE*rate),begin=clamp(center-n/2,0,Math.max(0,buffer.length-n));
-    const available=Math.min(n,buffer.length-begin);if(available<64)continue;
-    let average=0;
-    for(let i=0;i<available;i++){const v=mix(begin+i);real[i]=v;average+=v}
-    average/=available;
-    for(let i=0;i<available;i++){real[i]=(real[i]-average)*(.5-.5*Math.cos(2*Math.PI*i/(n-1)));imag[i]=0}
-    for(let i=available;i<n;i++){real[i]=0;imag[i]=0}
-    let j=0;
-    for(let i=1;i<n;i++){let bit=n>>1;while(j&bit){j^=bit;bit>>=1}j^=bit;if(i<j){[real[i],real[j]]=[real[j],real[i]];[imag[i],imag[j]]=[imag[j],imag[i]]}}
-    for(let length=2;length<=n;length<<=1){
-      const angle=-2*Math.PI/length,wr=Math.cos(angle),wi=Math.sin(angle);
-      for(let block=0;block<n;block+=length){
-        let r=1,im=0;
-        for(let m=0;m<length/2;m++){
-          const a=block+m,b=a+length/2,tr=real[b]*r-imag[b]*im,ti=real[b]*im+imag[b]*r;
-          real[b]=real[a]-tr;imag[b]=imag[a]-ti;real[a]+=tr;imag[a]+=ti;
-          const nr=r*wr-im*wi;im=r*wi+im*wr;r=nr;
-        }
+  function clipList(d) {
+    if(Array.isArray(d)) return d.filter(m=>m&&typeof m==='object');
+    if(!d||typeof d!=='object') return [];
+    for(const k of ['clips','recordingClips','recordings','audioClips','items','data','session']) {
+      if(d[k]&&typeof d[k]==='object') {
+        const found=clipList(d[k]);
+        if(found.length) return found;
       }
     }
-    let bin=-1,power=1e-10;
-    for(let i=Math.max(1,Math.ceil(40*n/rate));i<=Math.min(n/2-1,Math.floor(4000*n/rate));i++){
-      const p=real[i]*real[i]+imag[i]*imag[i];if(p>power){power=p;bin=i}
-    }
-    if(bin>0)frequency[k]=bin*rate/n;
+    if(clipFiles(d).length) return [d];
+    return Object.entries(d)
+      .filter(([k,v])=>/\.(wav|webm|mp3|ogg|m4a|mp4|aac)$/i.test(k)&&v&&typeof v==='object')
+      .map(([k,v])=>({...v,audioFile:k}));
   }
-  return {envelope,minimum,maximum,frequency};
-}
-async function decodeAudio(entries,generation){
-  const ac=audioContext();let next=0,done=0,success=0,unplaced=0,failed=0;
-  async function worker(){
-    while(generation===trackerGeneration){
-      const index=next++;if(index>=entries.length)return;
-      const entry=entries[index];
-      try{
-        const bytes=await entry.data();if(generation!==trackerGeneration)return;
-        const buffer=await ac.decodeAudioData(bytes.slice(0));if(generation!==trackerGeneration)return;
-        const meta=findMeta(entry.name),position=clipStart(meta,entry.name);
-        if(position===null){unplaced++;console.warn("開始時刻不明のため配置しません",entry.name);continue}
-        const f=features(buffer);
-        if(generation!==trackerGeneration)return;
-        clips.push({
-          start:position,
-          name:entry.name,
-          length:buffer.duration,
-          category:categoryOf(meta),
-          loadBuffer:async()=>ac.decodeAudioData((await entry.data()).slice(0)),
-          ...f
-        });
-        success++;
-      }catch(error){failed++;console.warn('音声をスキップ',entry.name,error)}
-      finally{
-        done++;
-        if(generation===trackerGeneration){
-          if(done%10===0||done===entries.length){
-            clips.sort((a,b)=>a.start-b.start);
-            refresh();
+  function categoryOf(m) {
+    const v=m?.category??m?.type??m?.label??m?.classification??m?.audio?.category;
+    return typeof v==='object'?(v?.category??v?.label??v?.type??'unknown'):(v??'unknown');
+  }
+  const snore=m=>/snore|snoring|いびき/i.test(String(categoryOf(m)));
+  function clipStart(m,name) {
+    for(const k of ['startSec','elapsedSec','offsetSec','timeSec','startSeconds']) {
+      const n=num(m?.[k]);
+      if(n!==null&&n>=0) return n;
+    }
+    for(const k of ['startMs','offsetMs','elapsedMs']) {
+      const n=num(m?.[k]);
+      if(n!==null) {
+        const s=n>=1e11?(n-startMs)/1000:n/1000;
+        if(s>=0) return s;
+      }
+    }
+    for(const k of ['startedAt','startTime','startAt','timestamp','recordedAt','createdAt']) {
+      const t=ms(m?.[k]);
+      if(t!==null&&t>=startMs) return (t-startMs)/1000;
+    }
+    const id=num(m?.id);
+    if(id!==null&&id>=1e9) {
+      const t=ms(id);
+      if(t>=startMs) return (t-startMs)/1000;
+    }
+    const n=base(name);
+    const a=n.match(/^clip_(\d+(?:\.\d+)?)_[^/]+\.(wav|webm|mp3|ogg|m4a|mp4|aac)$/i);
+    const b=n.match(/(?:^|[_-])(\d+(?:\.\d+)?)s(?:[_-]|\.)/i);
+    const c=n.match(/(?:^|[_-])(\d{10,13})(?:[_-]|\.)/);
+    if(a) return Number(a[1]);
+    if(b) return Number(b[1]);
+    if(c) {
+      const t=ms(Number(c[1]));
+      if(t>=startMs) return (t-startMs)/1000;
+    }
+    return null;
+  }
+  function findMeta(name) {
+    let found=metadata.filter(m=>clipFiles(m).some(p=>path(p)===path(name)));
+    if(!found.length) found=metadata.filter(m=>clipFiles(m).some(p=>base(p)===base(name)));
+    if(found.length) return Object.assign({},...found);
+    const stem=base(name).replace(/\.[^.]+$/,'');
+    found=metadata.filter(m=>m.id!==undefined&&String(m.id).toLowerCase()===stem);
+    return found.length===1?found[0]:{};
+  }
+  function indexMotion() {
+    motionPoints=logs.filter(x=>x.motion!==null);
+    motionPeak=0;
+    if(motionPoints.length) {
+      for(const x of motionPoints) motionPeak=Math.max(motionPeak,x.motion);
+    } else {
+      for(const b of bins) motionPeak=Math.max(motionPeak,b.max);
+    }
+  }
+  function parseTracker(data) {
+    if(!data||typeof data!=='object'||Array.isArray(data)) throw Error('セッションJSONが不正です');
+    const source=rawLogs(data);
+    let t=ms(data.session?.startedAt??data.session?.startTime??
+      data.session?.startAt??data.startedAt??data.startTime);
+    if(t===null) {
+      for(const x of source) {
+        const at=ms(x.timestamp??x.time??x.recordedAt??x.createdAt);
+        if(at!==null) t=t===null?at:Math.min(t,at);
+      }
+    }
+    if(t===null) throw Error('セッション開始時刻がありません');
+
+    const parsed=source.map(x=>{
+      let sec=num(x.sec??x.elapsedSec??x.timeSec??x.seconds??x.offsetSec);
+      if(sec===null) {
+        const at=ms(x.timestamp??x.time??x.recordedAt??x.createdAt);
+        if(at!==null) sec=(at-t)/1000;
+      }
+      if(sec===null||sec<0) return null;
+      const g=num(x.motionG??x.accelerationG??x.g??x.motion?.g);
+      return {
+        sec,
+        db:num(x.db??x.dB??x.peakDb??x.soundDb??x.soundPressureDb??
+          x.decibel??x.decibels??x.audioDb??x.audio?.db??x.audio?.peakDb),
+        hz:num(x.peakHz??x.hz??x.Hz??x.frequency??x.frequencyHz??
+          x.dominantHz??x.peakFrequency??x.peakFrequencyHz??
+          x.audio?.peakHz??x.audio?.frequencyHz),
+        motion:g===null?null:Math.max(0,g)
+      };
+    }).filter(Boolean).sort((a,b)=>a.sec-b.sec);
+
+    const parsedBins=rawBins(data).map((b,i)=>{
+      const avg=Math.max(0,num(b.avgMotion,0));
+      return {
+        start:Math.max(0,num(b.startSec,i*30)),
+        length:Math.max(.001,num(b.durationSec,30)),
+        avg,max:Math.max(avg,num(b.maxMotion,avg))
+      };
+    }).sort((a,b)=>a.start-b.start);
+
+    startMs=t;logs=parsed;bins=parsedBins;clips=[];
+    metadata=clipList(data);
+    duration=Math.max(1,num(data.session?.durationSec??data.durationSec,0),
+      logs.length?logs[logs.length-1].sec+1:0);
+    for(const b of bins) duration=Math.max(duration,b.start+b.length);
+    indexMotion();
+    hasTracker=true;trackerDemo=false;
+  }
+
+  // 外部ライブラリ不要。非暗号化ZIPの格納/DEFLATEに対応。
+  function inflate(input,expected) {
+    const LB=[3,4,5,6,7,8,9,10,11,13,15,17,19,23,27,31,35,43,51,59,67,83,99,115,131,163,195,227,258];
+    const LE=[0,0,0,0,0,0,0,0,1,1,1,1,2,2,2,2,3,3,3,3,4,4,4,4,5,5,5,5,0];
+    const DB=[1,2,3,4,5,7,9,13,17,25,33,49,65,97,129,193,257,385,513,769,1025,1537,2049,3073,4097,6145,8193,12289,16385,24577];
+    const DE=[0,0,0,0,1,1,2,2,3,3,4,4,5,5,6,6,7,7,8,8,9,9,10,10,11,11,12,12,13,13];
+    let pos=0,buffer=0,count=0,used=0;
+    const out=new Uint8Array(expected);
+    function bits(n) {
+      while(count<n) {
+        if(pos>=input.length) throw Error('ZIP圧縮データが不完全');
+        buffer|=input[pos++]<<count;count+=8;
+      }
+      const v=buffer&((1<<n)-1);
+      buffer>>>=n;count-=n;
+      return v;
+    }
+    function put(v) {
+      if(used>=expected) throw Error('ZIP展開サイズ超過');
+      out[used++]=v;
+    }
+    function tree(lengths) {
+      const counts=new Uint16Array(16),next=new Uint16Array(16);
+      const tables=Array.from({length:16},()=>new Map());
+      let max=0,code=0;
+      for(const n of lengths) {
+        if(n>15) throw Error('ZIP符号長が不正');
+        if(n) {counts[n]++;max=Math.max(max,n);}
+      }
+      for(let i=1;i<=15;i++) {
+        code=(code+counts[i-1])<<1;
+        if(code+counts[i]>(1<<i)) throw Error('ZIP符号表が不正');
+        next[i]=code;
+      }
+      lengths.forEach((n,s)=>{if(n) tables[n].set(next[n]++,s);});
+      return {tables,max};
+    }
+    function symbol(t) {
+      let code=0;
+      for(let n=1;n<=t.max;n++) {
+        code=(code<<1)|bits(1);
+        if(t.tables[n].has(code)) return t.tables[n].get(code);
+      }
+      throw Error('ZIP Huffman符号が不正');
+    }
+    let final=false;
+    while(!final) {
+      final=bits(1)===1;
+      const type=bits(2);
+      if(type===0) {
+        if(count%8) bits(count%8);
+        const length=bits(16),inverse=bits(16);
+        if(((length^inverse)&65535)!==65535) throw Error('ZIPブロックが不正');
+        for(let i=0;i<length;i++) put(bits(8));
+        continue;
+      }
+      if(type===3) throw Error('ZIPブロック形式が不正');
+      let literal,distance;
+      if(type===1) {
+        literal=tree(Array.from({length:288},(_,i)=>i<=143?8:i<=255?9:i<=279?7:8));
+        distance=tree(Array(32).fill(5));
+      } else {
+        const nl=bits(5)+257,nd=bits(5)+1,nc=bits(4)+4;
+        const order=[16,17,18,0,8,7,9,6,10,5,11,4,12,3,13,2,14,1,15];
+        const lengths=Array(19).fill(0);
+        for(let i=0;i<nc;i++) lengths[order[i]]=bits(3);
+        const ct=tree(lengths),all=[];
+        while(all.length<nl+nd) {
+          const v=symbol(ct);
+          if(v<=15) all.push(v);
+          else {
+            let repeat,value;
+            if(v===16) {
+              if(!all.length) throw Error('ZIP反復符号が不正');
+              repeat=bits(2)+3;value=all[all.length-1];
+            } else if(v===17) {repeat=bits(3)+3;value=0;}
+            else {repeat=bits(7)+11;value=0;}
+            if(all.length+repeat>nl+nd) throw Error('ZIP符号数が不正');
+            for(let i=0;i<repeat;i++) all.push(value);
           }
-          $('loadStatusBadge').textContent=`ログ表示済み / 音声 ${done}/${entries.length}（成功${success}本）`;
-          await new Promise(r=>setTimeout(r,0));
+        }
+        literal=tree(all.slice(0,nl));distance=tree(all.slice(nl));
+      }
+      for(;;) {
+        const v=symbol(literal);
+        if(v<256) {put(v);continue;}
+        if(v===256) break;
+        const li=v-257;
+        if(li<0||li>=LB.length) throw Error('ZIP長さ符号が不正');
+        const length=LB[li]+bits(LE[li]),di=symbol(distance);
+        if(di>=DB.length) throw Error('ZIP距離符号が不正');
+        const dist=DB[di]+bits(DE[di]);
+        if(dist>used) throw Error('ZIPコピー距離が不正');
+        for(let i=0;i<length;i++) put(out[used-dist]);
+      }
+    }
+    if(used!==expected) throw Error('ZIP展開サイズ不一致');
+    return out.buffer;
+  }
+  async function unzip(file) {
+    const bytes=new Uint8Array(await file.arrayBuffer());
+    const view=new DataView(bytes.buffer);
+    const u16=p=>view.getUint16(p,true),u32=p=>view.getUint32(p,true);
+    let end=-1;
+    for(let p=bytes.length-22;p>=Math.max(0,bytes.length-65557);p--) {
+      if(u32(p)===0x06054b50&&p+22+u16(p+20)===bytes.length) {end=p;break;}
+    }
+    if(end<0) throw Error('ZIP中央ディレクトリがありません');
+    if(u16(end+4)||u16(end+6)) throw Error('分割ZIPは非対応');
+    const count=u16(end+10),offset=u32(end+16);
+    if(count===65535||offset===0xffffffff) throw Error('ZIP64は非対応');
+    const entries=[],decoder=new TextDecoder();
+    let p=offset;
+    for(let i=0;i<count;i++) {
+      if(p+46>bytes.length||u32(p)!==0x02014b50) throw Error('ZIP中央ディレクトリが不正');
+      const flags=u16(p+8),method=u16(p+10);
+      const compressed=u32(p+20),expanded=u32(p+24);
+      const nl=u16(p+28),extra=u16(p+30),comment=u16(p+32),local=u32(p+42);
+      if(p+46+nl+extra+comment>bytes.length) throw Error('ZIPヘッダーが不完全');
+      const name=decoder.decode(bytes.subarray(p+46,p+46+nl));
+      if(!name.endsWith('/')&&/\.(json|wav|webm|mp3|ogg|m4a|mp4|aac)$/i.test(name)) {
+        if(flags&1) throw Error('暗号化ZIPは非対応');
+        entries.push({
+          name,
+          async data() {
+            if(local+30>bytes.length||u32(local)!==0x04034b50) throw Error('ZIPローカルヘッダーが不正');
+            const begin=local+30+u16(local+26)+u16(local+28);
+            if(begin+compressed>bytes.length||expanded>268435456) throw Error('ZIPエントリー破損または256MB超');
+            const data=bytes.subarray(begin,begin+compressed);
+            if(method===0) {
+              if(compressed!==expanded) throw Error('ZIP格納サイズ不一致');
+              return data.slice().buffer;
+            }
+            if(method===8) return inflate(data,expanded);
+            throw Error('未対応ZIP方式: '+method);
+          }
+        });
+      }
+      p+=46+nl+extra+comment;
+    }
+    return entries;
+  }
+  const jsonText=text=>JSON.parse(text.replace(/^\uFEFF/,''));
+  async function documentsFrom(file,isCurrent) {
+    if(/\.json$/i.test(file.name)) {
+      const obj=jsonText(await file.text());
+      return isCurrent()?{entries:[],documents:[{name:file.name,obj}]}:null;
+    }
+    if(!/\.zip$/i.test(file.name)) throw Error('JSONかZIPを選択してください');
+    const entries=await unzip(file),documents=[];
+    for(const e of entries) {
+      if(!isCurrent()) return null;
+      if(!/\.json$/i.test(e.name)) continue;
+      try {
+        documents.push({name:e.name,obj:jsonText(new TextDecoder().decode(await e.data()))});
+      } catch(error) {console.warn(e.name,error);}
+    }
+    return isCurrent()?{entries,documents}:null;
+  }
+
+  function features(buffer) {
+    const channels=Array.from({length:buffer.numberOfChannels},(_,i)=>buffer.getChannelData(i));
+    const mix=i=>{
+      let v=0;
+      for(const c of channels) v+=c[i];
+      return v/channels.length;
+    };
+    const rate=buffer.sampleRate;
+    const envelope=new Float32Array(Math.ceil(buffer.duration*RATE));
+    const minimum=new Float32Array(Math.ceil(buffer.duration*PEAK_RATE));
+    const maximum=new Float32Array(minimum.length);
+    const frequency=new Float32Array(envelope.length);
+
+    for(let k=0;k<envelope.length;k++) {
+      let sum=0;
+      const a=Math.floor(k*rate/RATE);
+      const b=Math.min(buffer.length,Math.floor((k+1)*rate/RATE));
+      for(let i=a;i<b;i++) {const v=mix(i);sum+=v*v;}
+      const rms=b>a?Math.sqrt(sum/(b-a)):0;
+      envelope[k]=clamp(rms>1e-7?20*Math.log10(rms)+72:0,0,60);
+    }
+    for(let k=0;k<minimum.length;k++) {
+      let low=1,high=-1;
+      const a=Math.floor(k*rate/PEAK_RATE);
+      const b=Math.min(buffer.length,Math.floor((k+1)*rate/PEAK_RATE));
+      for(let i=a;i<b;i++) {
+        const v=mix(i);low=Math.min(low,v);high=Math.max(high,v);
+      }
+      minimum[k]=a<b?low:0;maximum[k]=a<b?high:0;
+    }
+
+    // 表示専用基準。PCM・dB・周波数・再生バッファは変更しない。
+    const quiet=new Float32Array(envelope.length),block=PEAK_RATE/RATE;
+    for(let k=0;k<quiet.length;k++) {
+      let peak=0;
+      for(let i=k*block;i<Math.min((k+1)*block,minimum.length);i++) {
+        peak=Math.max(peak,Math.abs(minimum[i]),Math.abs(maximum[i]));
+      }
+      quiet[k]=peak;
+    }
+    quiet.sort();
+    const noiseFloor=quiet.length
+      ? Math.min(.05,quiet[Math.floor((quiet.length-1)*.2)]*1.2):0;
+
+    const n=2048,real=new Float64Array(n),imag=new Float64Array(n);
+    for(let k=0;k<envelope.length;k++) {
+      if(envelope[k]<15) continue;
+      const begin=clamp(Math.round(k*rate/RATE)-n/2,0,Math.max(0,buffer.length-n));
+      const available=Math.min(n,buffer.length-begin);
+      if(available<64) continue;
+      let avg=0;
+      for(let i=0;i<available;i++) {real[i]=mix(begin+i);avg+=real[i];}
+      avg/=available;
+      for(let i=0;i<n;i++) {
+        real[i]=i<available?(real[i]-avg)*(.5-.5*Math.cos(2*Math.PI*i/(n-1))):0;
+        imag[i]=0;
+      }
+      let j=0;
+      for(let i=1;i<n;i++) {
+        let bit=n>>1;
+        while(j&bit) {j^=bit;bit>>=1;}
+        j^=bit;
+        if(i<j) {
+          [real[i],real[j]]=[real[j],real[i]];
+          [imag[i],imag[j]]=[imag[j],imag[i]];
+        }
+      }
+      for(let length=2;length<=n;length<<=1) {
+        const angle=-2*Math.PI/length,wr=Math.cos(angle),wi=Math.sin(angle);
+        for(let a=0;a<n;a+=length) {
+          let r=1,im=0;
+          for(let m=0;m<length/2;m++) {
+            const x=a+m,y=x+length/2;
+            const tr=real[y]*r-imag[y]*im,ti=real[y]*im+imag[y]*r;
+            real[y]=real[x]-tr;imag[y]=imag[x]-ti;
+            real[x]+=tr;imag[x]+=ti;
+            const nr=r*wr-im*wi;
+            im=r*wi+im*wr;r=nr;
+          }
+        }
+      }
+      let bin=-1,power=1e-10;
+      for(let i=Math.max(1,Math.ceil(40*n/rate));
+          i<=Math.min(n/2-1,Math.floor(4000*n/rate));i++) {
+        const p=real[i]*real[i]+imag[i]*imag[i];
+        if(p>power) {power=p;bin=i;}
+      }
+      if(bin>0) frequency[k]=bin*rate/n;
+    }
+    return {envelope,minimum,maximum,frequency,noiseFloor};
+  }
+
+  async function loadTracker(file,generation) {
+    const current=()=>generation===trackerGeneration&&!disposed;
+    stopPlayback();
+    $('loadStatusBadge').textContent='JSONを解析中…';
+    const result=await documentsFrom(file,current);
+    if(!result||!current()) return;
+    const {entries,documents}=result;
+    const candidates=documents.filter(d=>d.obj&&typeof d.obj==='object'&&
+      !Array.isArray(d.obj)&&base(d.name)!=='clips.json');
+    const rank=d=>(base(d.name)==='session.json'?1000000:0)+
+      rawLogs(d.obj).length*2+rawBins(d.obj).length+
+      (d.obj.session||d.obj.startedAt||d.obj.startTime?1000:0);
+    candidates.sort((a,b)=>rank(b)-rank(a));
+    if(!candidates.length) throw Error('セッションJSONがありません');
+    parseTracker(candidates[0].obj);
+
+    const merged=new Map(),anonymous=[];
+    documents.sort((a,b)=>(base(a.name)==='clips.json')-(base(b.name)==='clips.json'));
+    for(const m of [...metadata,...documents.flatMap(d=>clipList(d.obj))]) {
+      const names=clipFiles(m);
+      const key=names.length?base(names[0]):m.id!==undefined?'id:'+m.id:null;
+      if(!key) {anonymous.push(m);continue;}
+      const clean=Object.fromEntries(Object.entries(m).filter(([,v])=>v!==null&&v!==undefined&&v!==''));
+      merged.set(key,{...merged.get(key),...clean});
+    }
+    metadata=[...merged.values(),...anonymous];
+    for(const m of metadata) {
+      const s=clipStart(m,clipFiles(m)[0]);
+      if(s!==null) duration=Math.max(duration,s+Math.max(0,num(m.durationSec??m.duration,0)));
+    }
+    center=duration/2;cursor=center;
+    refresh();
+    const audio=entries.filter(e=>/\.(wav|webm|mp3|ogg|m4a|mp4|aac)$/i.test(e.name));
+    if(!audio.length) {
+      $('loadStatusBadge').textContent=`ログ${logs.length}点 / 録音なし`;
+      return;
+    }
+    const context=audioContext();
+    let next=0,done=0,failed=0,unplaced=0;
+    async function worker() {
+      while(current()) {
+        const i=next++;
+        if(i>=audio.length) return;
+        const entry=audio[i];
+        try {
+          const meta=findMeta(entry.name),position=clipStart(meta,entry.name);
+          if(position===null) {unplaced++;continue;}
+          const data=await entry.data();
+          if(!current()) return;
+          const buffer=await context.decodeAudioData(data);
+          if(!current()) return;
+          clips.push({
+            start:position,length:buffer.duration,name:entry.name,
+            category:categoryOf(meta),...features(buffer),
+            loadBuffer:async()=>context.decodeAudioData(await entry.data())
+          });
+        } catch(error) {
+          if(current()) {failed++;console.warn(entry.name,error);}
+        } finally {
+          done++;
+          if(current()) {
+            $('loadStatusBadge').textContent=`ログ表示済み / 音声 ${done}/${audio.length}`;
+            if(done%10===0||done===audio.length) {
+              clips.sort((a,b)=>a.start-b.start);
+              refresh();
+            }
+            await new Promise(resolve=>setTimeout(resolve,0));
+          }
         }
       }
     }
+    await Promise.all(Array.from({length:Math.min(2,audio.length)},worker));
+    if(!current()) return;
+    clips.sort((a,b)=>a.start-b.start);
+    refresh();
+    $('loadStatusBadge').textContent=
+      `読込完了: ログ${logs.length}点 / 配置${clips.length}本 / 時刻不明${unplaced}本 / 失敗${failed}本`;
   }
-  await Promise.all(Array.from({length:Math.min(2,entries.length)},worker));
-  if(generation===trackerGeneration){clips.sort((a,b)=>a.start-b.start);refresh();$('loadStatusBadge').textContent=`読込完了: ログ${logs.length}点 / 配置${clips.length}本 / 時刻不明${unplaced}本 / 失敗${failed}本`;}
-}
-async function loadTracker(file,generation){
-  stopPlayback();$('loadStatusBadge').textContent='JSONを解析中…';
-  let entries=[],data=null;const documents=[];
-  if(/\.zip$/i.test(file.name)){
-    entries=await unzip(file);if(generation!==trackerGeneration)return;
-    for(const e of entries.filter(x=>/\.json$/i.test(x.name))){
-      try{const obj=JSON.parse(new TextDecoder().decode(await e.data()).replace(/^\uFEFF/,''));documents.push({name:e.name,obj})}
-      catch(err){console.warn(e.name,err)}
-      if(generation!==trackerGeneration)return;
-    }
-    // clips.jsonの件数にセッション選択を左右させない。
-    const candidates=documents.filter(d=>d.obj&&typeof d.obj==='object'&&!Array.isArray(d.obj)&&base(d.name)!=='clips.json');
-    candidates.sort((a,b)=>rank(b)-rank(a));
-    function rank(d){return (base(d.name)==='session.json'?1000000:0)+rawLogs(d.obj).length*2+rawBins(d.obj).length+(d.obj.session||d.obj.startedAt||d.obj.startTime?1000:0)}
-    data=candidates[0]?.obj;
-    if(!data)throw Error('ZIP内にセッションJSONがありません');
-  }else if(/\.json$/i.test(file.name)){data=JSON.parse((await file.text()).replace(/^\uFEFF/,''));documents.push({name:file.name,obj:data})}
-  else throw Error('JSONかZIPを選択してください');
-  if(generation!==trackerGeneration)return;
-  parseTracker(data);
-  // 同じファイルの情報を統合。独立したclips.jsonを最後に適用。
-  const ordered=documents.slice().sort((a,b)=>(base(a.name)==='clips.json')-(base(b.name)==='clips.json'));
-  const merged=new Map(),anonymous=[];
-  for(const m of [...metadata,...ordered.flatMap(d=>clipList(d.obj))]){
-    const names=clipFiles(m),key=names.length?base(names[0]):m?.id!==undefined?'id:'+m.id:null;
-    if(!key){anonymous.push(m);continue}
-    const clean=Object.fromEntries(Object.entries(m).filter(([k,v])=>v!==null&&v!==undefined&&v!==''));
-    merged.set(key,{...(merged.get(key)||{}),...clean});
-  }
-  metadata=[...merged.values(),...anonymous];
-  for(const m of metadata){const s=clipStart(m,clipFiles(m)[0]);if(s!==null)duration=Math.max(duration,s+num(m.durationSec??m.duration,0))}
-  center=duration/2;refresh();
-  const audio=entries.filter(e=>/\.(wav|webm|mp3|ogg|m4a|mp4|aac)$/i.test(e.name));
-  const missing=audio.filter(e=>clipStart(findMeta(e.name),e.name)===null);
-  $('loadStatusBadge').title=missing.length?'開始時刻不明（0秒には配置しません）: '+missing.map(e=>e.name).join(', '):'全音声の開始時刻を取得';
-  $('loadStatusBadge').textContent=audio.length?`ログ${logs.length}点 / 音声${audio.length}本を読込開始`:`ログ${logs.length}点 / 録音なし`;
-  if(audio.length)await decodeAudio(audio,generation);
-}
 
-function stage(v){const s=String(v||'').toLowerCase();return ['deep','light','rem'].includes(s)?s:(s==='wake'||s==='awake'?'wake':null)}
-function timeValue(target,t,v,low,high){const at=ms(t),value=num(v);if(at!==null&&value!==null&&value>=low&&value<=high)target.push({at,value})}
-function fitbitObject(object,name=''){
-  if(Array.isArray(object)){for(const item of object)fitbitObject(item,name);return}
-  if(!object||typeof object!=='object')return;
-  const records=Array.isArray(object.sleep)?object.sleep:[object];
-  for(const r of records){
-    const score=num(r?.sleepScore?.overallScore??r?.sleepScore?.score??r?.sleepScore??r?.score);
-    if(score!==null&&score>=0&&score<=100&&(r?.levels||r?.sleepScore||/score/i.test(name)))fitbit.score=score;
-    if(Array.isArray(r?.levels?.data))for(const item of r.levels.data){
-      const at=ms(item.dateTime??item.datetime??item.startTime),length=num(item.seconds),level=stage(item.level);
-      if(at!==null&&length>0&&level)fitbit.stages.push({start:at,end:at+length*1000,level});
+  function stage(v) {
+    const s=String(v||'').toLowerCase();
+    return ['deep','light','rem'].includes(s)?s:/^(wake|awake)$/.test(s)?'wake':null;
+  }
+  function timeValue(target,t,v,low,high) {
+    const at=ms(t),value=num(v);
+    if(at!==null&&value!==null&&value>=low&&value<=high) target.push({at,value});
+  }
+  function fitbitObject(target,object,name='') {
+    if(Array.isArray(object)) {
+      for(const item of object) fitbitObject(target,item,name);
+      return;
+    }
+    if(!object||typeof object!=='object') return;
+    for(const r of Array.isArray(object.sleep)?object.sleep:[object]) {
+      if(!r||typeof r!=='object') continue;
+      const score=num(r.sleepScore?.overallScore??r.sleepScore?.score??r.sleepScore??r.score);
+      if(score!==null&&score>=0&&score<=100&&(r.levels||r.sleepScore||/score/i.test(name))) {
+        target.score=score;
+      }
+      for(const x of Array.isArray(r.levels?.data)?r.levels.data:[]) {
+        const at=ms(x.dateTime??x.datetime??x.startTime);
+        const length=num(x.seconds),level=stage(x.level);
+        if(at!==null&&length>0&&level) {
+          target.stages.push({start:at,end:at+length*1000,level});
+        }
+      }
+    }
+    for(const array of [object.bpm,object.heartRate,object['heart-rate']].filter(Array.isArray)) {
+      for(const x of array) {
+        timeValue(target.bpm,x.dateTime??x.datetime??x.timestamp,
+          x.value?.bpm??x.value?.heartRate??x.value,25,240);
+      }
+    }
+    for(const array of [object.spo2,object.SpO2,object['Oxygen Saturation']].filter(Array.isArray)) {
+      for(const x of array) {
+        timeValue(target.spo2,x.dateTime??x.datetime??x.timestamp,
+          x.value?.spo2??x.value?.SpO2??x.value,50,100);
+      }
+    }
+    // ファイル名で種別が分かる単一レコード形式も対応。
+    if(/heart|bpm/i.test(name)) {
+      timeValue(target.bpm,object.dateTime??object.datetime??object.timestamp,
+        object.value?.bpm??object.value?.heartRate??object.bpm??object.value,25,240);
+    }
+    if(/spo2|oxygen/i.test(name)) {
+      timeValue(target.spo2,object.dateTime??object.datetime??object.timestamp,
+        object.value?.spo2??object.value?.SpO2??object.value,50,100);
+    }
+    if(/spo2|oxygen/i.test(name)||object.spo2||object.SpO2) {
+      const r=object.value&&typeof object.value==='object'&&!Array.isArray(object.value)
+        ? object.value:object;
+      const min=num(r.minimum??r.min),max=num(r.maximum??r.max);
+      if(min!==null&&max!==null&&min>=50&&max<=100&&min<=max) {
+        target.spo2Range=target.spo2Range
+          ? {min:Math.min(min,target.spo2Range.min),max:Math.max(max,target.spo2Range.max)}
+          : {min,max};
+      }
+    }
+    const temp=object.temperature??object['Relative Sleep Skin Temperature'];
+    if(Array.isArray(temp)) {
+      for(const x of temp) {
+        timeValue(target.temperature,x.dateTime??x.datetime,
+          x.value?.nightlyRelative??x.value,-20,20);
+      }
     }
   }
-  for(const array of [object.bpm,object.heartRate,object['heart-rate']].filter(Array.isArray))
-    for(const item of array)timeValue(fitbit.bpm,item.dateTime??item.datetime??item.timestamp,item.value?.bpm??item.value?.heartRate??item.value,25,240);
-  for(const array of [object.spo2,object.SpO2,object['Oxygen Saturation']].filter(Array.isArray))
-    for(const item of array)timeValue(fitbit.spo2,item.dateTime??item.datetime??item.timestamp,item.value?.spo2??item.value?.SpO2??item.value,50,100);
-  if(/spo2|oxygen/i.test(name)||object.spo2||object.SpO2){
-    const range=object.value&&!Array.isArray(object.value)?object.value:object,min=num(range.minimum??range.min),max=num(range.maximum??range.max);
-    if(min!==null&&max!==null&&min>=50&&max<=100&&min<=max)fitbit.spo2Range={min,max};
+  function normalizeFitbit() {
+    for(const k of ['bpm','spo2','temperature']) {
+      const unique=new Map(fitbit[k].map(x=>[x.at,x]));
+      fitbit[k]=[...unique.values()].sort((a,b)=>a.at-b.at);
+    }
+    const unique=new Map(fitbit.stages.map(x=>[`${x.start}:${x.end}:${x.level}`,x]));
+    fitbit.stages=[...unique.values()].sort((a,b)=>a.start-b.start);
+    $('fitbitStatus').textContent=
+      `段階${fitbit.stages.length} / 心拍${fitbit.bpm.length} / SpO₂${fitbit.spo2.length}`+
+      (fitbitDemo?'【デモ】':'');
+    requestDraw();report();
   }
-  const temp=object.temperature??object['Relative Sleep Skin Temperature'];
-  if(Array.isArray(temp))for(const item of temp)timeValue(fitbit.temperature,item.dateTime??item.datetime,item.value?.nightlyRelative??item.value,-20,20);
-  fitbit.sourceCount++;
-}
-function normalizeFitbit(){
-  for(const k of ['stages','bpm','spo2','temperature'])fitbit[k].sort((a,b)=>(a.at??a.start)-(b.at??b.start));
-  $('fitbitStatus').textContent=`段階${fitbit.stages.length} / 心拍${fitbit.bpm.length} / SpO₂${fitbit.spo2.length}`+(fitbitDemo?'【デモ】':'');
-  draw();report();
-}
-async function loadFitbit(files,generation){
-  $('fitbitStatus').textContent='解析中…';
-  const data=[];
-  for(const file of files){
-    if(/\.zip$/i.test(file.name)){for(const e of (await unzip(file)).filter(x=>/\.json$/i.test(x.name))){try{data.push({name:e.name,obj:JSON.parse(new TextDecoder().decode(await e.data()))})}catch(err){console.warn(e.name,err)}}}
-    else if(/\.json$/i.test(file.name))data.push({name:file.name,obj:JSON.parse(await file.text())});
+  async function loadFitbit(files,generation) {
+    const current=()=>generation===fitbitGeneration&&!disposed;
+    $('fitbitStatus').textContent='解析中…';
+    const target=emptyFitbit();
+    for(const file of files) {
+      const result=await documentsFrom(file,current);
+      if(!result||!current()) return;
+      for(const d of result.documents) {
+        fitbitObject(target,d.obj,d.name);
+        target.sourceCount++;
+      }
+    }
+    if(!current()) return;
+    fitbit=target;fitbitDemo=false;
+    normalizeFitbit();
   }
-  if(generation!==fitbitGeneration)return;
-  fitbit=emptyFitbit();fitbitDemo=false;
-  for(const d of data)fitbitObject(d.obj,d.name);
-  normalizeFitbit();
-}
-function demo(){
-  trackerGeneration++;fitbitGeneration++;stopPlayback();
-  startMs=new Date(2025,0,14,23,0,0).getTime();duration=8*3600;center=duration/2;
-  logs=[];bins=[];metadata=[];clips=[];fitbit=emptyFitbit();
-  for(let s=0;s<duration;s++){
-    const active=s%1700<35;
-    logs.push({sec:s,db:27+5*Math.abs(Math.sin(s/45))+(s%850<90?11:0),hz:92+34*Math.abs(Math.sin(s/100)),motion:.002+.0015*Math.abs(Math.sin(s/57))+(active?.028*Math.abs(Math.sin(s/3)):0)});
+
+  function windowStart() {return center-span/2;}
+  function yToSec(y) {return windowStart()+y/Math.max(1,canvas.height)*span;}
+  function secToY(s) {return (s-windowStart())/span*canvas.height;}
+  function columns() {
+    const w=canvas.width;
+    return {ml:w*.01,mw:w*.15,sl:w*.16,sw:w*.44,t:w*.60,spo:w*.72,bpm:w*.82,stage:w*.92};
   }
-  for(let s=0;s<duration;s+=30){const v=logs.slice(s,s+30).map(x=>x.motion);bins.push({start:s,length:30,avg:v.reduce((a,b)=>a+b,0)/v.length,max:Math.max(...v)})}
-  for(let s=0;s<duration;s+=180){
-    const level=['light','deep','light','rem'][Math.floor(s/5400)%4];
-    fitbit.stages.push({start:startMs+s*1000,end:startMs+Math.min(duration,s+180)*1000,level:s>0&&s%7200===0?'wake':level});
-    fitbit.bpm.push({at:startMs+s*1000,value:57+7*Math.sin(s/2100)});
-    fitbit.spo2.push({at:startMs+s*1000,value:97+Math.sin(s/900)});
+  function line(x,y,x2,y2,color='#cbd5e1',width=1) {
+    ctx.strokeStyle=color;ctx.lineWidth=width;
+    ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x2,y2);ctx.stroke();
   }
-  fitbit.score=81;fitbit.spo2Range={min:95,max:99};fitbit.sourceCount=1;
-  hasTracker=true;trackerDemo=true;fitbitDemo=true;
-  refresh();normalizeFitbit();$('loadStatusBadge').textContent='【デモ】架空ログ / 録音なし';
-}
-function windowStart(){return center-span/2}
-function yToSec(y){return windowStart()+y/Math.max(1,canvas.height)*span}
-function secToY(s){return (s-windowStart())/span*canvas.height}
-function columns(){const w=canvas.width;return {ml:w*.01,mw:w*.15,sl:w*.16,sw:w*.44,t:w*.60,spo:w*.72,bpm:w*.82,stage:w*.92}}
-function line(x,y,x2,y2,color='#cbd5e1',thick=1){ctx.strokeStyle=color;ctx.lineWidth=thick;ctx.beginPath();ctx.moveTo(x,y);ctx.lineTo(x2,y2);ctx.stroke()}
-function motionMax(){
-  if(motionSetting!=='auto')return Number(motionSetting);
-  let max=0;
-  if(logs.some(x=>x.motion!==null)){for(const x of logs)max=Math.max(max,x.motion??0)}
-  else for(const b of bins)max=Math.max(max,b.max);
-  return SCALES.find(x=>max<=x)||.2;
-}
-function motionX(v,max,col){return col.ml+clamp(num(v,0),0,max)/max*col.mw}
-function motionLabel(v){return (v>=.1?v.toFixed(1):v>=.01?v.toFixed(2):v.toFixed(3))+'G'}
-function ticks(start,end,col){
-  const step=span<=60?5:span<=300?15:span<=600?30:span<=1800?120:300;
-  ctx.font='10px monospace';
-  for(let s=Math.ceil(start/step)*step;s<=end;s+=step){
-    const y=secToY(s);line(col.t+2,y,col.t+10,y,'#94a3b8');
-    if(step<60?Math.round(s)%60===0:Math.round(s)%(step*2)===0){ctx.fillStyle='#475569';ctx.fillText(clock(s),col.t+12,y+3)}
+  function motionMax() {
+    return motionSetting==='auto'
+      ? SCALES.find(v=>motionPeak<=v)||Math.max(.2,motionPeak)
+      : Number(motionSetting);
   }
-  const midnight=new Date(startMs+start*1000);midnight.setHours(24,0,0,0);
-  while(midnight.getTime()<=startMs+end*1000){
-    const s=(midnight.getTime()-startMs)/1000,y=secToY(s);
-    ctx.setLineDash([5,4]);line(0,y,canvas.width,y,'#f59e0b');ctx.setLineDash([]);
-    ctx.fillStyle='#92400e';ctx.fillText(datetime(s),Math.max(0,canvas.width-160),Math.max(12,y-4));midnight.setDate(midnight.getDate()+1);
+  const motionX=(v,max,c)=>c.ml+clamp(num(v,0),0,max)/max*c.mw;
+  const motionLabel=v=>Number(v.toPrecision(3))+'G';
+
+  function ticks(start,end,c) {
+    const step=span<=60?5:span<=300?15:span<=600?30:span<=1800?120:300;
+    ctx.font='10px monospace';
+    for(let s=Math.ceil(start/step)*step;s<=end;s+=step) {
+      const y=secToY(s);
+      line(c.t+2,y,c.t+10,y,'#94a3b8');
+      if(step<60?Math.round(s)%60===0:Math.round(s)%(step*2)===0) {
+        ctx.fillStyle='#475569';ctx.fillText(clock(s),c.t+12,y+3);
+      }
+    }
+    const midnight=new Date(startMs+start*1000);
+    midnight.setHours(24,0,0,0);
+    while(midnight.getTime()<=startMs+end*1000) {
+      const y=secToY((midnight.getTime()-startMs)/1000);
+      ctx.setLineDash([5,4]);
+      line(0,y,canvas.width,y,'#f59e0b');
+      ctx.setLineDash([]);
+      ctx.fillStyle='#92400e';
+      ctx.fillText(datetime((midnight.getTime()-startMs)/1000),
+        Math.max(0,canvas.width-160),Math.max(12,y-4));
+      midnight.setDate(midnight.getDate()+1);
+    }
   }
-}
-function motionGraph(start,end,col,max){
-  if(logs.some(x=>x.motion!==null)){
+  function motionGraph(start,end,c,max) {
     let previous=null;
-    for(const item of logs){
-      if(item.motion===null)continue;
-      const s=item.sec+motionOffset;if(s<start||s>end)continue;
-      const y=secToY(s),x=motionX(item.motion,max,col);
-      if(previous&&Math.abs(y-previous.y)<30)line(previous.x,previous.y,x,y,'#2563eb',1.3);
-      line(col.ml,y,x,y,'#f97316');previous={x,y};
-    }
-    return;
-  }
-  let previous=null;
-  for(const b of bins){
-    if(b.start+motionOffset+b.length<start||b.start+motionOffset>end)continue;
-    const y=secToY(b.start+motionOffset+b.length/2),x=motionX(b.avg,max,col);
-    if(previous)line(previous.x,previous.y,x,y,'#2563eb',1.4);
-    previous={x,y};
-    if(y>=0&&y<=canvas.height){line(col.ml,y,motionX(b.max,max,col),y,'#f97316',1.2);ctx.fillStyle='#2563eb';ctx.beginPath();ctx.arc(x,y,1.5,0,Math.PI*2);ctx.fill()}
-  }
-}
-function waveGraph(start,end,col){
-  const centerX=col.sl+col.sw/2,amp=col.sw/2;
-  ctx.save();ctx.strokeStyle='#2563eb';ctx.lineWidth=1;ctx.globalAlpha=.9;
-  for(const clip of clips){
-    ctx.strokeStyle='#2563eb'; // 保存分類による色分けはしない
-    if(clip.start+clip.length<start||clip.start>end)continue;
-    const first=Math.max(0,Math.floor((start-clip.start)*PEAK_RATE));
-    const last=Math.min(clip.minimum.length-1,Math.ceil((end-clip.start)*PEAK_RATE));
-    let row=-1,low=0,high=0;
-    const flush=()=>{if(row<0)return;ctx.beginPath();ctx.moveTo(centerX+clamp(low,-1,1)*amp,row+.5);ctx.lineTo(centerX+clamp(high,-1,1)*amp,row+.5);ctx.stroke()};
-    for(let i=first;i<=last;i++){
-      const y=Math.floor(secToY(clip.start+i/PEAK_RATE));if(y<0||y>=canvas.height)continue;
-      if(y!==row){flush();row=y;low=clip.minimum[i];high=clip.maximum[i]}
-      else{low=Math.min(low,clip.minimum[i]);high=Math.max(high,clip.maximum[i])}
-    }
-    flush();
-  }
-  ctx.restore();
-}
-function fitbitGraph(start,end,col){
-  for(const x of [col.spo,col.bpm,col.stage])line(x,0,x,canvas.height);
-  function graph(points,left,right,scale,color){
-    let previous=null;
-    for(const item of points){
-      const s=(item.at-startMs)/1000;if(s<start||s>end)continue;
-      const p={x:left+clamp(scale(item.value),0,1)*(right-left),y:secToY(s)};
-      if(previous)line(previous.x,previous.y,p.x,p.y,color,1.5);
-      ctx.fillStyle=color;ctx.fillRect(p.x-1,p.y-1,2,2);previous=p;
+    if(motionPoints.length) {
+      for(const item of motionPoints) {
+        const s=item.sec+motionOffset;
+        if(s<start) continue;
+        if(s>end) break;
+        const y=secToY(s),x=motionX(item.motion,max,c);
+        if(previous&&s-previous.s<=2) line(previous.x,previous.y,x,y,'#2563eb',1.3);
+        line(c.ml,y,x,y,'#f97316');
+        previous={s,x,y};
+      }
+    } else {
+      for(const b of bins) {
+        if(b.start+motionOffset+b.length<start) continue;
+        if(b.start+motionOffset>end) break;
+        const s=b.start+motionOffset+b.length/2;
+        const y=secToY(s),x=motionX(b.avg,max,c);
+        if(previous&&s-previous.s<=Math.max(b.length,previous.length)*1.6) {
+          line(previous.x,previous.y,x,y,'#2563eb',1.4);
+        }
+        previous={s,x,y,length:b.length};
+        if(y>=0&&y<=canvas.height) line(c.ml,y,motionX(b.max,max,c),y,'#f97316',1.2);
+      }
     }
   }
-  graph(fitbit.spo2,col.spo+3,col.bpm-4,v=>(v-90)/10,'#0f766e');
-  let hmin=40,hmax=110;
-  if(fitbit.bpm.length){
-    hmin=clamp(Math.floor(fitbit.bpm.reduce((a,b)=>Math.min(a,b.value),Infinity)/10)*10,25,180);
-    hmax=Math.max(hmin+10,clamp(Math.ceil(fitbit.bpm.reduce((a,b)=>Math.max(a,b.value),0)/10)*10,40,240));
+
+  // 音響波形は青だけ。環境音基準を引いてから倍率を適用。
+  // 各画面行に集約し、線幅は常に1pxに固定する。
+  function soundGraph(start,end,c) {
+    ctx.save();
+    ctx.beginPath();ctx.rect(c.sl,0,c.sw,canvas.height);ctx.clip();
+    const mid=c.sl+c.sw/2,amp=c.sw/2*waveGain*volumeGain;
+    for(const clip of clips) {
+      if(clip.start>end) break;
+      if(clip.start+clip.length<start) continue;
+      const first=Math.max(0,Math.floor((start-clip.start)*PEAK_RATE));
+      const last=Math.min(clip.minimum.length-1,Math.ceil((end-clip.start)*PEAK_RATE));
+      const floor=clip.noiseFloor||0;
+      let row=-1,low=0,high=0;
+      const flush=()=>{
+        if(row>=0&&(low!==0||high!==0)) {
+          line(mid+clamp(low*amp,-c.sw/2,c.sw/2),row+.5,
+            mid+clamp(high*amp,-c.sw/2,c.sw/2),row+.5,'#2563eb',1);
+        }
+      };
+      for(let i=first;i<=last;i++) {
+        const y=Math.floor(secToY(clip.start+i/PEAK_RATE));
+        if(y<0||y>=canvas.height) continue;
+        const lo=clip.minimum[i],hi=clip.maximum[i];
+        const l=Math.sign(lo)*Math.max(0,Math.abs(lo)-floor);
+        const h=Math.sign(hi)*Math.max(0,Math.abs(hi)-floor);
+        if(y!==row) {flush();row=y;low=l;high=h;}
+        else {low=Math.min(low,l);high=Math.max(high,h);}
+      }
+      flush();
+    }
+    ctx.restore();
   }
-  graph(fitbit.bpm,col.bpm+3,col.stage-4,v=>(v-hmin)/(hmax-hmin),'#dc2626');
-  for(const item of fitbit.stages){
-    const a=(item.start-startMs)/1000,b=(item.end-startMs)/1000;if(b<start||a>end)continue;
-    const top=clamp(secToY(a),0,canvas.height),bottom=clamp(secToY(b),0,canvas.height);
-    ctx.fillStyle=STAGE_COLORS[item.level];
-    ctx.fillRect(col.stage+3,top,Math.max(1,canvas.width-col.stage-6),Math.max(1,bottom-top));
-  }
-}
-function draw(){
-  if(!canvas.width||!canvas.height)return;
-  ctx.fillStyle='white';ctx.fillRect(0,0,canvas.width,canvas.height);
-  const start=windowStart(),end=start+span,col=columns(),max=motionMax();
-  $('motionMidLabel').textContent=motionLabel(max/2);$('motionMaxLabel').textContent=motionLabel(max);
-  for(const v of [max/2,max]){const x=motionX(v,max,col);line(x,0,x,canvas.height,'#e2e8f0')}
-  const middle=col.sl+col.sw/2;
-  for(let s=-10;s<=10;s+=2){const x=middle+s/10*col.sw/2;line(x,0,x,canvas.height,s===0?'#64748b':'#eef2f7',s===0?1.2:1)}
-  ticks(start,end,col);motionGraph(start,end,col,max);waveGraph(start,end,col);fitbitGraph(start,end,col);
-  $('currentCenterTime').textContent=clock(center);
-}
-function resize(){
-  const rect=viewport.getBoundingClientRect();
-  canvas.width=Math.max(1,Math.round(rect.width));canvas.height=Math.max(1,Math.round(rect.height));
-  ya=clamp(ya,10,Math.max(10,canvas.height-10));yb=clamp(yb,10,Math.max(10,canvas.height-10));
-  draw();updateLines();if(playing||seeking)showHead(cursor);
-}
-function nearest(s){
-  if(!logs.length)return null;
-  let lo=0,hi=logs.length-1;
-  while(lo<hi){const m=(lo+hi)>>1;if(logs[m].sec<s)lo=m+1;else hi=m}
-  const right=logs[lo],left=lo?logs[lo-1]:null;
-  return left&&Math.abs(left.sec-s)<=Math.abs(right.sec-s)?left:right;
-}
-function measure(s){
-  const near=nearest(s);let db=near&&Math.abs(near.sec-s)<=1.5?near.db:null;
-  let hz=near&&Math.abs(near.sec-s)<=1.5&&near.hz>0?near.hz:null;
-  if(db===null||hz===null){
-    const clip=clips.find(c=>s>=c.start&&s<c.start+c.length);
-    if(clip&&clip.envelope.length){
-      const index=clamp(Math.round((s-clip.start)*RATE),0,clip.envelope.length-1);
-      if(db===null)db=clip.envelope[index];
-      if(hz===null&&clip.frequency&&clip.frequency[index]>0)hz=clip.frequency[index];
+  function fitbitGraph(start,end,c) {
+    for(const x of [c.spo,c.bpm,c.stage]) line(x,0,x,canvas.height);
+    function graph(points,left,right,scale,color) {
+      let previous=null;
+      for(const item of points) {
+        const s=(item.at-startMs)/1000;
+        if(s<start) continue;
+        if(s>end) break;
+        const p={x:left+clamp(scale(item.value),0,1)*(right-left),y:secToY(s),s};
+        if(previous&&s-previous.s<=600) line(previous.x,previous.y,p.x,p.y,color,1.5);
+        ctx.fillStyle=color;ctx.fillRect(p.x-1,p.y-1,2,2);
+        previous=p;
+      }
+    }
+    graph(fitbit.spo2,c.spo+3,c.bpm-4,v=>(v-90)/10,'#0f766e');
+    graph(fitbit.bpm,c.bpm+3,c.stage-4,v=>(v-40)/80,'#dc2626');
+    for(const item of fitbit.stages) {
+      const a=(item.start-startMs)/1000,b=(item.end-startMs)/1000;
+      if(b<start) continue;
+      if(a>end) break;
+      const top=clamp(secToY(a),0,canvas.height);
+      const bottom=clamp(secToY(b),0,canvas.height);
+      ctx.fillStyle=COLORS[item.level];
+      ctx.fillRect(c.stage+3,top,Math.max(1,canvas.width-c.stage-6),Math.max(1,bottom-top));
     }
   }
-  return {db,hz};
-}
-function metrics(s,t,d,h){
-  const m=measure(s);$(t).textContent=clock(s);
-  $(d).textContent=Number.isFinite(m.db)?`${m.db.toFixed(1)} dB`:'-- dB';
-  $(h).textContent=Number.isFinite(m.hz)&&m.hz>0?`${Math.round(m.hz)} Hz`:'-- Hz';
-}
-function updateLines(){
-  if(!canvas.height)return;
-  $('lineA').style.top=ya+'px';$('lineB').style.top=yb+'px';
-  const top=Math.min(ya,yb),bottom=Math.max(ya,yb),gap=bottom-top;
-  $('intervalBracket').style.top=top+'px';$('intervalBracket').style.height=gap+'px';
-  const a=yToSec(ya),b=yToSec(yb);
-  intervalStart=Math.min(a,b);intervalEnd=Math.max(a,b);
-  metrics(a,'labelATime','labelADb','labelAHz');metrics(b,'labelBTime','labelBDb','labelBHz');
-  $('intervalSec').textContent=(intervalEnd-intervalStart).toFixed(1);
-  $('lineA').querySelector('.lineLabel').style.display=playing?'none':'';
-  $('lineB').querySelector('.lineLabel').style.display=playing?'none':'';
-  $('replayMetrics').style.display=playing?'block':'none';$('seekButtons').style.display=playing?'grid':'none';
-  if(!seeking)$('audioStatusText').textContent=playing?'再生中・黄色線をドラッグ可能':'待機中';
-  if(!playing){
-    const height=75,y=gap>=height+6?top+(gap-height)/2:bottom+height+8<canvas.height?bottom+6:Math.max(0,top-height-6);
-    $('intervalHud').style.top=y+'px';
+  function requestDraw() {
+    if(drawFrame||disposed) return;
+    drawFrame=requestAnimationFrame(()=>{
+      drawFrame=0;draw();
+    });
   }
-}
-function showHead(s){
-  const y=clamp(secToY(s),Math.min(ya,yb),Math.max(ya,yb));
-  $('playheadLine').style.top=y+'px';
-  $('intervalHud').style.top=clamp(y+8,4,Math.max(4,canvas.height-145))+'px';
-}
-function currentCursor(){
-  if(playing&&!seeking&&audioCtx)cursor=clamp(anchorSec+Math.max(0,audioCtx.currentTime-anchorTime),intervalStart,intervalEnd);
-  return cursor;
-}
-function stopSources(){for(const source of sources){try{source.stop()}catch(_){}try{source.disconnect()}catch(_){}}sources=[]}
-function stopPlayback(){
-  if(playing&&!seeking)currentCursor();
-  playing=false;seeking=false;resumeSeek=false;
-  if(frame)cancelAnimationFrame(frame);frame=0;stopSources();
-  $('playheadLine').style.display='none';$('playIcon').textContent='▶';$('playText').textContent='区間再生';
-  $('playIntervalBtn').classList.remove('stopping');$('playIntervalBtn').classList.add('primary');
-  document.body.style.cursor='';updateLines();
-}
-async function schedule(s){
-  const ac=audioContext();await ac.resume();updateLines();
-  const start=clamp(s,intervalStart,intervalEnd);
-  if(start>=intervalEnd-.01){stopPlayback();return}
-  stopSources();if(frame)cancelAnimationFrame(frame);frame=0;
-  
-  // 再生区間に重なるクリップを抽出（1本でも複数本でも対応）
-  const targetClips=clips.filter(c=>c.start+c.length>start&&c.start<intervalEnd);
-  if(!targetClips.length){
-    $('audioStatusText').textContent='この区間に録音はありません';
-    stopPlayback();
-    return;
-  }
-
-  $('audioStatusText').textContent='音声準備中…';
-  try{
-    // 必要なクリップのAudioBufferだけをオンデマンドで並行取得
-    const loadedBuffers=await Promise.all(targetClips.map(c=>c.loadBuffer?c.loadBuffer():Promise.resolve(c.buffer)));
-    if(seeking)return;
-
-    const baseTime=ac.currentTime+.04;anchorSec=start;cursor=start;anchorTime=baseTime;
-    for(let i=0;i<targetClips.length;i++){
-      const clip=targetClips[i], buf=loadedBuffers[i];
-      if(!buf)continue;
-      const offset=Math.max(0,start-clip.start),when=baseTime+Math.max(0,clip.start-start);
-      const length=Math.min(clip.length-offset,intervalEnd-Math.max(start,clip.start));
-      if(length<=0)continue;
-      const source=ac.createBufferSource();source.buffer=buf;source.connect(ac.destination);source.start(when,offset,length);sources.push(source);
+  function draw() {
+    if(disposed||$('scopePage').hidden||!canvas.width||!canvas.height) return;
+    ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);
+    const start=windowStart(),end=start+span,c=columns(),max=motionMax();
+    $('motionMidLabel').textContent=motionLabel(max/2);
+    $('motionMaxLabel').textContent=motionLabel(max);
+    for(const v of [max/2,max]) line(motionX(v,max,c),0,motionX(v,max,c),canvas.height,'#e2e8f0');
+    for(let i=-5;i<=5;i++) {
+      const x=c.sl+c.sw/2+i/5*c.sw/2;
+      line(x,0,x,canvas.height,i===0?'#64748b':'#eef2f7');
     }
-    playing=true;seeking=false;$('playheadLine').style.display='block';$('playIcon').textContent='■';$('playText').textContent='停止';
-    $('playIntervalBtn').classList.remove('primary');$('playIntervalBtn').classList.add('stopping');
-    updateLines();showHead(start);tick();
-  }catch(err){
-    showPlaybackError(err);
+    ticks(start,end,c);motionGraph(start,end,c,max);
+    soundGraph(start,end,c);fitbitGraph(start,end,c);
+    $('currentCenterTime').textContent=clock(center);
   }
-}
-function tick(){
-  if(!playing||seeking)return;
-  currentCursor();if(cursor>=intervalEnd-.01){stopPlayback();return}
-  showHead(cursor);metrics(cursor,'replayTime','replayDb','replayHz');frame=requestAnimationFrame(tick);
-}
-function seekBy(delta){if(!playing)return;const next=clamp(currentCursor()+delta,intervalStart,intervalEnd);if(next>=intervalEnd-.01)stopPlayback();else schedule(next).catch(showPlaybackError)}
-function showPlaybackError(err){stopPlayback();$('audioStatusText').textContent=err.message}
-
-function candidates(){
-  if(!hasTracker)return {movement:0,low:0};
-  const points=bins.length?bins.map(b=>({sec:b.start+b.length/2,value:b.max})):logs.map(x=>({sec:x.sec,value:x.motion}));
-  let movement=0,last=-Infinity;
-  for(const p of points)if(p.value!==null&&p.value>=.025&&p.sec-last>=60){movement++;last=p.sec}
-  let low=0,begin=null,previous=null;
-  for(const x of logs){
-    if(begin!==null&&previous!==null&&x.sec-previous>2){if(previous-begin>=9)low++;begin=null}
-    if(x.db!==null&&x.db<22){if(begin===null)begin=x.sec}
-    else if(begin!==null){if(previous!==null&&previous-begin>=9)low++;begin=null}
-    previous=x.sec;
+  function resize() {
+    if(disposed||$('scopePage').hidden) return;
+    const rect=viewport.getBoundingClientRect();
+    const w=Math.max(1,Math.round(rect.width)),h=Math.max(1,Math.round(rect.height));
+    if(initialized&&w===canvas.width&&h===canvas.height) return;
+    const old=canvas.height||1;
+    canvas.width=w;canvas.height=h;
+    if(!initialized) {
+      ya=h*.32;yb=h*.68;
+      initialized=true;
+      cursor=yToSec((ya+yb)/2);
+    } else {ya=ya/old*h;yb=yb/old*h;}
+    requestDraw();updateLines();
   }
-  if(begin!==null&&previous!==null&&previous-begin>=9)low++;
-  return {movement,low};
-}
-function stageChart(){
-  const chart=$('stageChart'),rect=chart.getBoundingClientRect();chart.width=Math.max(1,Math.round(rect.width));chart.height=110;
-  const c=chart.getContext('2d');c.fillStyle='white';c.fillRect(0,0,chart.width,110);
-  if(!fitbit.stages.length){c.fillStyle='#64748b';c.font='12px monospace';c.fillText('睡眠ステージなし',10,25);return}
-  const first=fitbit.stages.reduce((a,b)=>Math.min(a,b.start),Infinity),last=fitbit.stages.reduce((a,b)=>Math.max(a,b.end),-Infinity),total=Math.max(1,last-first);
-  const rows={wake:0,rem:1,light:2,deep:3};
-  for(const s of fitbit.stages){const x=60+(s.start-first)/total*(chart.width-68),right=60+(s.end-first)/total*(chart.width-68);c.fillStyle=STAGE_COLORS[s.level];c.fillRect(x,rows[s.level]*25+5,Math.max(1,right-x),18)}
-  c.fillStyle='#334155';c.font='11px monospace';
-  for(const [label,row] of [['覚醒',0],['REM',1],['浅い',2],['深い',3]])c.fillText(label,7,row*25+19);
-}
-function report(){
-  $('reportPeriod').textContent=hasTracker?`${datetime(0)} ～ ${datetime(duration)}`:'セッション未読込';
-  $('reportMode').textContent=trackerDemo||fitbitDemo?'【デモを含む】架空データは表示確認用。実測結果ではありません。':!hasTracker?'SleepTrackerセッション未読込':fitbit.sourceCount===0?'SleepTracker単独モード。Fitbit未読込。':'実データ表示。ただしイベント候補の抽出は臨床的に未検証。';
-  $('fitbitScoreText').textContent=fitbit.score===null?'未取得':`${fitbit.score} / 100${fitbitDemo?'【デモ】':''}`;
-  const event=candidates();
-  $('eventCountText').textContent=hasTracker?`体動 ${event.movement} / 音量低下 ${event.low}`:'未解析';
-  $('correctedScoreText').textContent='未検証のため算出しない';
-  $('eventSummary').textContent=hasTracker?`体動候補 ${event.movement}件、連続音量低下候補 ${event.low}件。いずれも診断イベントではありません。`:'SleepTrackerログ未読込';
-  const totals={deep:0,light:0,rem:0,wake:0};
-  for(const s of fitbit.stages)totals[s.level]+=Math.max(0,(s.end-s.start)/60000);
-  $('stageSummary').textContent=fitbit.stages.length?`深い ${Math.round(totals.deep)}分 / 浅い ${Math.round(totals.light)}分 / REM ${Math.round(totals.rem)}分 / 覚醒 ${Math.round(totals.wake)}分`:'ステージデータなし';
-  $('fitbitSummary').textContent=fitbit.sourceCount?`心拍 ${fitbit.bpm.length}点 / 時系列SpO₂ ${fitbit.spo2.length}点${fitbit.spo2Range?` / SpO₂範囲 ${fitbit.spo2Range.min}–${fitbit.spo2Range.max}%`:''}。範囲値だけでは時系列波形は描きません。`:'Fitbitデータ未読込';
-  if(!$('reportPage').hidden)stageChart();
-}
-function offset(v){
-  motionOffset=clamp(num(v,0),-3600,3600);
-  $('motionOffsetSlider').value=String(clamp(motionOffset,-300,300));$('motionOffsetInput').value=motionOffset.toFixed(1);
-  $('motionOffsetDirection').textContent=Math.abs(motionOffset)<.001?'補正なし':`体動を${Math.abs(motionOffset).toFixed(1)}秒${motionOffset>0?'後':'前'}へ`;
-  try{localStorage.setItem('sleepScopeMotionOffsetSec',String(motionOffset))}catch(_){}
-  draw();
-}
-function scale(v){
-  motionSetting=['auto',...SCALES.map(String)].includes(String(v))?String(v):'auto';
-  $('motionScaleSelect').value=motionSetting;
-  try{localStorage.setItem('sleepScopeMotionScale',motionSetting)}catch(_){}
-  draw();
-}
-function page(reportPage){
-  $('scopePage').hidden=reportPage;$('reportPage').hidden=!reportPage;
-  $('scopeTab').setAttribute('aria-selected',String(!reportPage));$('reportTab').setAttribute('aria-selected',String(reportPage));
-  if(reportPage){report();stageChart()}else requestAnimationFrame(resize);
-}
-
-// タイムライン移動関数（スライダー、ボタン、スワイプ共通）
-function shiftCenter(deltaSec){
-  if(playing||seeking)return;
-  center=clamp(center+deltaSec,0,duration);
-  $('timeSlider').value=String(center);
-  draw();updateLines();
-}
-
-$('masterInput').addEventListener('change',async e=>{
-  const file=e.target.files?.[0];if(!file)return;const generation=++trackerGeneration;
-  try{await loadTracker(file,generation)}
-  catch(error){if(generation===trackerGeneration){console.error(error);$('loadStatusBadge').textContent='読込失敗: '+error.message}}
-});
-$('fitbitInput').addEventListener('change',async e=>{
-  const files=Array.from(e.target.files||[]);if(!files.length)return;const generation=++fitbitGeneration;
-  try{await loadFitbit(files,generation)}
-  catch(error){if(generation===fitbitGeneration){console.error(error);$('fitbitStatus').textContent='読込失敗: '+error.message}}
-});
-$('demoBtn').addEventListener('click',demo);
-$('scopeTab').addEventListener('click',()=>page(false));
-$('reportTab').addEventListener('click',()=>page(true));
-$('printBtn').addEventListener('click',()=>window.print());
-$('windowScaleSelect').addEventListener('change',e=>{
-  if(playing||seeking)stopPlayback();
-  const a=yToSec(ya),b=yToSec(yb),first=Math.min(a,b),last=Math.max(a,b),aAbove=ya<=yb;
-  span=Number(e.target.value);center=clamp((first+last)/2,0,duration);$('timeSlider').value=String(center);
-  const h=Math.max(1,canvas.height),visible=span*Math.max(0,h-20)/h;
-  if(last-first<=visible&&h>20){ya=clamp(secToY(a),10,h-10);yb=clamp(secToY(b),10,h-10)}
-  else{const top=clamp(h*.32,10,h-10),bottom=clamp(h*.68,10,h-10);ya=aAbove?top:bottom;yb=aAbove?bottom:top}
-  draw();updateLines();
-});
-
-$('timeSlider').addEventListener('input',e=>{if(playing||seeking)return;center=clamp(Number(e.target.value),0,duration);draw();updateLines()});
-
-// スライダー左右の「◀ 後進」「前進 ▶」ボタン（時間幅の20%ずつ移動）
-$('timePrevBtn').addEventListener('click',()=>shiftCenter(-Math.max(1,span*0.2)));
-$('timeNextBtn').addEventListener('click',()=>shiftCenter(Math.max(1,span*0.2)));
-
-// PCマウスホイール
-viewport.addEventListener('wheel',e=>{e.preventDefault();shiftCenter(Math.sign(e.deltaY)*Math.max(1,Math.floor(span/30)))},{passive:false});
-
-// 画面の上下スワイプ操作（タッチ／ポインター）
-viewport.addEventListener('pointerdown',e=>{
-  if(drag||seeking||e.target.closest('.measureLine,#intervalHud,#playheadLine'))return;
-  if(playing)return;
-  isSwiping=true;
-  swipeStartY=e.clientY;
-  swipeStartCenter=center;
-  viewport.setPointerCapture?.(e.pointerId);
-});
-
-viewport.addEventListener('pointermove',e=>{
-  if(!isSwiping||drag||seeking)return;
-  const dy=e.clientY-swipeStartY;
-  const secDelta=-(dy/Math.max(1,canvas.height))*span;
-  center=clamp(swipeStartCenter+secDelta,0,duration);
-  $('timeSlider').value=String(center);
-  draw();updateLines();
-});
-
-viewport.addEventListener('pointerup',e=>{
-  if(isSwiping){
-    isSwiping=false;
-    try{viewport.releasePointerCapture?.(e.pointerId)}catch(_){}
+  function nearest(s) {
+    if(!logs.length) return null;
+    let lo=0,hi=logs.length-1;
+    while(lo<hi) {
+      const m=(lo+hi)>>1;
+      if(logs[m].sec<s) lo=m+1;else hi=m;
+    }
+    const r=logs[lo],l=lo?logs[lo-1]:null;
+    return l&&Math.abs(l.sec-s)<=Math.abs(r.sec-s)?l:r;
   }
-});
-
-viewport.addEventListener('pointercancel',()=>{isSwiping=false});
-
-$('motionOffsetSlider').addEventListener('input',e=>offset(e.target.value));
-$('motionOffsetInput').addEventListener('input',e=>offset(e.target.value));
-$('motionOffsetMinusBtn').addEventListener('click',()=>offset(motionOffset-1));
-$('motionOffsetPlusBtn').addEventListener('click',()=>offset(motionOffset+1));
-$('motionOffsetResetBtn').addEventListener('click',()=>offset(0));
-$('motionScaleSelect').addEventListener('change',e=>scale(e.target.value));
-
-function beginLineDrag(which,event){
-  if(playing||seeking)return;
-  event.preventDefault();
-  event.stopPropagation();
-  drag=which;
-  document.body.style.cursor='row-resize';
-  event.currentTarget.setPointerCapture?.(event.pointerId);
-}
-
-$('lineA').addEventListener('pointerdown',event=>beginLineDrag('A',event));
-$('lineB').addEventListener('pointerdown',event=>beginLineDrag('B',event));
-
-window.addEventListener('pointermove',event=>{
-  if(drag&&!playing&&!seeking){
-    const rect=canvas.getBoundingClientRect();
-    const y=clamp(event.clientY-rect.top,10,Math.max(10,canvas.height-10));
-    if(drag==='A')ya=y;
-    else yb=y;
-    updateLines();
-    return;
+  function measure(s) {
+    const near=nearest(s),close=near&&Math.abs(near.sec-s)<=1.5;
+    let db=close?near.db:null,hz=close&&near.hz>0?near.hz:null;
+    if(db===null||hz===null) {
+      const clip=clips.find(c=>s>=c.start&&s<c.start+c.length);
+      if(clip&&clip.envelope.length) {
+        const i=clamp(Math.round((s-clip.start)*RATE),0,clip.envelope.length-1);
+        if(db===null) db=clip.envelope[i];
+        if(hz===null&&clip.frequency[i]>0) hz=clip.frequency[i];
+      }
+    }
+    return {db,hz};
   }
-
-  if(seeking){
-    event.preventDefault();
-    const rect=canvas.getBoundingClientRect();
-    const y=clamp(
-      event.clientY-rect.top,
-      Math.min(ya,yb),
-      Math.max(ya,yb)
-    );
-    cursor=clamp(yToSec(y),intervalStart,intervalEnd);
-    showHead(cursor);
+  function metrics(s,t,d,h) {
+    const m=measure(s);
+    $(t).textContent=clock(s);
+    $(d).textContent=Number.isFinite(m.db)?m.db.toFixed(1)+' dB':'-- dB';
+    $(h).textContent=Number.isFinite(m.hz)&&m.hz>0?Math.round(m.hz)+' Hz':'-- Hz';
+  }
+  function showHead() {
+    const head=$('playheadLine');
+    head.style.top=secToY(cursor)+'px';
+    head.querySelector('span').textContent=(playing?'↕ 再生中 ':'↕ 再生位置 ')+clock(cursor);
+    head.setAttribute('aria-valuemin',intervalStart);
+    head.setAttribute('aria-valuemax',intervalEnd);
+    head.setAttribute('aria-valuenow',cursor);
+    head.setAttribute('aria-valuetext',clock(cursor));
     metrics(cursor,'replayTime','replayDb','replayHz');
   }
-});
-
-window.addEventListener('pointerup',()=>{
-  if(drag){
-    drag=null;
-    document.body.style.cursor='';
+  function updateLines() {
+    const top=Math.min(ya,yb),bottom=Math.max(ya,yb);
+    intervalStart=yToSec(top);intervalEnd=yToSec(bottom);
+    cursor=clamp(cursor,intervalStart,intervalEnd);
+    $('lineA').style.top=ya+'px';$('lineB').style.top=yb+'px';
+    $('intervalBracket').style.top=top+'px';
+    $('intervalBracket').style.height=bottom-top+'px';
+    metrics(yToSec(ya),'labelATime','labelADb','labelAHz');
+    metrics(yToSec(yb),'labelBTime','labelBDb','labelBHz');
+    $('intervalSec').textContent=(intervalEnd-intervalStart).toFixed(1);
+    for(const id of ['lineA','lineB']) {
+      $(id).querySelector('.lineLabel').style.visibility=playing?'hidden':'visible';
+    }
+    const hud=$('intervalHud'),height=hud.offsetHeight||150;
+    hud.style.top=clamp(top+(bottom-top-height)/2,0,Math.max(0,canvas.height-height))+'px';
+    const active=playing||preparing;
+    $('playIcon').textContent=active?'■':'▶';
+    $('playText').textContent=preparing?'準備を中止':playing?'停止':'区間再生';
+    $('playIntervalBtn').classList.toggle('stopping',active);
+    $('playIntervalBtn').classList.toggle('primary',!active);
+    for(const id of ['timeSlider','timePrevBtn','timeNextBtn','windowScaleSelect']) {
+      $(id).disabled=active;
+    }
+    showHead();
   }
 
-  if(seeking){
-    seeking=false;
-    document.body.style.cursor='';
-    const shouldResume=resumeSeek&&cursor<intervalEnd-.01;
-    resumeSeek=false;
-
-    if(shouldResume){
-           schedule(cursor).catch(showPlaybackError);
-    }else{
-      stopPlayback();
+  function currentCursor() {
+    if(playing&&ac) {
+      cursor=clamp(anchorSec+Math.max(0,ac.currentTime-anchorTime),intervalStart,intervalEnd);
+    }
+    return cursor;
+  }
+  function stopSources() {
+    for(const source of sources) {
+      try {source.stop();} catch(_) {}
+      source.disconnect();
+    }
+    sources=[];
+  }
+  function stopPlayback(message='待機中') {
+    currentCursor();playGeneration++;
+    playing=preparing=false;
+    cancelAnimationFrame(playFrame);playFrame=0;
+    stopSources();
+    if(!disposed) {
+      $('audioStatusText').textContent=message;
+      updateLines();
     }
   }
-});
-
-window.addEventListener('pointercancel',()=>{
-  if(drag){
-    drag=null;
-    document.body.style.cursor='';
-  }
-  if(seeking){
+  async function schedule(s) {
     stopPlayback();
-  }
-});
-
-$('playheadLine').addEventListener('pointerdown',event=>{
-  if(!playing)return;
-  event.preventDefault();
-  event.stopPropagation();
-
-  currentCursor();
-  seeking=true;
-  resumeSeek=true;
-  stopSources();
-
-  if(frame)cancelAnimationFrame(frame);
-  frame=0;
-
-  $('audioStatusText').textContent='位置を選択中';
-  document.body.style.cursor='row-resize';
-  event.currentTarget.setPointerCapture?.(event.pointerId);
-});
-
-$('playIntervalBtn').addEventListener('click',()=>{
-  if(playing){
-    stopPlayback();
-    return;
-  }
-
-  updateLines();
-
-  if(intervalEnd-intervalStart<=.05){
-    $('audioStatusText').textContent='計測区間が短すぎます';
-    return;
-  }
-
-  schedule(intervalStart).catch(showPlaybackError);
-});
-
-$('rewindBtn').addEventListener('click',()=>seekBy(-5));
-$('forwardBtn').addEventListener('click',()=>seekBy(5));
-
-window.addEventListener('resize',()=>{
-  resize();
-  if(!$('reportPage').hidden)stageChart();
-});
-
-try{
-  scale(localStorage.getItem('sleepScopeMotionScale')||'auto');
-}catch(_){
-  scale('auto');
-}
-
-try{
-  offset(num(localStorage.getItem('sleepScopeMotionOffsetSec'),0));
-}catch(_){
-  offset(0);
-}
-
-resize();
-requestAnimationFrame(resize);
-report();
-})();
-</script>
-<script>
-'use strict';
-(() => {
-  // このscriptは既存の更新確認script全体と置き換える。
-  // 患者・録音・FitbitデータはGitHubへ送信しない。
-  const ownSource = document.currentScript.textContent;
-  const status = document.getElementById('updateStatus');
-  const checkButton = document.getElementById('checkUpdateBtn');
-  const applyButton = document.getElementById('applyUpdateBtn');
-  const build = document.querySelector('meta[name="st-scope-build"]')?.content || '版不明';
-
-  const settingsKey = 'st-scope-update-source:' + location.origin + location.pathname;
-  function savedSettings() {
-    try { return JSON.parse(localStorage.getItem(settingsKey) || '{}'); }
-    catch (_) { return {}; }
-  }
-  let checking = false;
-  let applying = false;
-  let candidate = null;
-  const controller = new AbortController();
-
-  function say(message) {
-    status.textContent = build + ' / ' + message;
-    status.title = status.textContent;
-  }
-
-  function nonce() {
-    return Date.now() + '-' + Math.random().toString(36).slice(2);
-  }
-
-  // GitHub Pagesの実行URLから対象を判定する。
-  // カスタムドメインでは以下のmetaをheadに設定する：
-  // <meta name="st-scope-repository" content="所有者/リポジトリ">
-  // <meta name="st-scope-path" content="対象HTMLのリポジトリ内パス">
-  function sourceConfig() {
-    const savedURL = document.querySelector('meta[name="st-scope-source-url"]')?.content;
-    const url = new URL(savedURL || location.href);
-    const saved = savedSettings();
-    const repoMeta = document.querySelector('meta[name="st-scope-repository"]')?.content || saved.repo;
-    const pathMeta = document.querySelector('meta[name="st-scope-path"]')?.content || saved.path;
-    let repo = repoMeta;
-    let path = pathMeta;
-
-    if (!repo || !path) {
-      if (!/^[a-z0-9-]+\.github\.io$/i.test(url.hostname)) {
-        throw new Error(
-          'GitHub Pagesで開いてください。カスタムドメインでは取得先の設定が必要です'
-        );
-      }
-      const owner = url.hostname.split('.')[0];
-      const segments = url.pathname.split('/').filter(Boolean)
-        .map(part => decodeURIComponent(part));
-
-      // ユーザーサイトのルートは owner.github.io リポジトリ。
-      if (!segments.length) {
-        repo ||= owner + '/' + owner + '.github.io';
-        path ||= 'index.html';
-      } else if (segments.length === 1 && /\.html?$/i.test(segments[0])) {
-        repo ||= owner + '/' + owner + '.github.io';
-        path ||= segments[0];
-      } else {
-        const repository = segments.shift();
-        repo ||= owner + '/' + repository;
-        path ||= segments.length ? segments.join('/') : 'index.html';
-        if (url.pathname.endsWith('/') && segments.length) {
-          path = path.replace(/\/$/, '') + '/index.html';
+    const generation=playGeneration;
+    const current=()=>generation===playGeneration&&!disposed;
+    const start=Math.max(0,clamp(s,intervalStart,intervalEnd));
+    const end=Math.min(duration,intervalEnd);
+    cursor=clamp(start,intervalStart,intervalEnd);
+    if(end-start<=.05) {stopPlayback('再生できる区間がありません');return;}
+    const targets=clips.filter(c=>c.start+c.length>start&&c.start<end);
+    if(!targets.length) {stopPlayback('この区間に録音はありません');return;}
+    preparing=true;
+    $('audioStatusText').textContent='音声準備中…';
+    updateLines();
+    try {
+      const context=audioContext();
+      await context.resume();
+      if(!current()) return;
+      const buffers=new Array(targets.length);
+      let next=0;
+      async function worker() {
+        while(current()) {
+          const i=next++;
+          if(i>=targets.length) return;
+          buffers[i]=await targets[i].loadBuffer();
         }
       }
-    }
-
-    if (!/^[a-z0-9_.-]+\/[a-z0-9_.-]+$/i.test(repo)) {
-      throw new Error('リポジトリ設定が不正です');
-    }
-    if (!path || path.startsWith('/') ||
-        path.split('/').some(part => part === '..' || part === '.')) {
-      throw new Error('HTMLファイルのパスが不正です');
-    }
-    const branch = document.querySelector('meta[name="st-scope-branch"]')?.content || saved.branch || '';
-    return {repo, path, branch, url: url.href};
-  }
-
-  async function getText(url, accept) {
-    const abort = new AbortController();
-    const timeout = setTimeout(() => abort.abort(), 15000);
-    try {
-      const response = await fetch(url, {
-        cache: 'no-store',
-        credentials: 'omit',
-        signal: abort.signal,
-        headers: {Accept: accept}
-      });
-      if (!response.ok) {
-        throw new Error(
-          'HTTP ' + response.status +
-          (response.status === 403 ? '（API制限または権限を確認）' : '')
-        );
+      await Promise.all(Array.from({length:Math.min(2,targets.length)},worker));
+      if(!current()) return;
+      const baseTime=context.currentTime+.05;
+      anchorSec=start;anchorTime=baseTime;cursor=start;
+      for(let i=0;i<targets.length;i++) {
+        const clip=targets[i],buffer=buffers[i];
+        const offset=Math.max(0,start-clip.start);
+        const segmentStart=Math.max(start,clip.start);
+        const length=Math.min(buffer.duration-offset,end-segmentStart);
+        if(length<=0) continue;
+        const source=context.createBufferSource();
+        source.buffer=buffer;source.connect(context.destination);
+        sources.push(source);
+        source.start(baseTime+Math.max(0,clip.start-start),offset,length);
       }
-      return await response.text();
-    } finally {
-      clearTimeout(timeout);
+      if(!sources.length) {stopPlayback('再生できる音声がありません');return;}
+      preparing=false;playing=true;
+      $('audioStatusText').textContent='再生中・黄色線をドラッグ可能';
+      updateLines();
+      function tick() {
+        if(!current()||!playing) return;
+        currentCursor();
+        if(cursor>=end-.01) {cursor=end;stopPlayback('再生終了');return;}
+        showHead();
+        playFrame=requestAnimationFrame(tick);
+      }
+      tick();
+    } catch(error) {
+      if(current()) {stopPlayback('再生失敗: '+error.message);console.error(error);}
     }
   }
-
-  async function getJSON(url) {
-    return JSON.parse(await getText(url, 'application/vnd.github+json'));
+  function seekBy(delta) {
+    if(preparing||gesture||trackerLoading) return;
+    const resume=playing,next=clamp(currentCursor()+delta,intervalStart,intervalEnd);
+    if(resume) {
+      if(next>=intervalEnd-.01) {stopPlayback('再生終了');cursor=next;showHead();}
+      else schedule(next);
+    } else {cursor=next;showHead();}
   }
 
-  function busy() {
-    const audio = document.getElementById('audioStatusText')?.textContent || '';
-    const tracker = document.getElementById('loadStatusBadge')?.textContent || '';
-    const fitbit = document.getElementById('fitbitStatus')?.textContent || '';
-    const playButton = document.getElementById('playIntervalBtn');
+  function candidates() {
+    if(!hasTracker) return {movement:0,low:0};
+    const points=bins.length
+      ? bins.map(b=>({sec:b.start+b.length/2,value:b.max}))
+      : motionPoints.map(x=>({            sec:x.sec,value:x.motion
+          }));
 
-    return !!playButton?.classList.contains('stopping') ||
-      /再生中|位置を選択中|音声準備中/.test(audio) ||
-      /解析中|音声読込開始|音声 \d+\/\d+/.test(tracker) ||
-      /解析中/.test(fitbit);
-  }
-
-  function setMeta(documentObject, name, content) {
-    let element = documentObject.querySelector('meta[name="' + name + '"]');
-    if (!element) {
-      element = documentObject.createElement('meta');
-      element.name = name;
-      documentObject.head.appendChild(element);
-    }
-    element.content = content;
-  }
-
-  function validate(html) {
-    if (!/<!doctype html>/i.test(html.slice(0, 200)) ||
-        !/<\/html>\s*$/i.test(html)) {
-      throw new Error('HTMLが不完全です');
-    }
-    const parsed = new DOMParser().parseFromString(html, 'text/html');
-    const remoteBuild = parsed.querySelector('meta[name="st-scope-build"]')?.content;
-
-    if (!remoteBuild || !/^ST-SCOPE-/.test(remoteBuild) ||
-        !parsed.getElementById('waveCanvas') ||
-        !parsed.getElementById('masterInput') ||
-        !parsed.getElementById('fitbitInput') ||
-        !parsed.getElementById('updateStatus') ||
-        !parsed.getElementById('checkUpdateBtn') ||
-        !parsed.getElementById('applyUpdateBtn')) {
-      throw new Error(
-        '取得先がオシロスコープHTMLではありません。ファイル位置を確認してください'
-      );
-    }
-
-    const updateScripts = Array.from(parsed.querySelectorAll('script')).filter(s =>
-      s.textContent.includes('updateStatus') &&
-      s.textContent.includes('checkUpdateBtn') &&
-      s.textContent.includes('applyUpdateBtn')
-    );
-    if (updateScripts.length !== 1) {
-      throw new Error('更新処理の位置を一意に確認できません');
-    }
-    return {parsed, remoteBuild, updateScript: updateScripts[0]};
-  }
-
-  async function checkUpdate(manual = false) {
-    if (checking || applying) return;
-    checking = true;
-    checkButton.disabled = true;
-    // 確認中は以前の候補を適用させない。
-    applyButton.disabled = true;
-
-    try {
-      const config = sourceConfig();
-      say('GitHubの最新コミットを確認中…');
-
-      // main固定ではなくリポジトリの既定ブランチを使用。
-      const repository = await getJSON(
-        'https://api.github.com/repos/' + config.repo + '?cb=' + nonce()
-      );
-      if (!repository.default_branch) {
-        throw new Error('既定ブランチを取得できません');
+      let movement=0,last=-Infinity;
+      for(const p of points) {
+        if(p.value!==null&&p.value>=.025&&p.sec-last>=60) {
+          movement++;
+          last=p.sec;
+        }
       }
 
-      const commit = await getJSON(
-        'https://api.github.com/repos/' + config.repo + '/commits/' +
-        encodeURIComponent(config.branch || repository.default_branch) + '?cb=' + nonce()
-      );
-      const sha = commit.sha;
-      if (!/^[a-f0-9]{40}$/.test(sha || '')) {
-        throw new Error('最新コミットIDが不正です');
+      let low=0,begin=null,previous=null;
+      function finishLow() {
+        if(begin!==null&&previous!==null&&previous-begin>=9) low++;
+        begin=null;
       }
+      for(const x of logs) {
+        if(previous!==null&&x.sec-previous>2) finishLow();
+        if(x.db!==null&&x.db<22) {
+          if(begin===null) begin=x.sec;
+        } else {
+          finishLow();
+        }
+        previous=x.sec;
+      }
+      finishLow();
+      return {movement,low};
+    }
 
-      if (window.__STScopeAppliedCommit === sha) {
-        candidate = null;
-        applyButton.hidden = true;
-        say('最新コミット適用済み ' + sha.slice(0, 7));
+    function stageChart() {
+      const chart=$('stageChart');
+      chart.width=Math.max(1,Math.round(chart.getBoundingClientRect().width));
+      chart.height=110;
+      const c=chart.getContext('2d');
+      c.fillStyle='#fff';
+      c.fillRect(0,0,chart.width,chart.height);
+      c.font='11px monospace';
+      if(!fitbit.stages.length) {
+        c.fillStyle='#64748b';
+        c.fillText('睡眠ステージなし',10,25);
         return;
       }
 
-      const encodedPath = config.path.split('/').map(encodeURIComponent).join('/');
-      const html = await getText(
-        'https://raw.githubusercontent.com/' + config.repo + '/' +
-        sha + '/' + encodedPath + '?cb=' + nonce(),
-        'text/html'
-      );
-      const checked = validate(html);
-      // 公開先に古い版が残っていてもV30から旧版へ戻さない。
-      const currentVersion = build.match(/^ST-SCOPE-V(\d+)-(\d{8})-(\d+)/);
-      const remoteVersion = checked.remoteBuild.match(/^ST-SCOPE-V(\d+)-(\d{8})-(\d+)/);
-      if (currentVersion && remoteVersion) {
-        for (let i = 1; i <= 3; i++) {
-          if (+remoteVersion[i] < +currentVersion[i]) {
-            throw new Error('取得先の版が現在より古いため適用を停止しました');
-          }
-          if (+remoteVersion[i] > +currentVersion[i]) break;
+      let first=Infinity,last=-Infinity;
+      for(const s of fitbit.stages) {
+        first=Math.min(first,s.start);
+        last=Math.max(last,s.end);
+      }
+      const total=Math.max(1,last-first);
+      const width=Math.max(1,chart.width-68);
+      const rows={wake:0,rem:1,light:2,deep:3};
+      for(const s of fitbit.stages) {
+        const x=60+(s.start-first)/total*width;
+        const right=60+(s.end-first)/total*width;
+        c.fillStyle=COLORS[s.level];
+        c.fillRect(x,rows[s.level]*25+5,Math.max(1,right-x),18);
+      }
+      c.fillStyle='#334155';
+      for(const [label,row] of [
+        ['覚醒',0],['REM',1],['浅い',2],['深い',3]
+      ]) {
+        c.fillText(label,7,row*25+19);
+      }
+    }
+
+    function report() {
+      if(disposed) return;
+      $('reportPeriod').textContent=hasTracker
+        ? `${datetime(0)} ～ ${datetime(duration)}`
+        : 'セッション未読込';
+      $('reportMode').textContent=trackerDemo||fitbitDemo
+        ? '【デモを含む】架空データは表示確認用。実測結果ではありません。'
+        : !hasTracker
+          ? 'SleepTrackerセッション未読込'
+          : !fitbit.sourceCount
+            ? 'SleepTracker単独モード。Fitbit未読込。'
+            : '実データ表示。ただしイベント候補の抽出は臨床的に未検証。';
+      $('fitbitScoreText').textContent=fitbit.score===null
+        ? '未取得'
+        : `${fitbit.score} / 100${fitbitDemo?'【デモ】':''}`;
+
+      const event=candidates();
+      $('eventCountText').textContent=hasTracker
+        ? `体動 ${event.movement} / 音量低下 ${event.low}`
+        : '未解析';
+      $('eventSummary').textContent=hasTracker
+        ? `体動候補 ${event.movement}件、連続音量低下候補 ${event.low}件。いずれも診断イベントではありません。`
+        : 'SleepTrackerログ未読込';
+
+      const totals={deep:0,light:0,rem:0,wake:0};
+      for(const s of fitbit.stages) {
+        totals[s.level]+=Math.max(0,(s.end-s.start)/60000);
+      }
+      $('stageSummary').textContent=fitbit.stages.length
+        ? `深い ${Math.round(totals.deep)}分 / 浅い ${Math.round(totals.light)}分 / REM ${Math.round(totals.rem)}分 / 覚醒 ${Math.round(totals.wake)}分`
+        : 'ステージデータなし';
+      $('fitbitSummary').textContent=fitbit.sourceCount
+        ? `心拍 ${fitbit.bpm.length}点 / 時系列SpO₂ ${fitbit.spo2.length}点${
+            fitbit.spo2Range
+              ? ` / SpO₂範囲 ${fitbit.spo2Range.min}–${fitbit.spo2Range.max}%`
+              : ''
+          }。範囲値だけでは時系列波形は描きません。`
+        : 'Fitbitデータ未読込';
+      if(!$('reportPage').hidden) stageChart();
+    }
+
+    function refresh() {
+      for(const c of clips) duration=Math.max(duration,c.start+c.length);
+      center=clamp(center,0,duration);
+      $('timeSlider').max=duration;
+      $('timeSlider').value=center;
+      $('sessionStartText').textContent=hasTracker?datetime(0):'--';
+      $('sessionEndText').textContent=hasTracker?datetime(duration):'--';
+      $('snoreCountText').textContent=
+        clips.filter(snore).length||metadata.filter(snore).length;
+      requestDraw();
+      updateLines();
+      report();
+    }
+
+    function demo() {
+      trackerGeneration++;fitbitGeneration++;
+      trackerLoading=fitbitLoading=false;
+      gesture=null;
+      stopPlayback();
+      startMs=new Date(2025,0,14,23).getTime();
+      duration=28800;center=duration/2;cursor=center;
+      logs=[];bins=[];clips=[];metadata=[];
+      fitbit=emptyFitbit();
+
+      for(let s=0;s<duration;s++) {
+        const active=s%1700<35;
+        logs.push({
+          sec:s,
+          db:27+5*Math.abs(Math.sin(s/45))+(s%850<90?11:0),
+          hz:92+34*Math.abs(Math.sin(s/100)),
+          motion:.002+.0015*Math.abs(Math.sin(s/57))+
+            (active?.028*Math.abs(Math.sin(s/3)):0)
+        });
+      }
+      for(let s=0;s<duration;s+=30) {
+        let sum=0,max=0,count=0;
+        for(let i=s;i<Math.min(duration,s+30);i++) {
+          const value=logs[i].motion;
+          sum+=value;max=Math.max(max,value);count++;
+        }
+        bins.push({start:s,length:count,avg:sum/count,max});
+      }
+      for(let s=0;s<duration;s+=180) {
+        const level=['light','deep','light','rem'][Math.floor(s/5400)%4];
+        fitbit.stages.push({
+          start:startMs+s*1000,
+          end:startMs+Math.min(duration,s+180)*1000,
+          level:s>0&&s%7200===0?'wake':level
+        });
+        fitbit.bpm.push({at:startMs+s*1000,value:57+7*Math.sin(s/2100)});
+        fitbit.spo2.push({at:startMs+s*1000,value:97+Math.sin(s/900)});
+      }
+      fitbit.score=81;
+      fitbit.spo2Range={min:95,max:99};
+      fitbit.sourceCount=1;
+      hasTracker=trackerDemo=fitbitDemo=true;
+      indexMotion();
+      refresh();
+      normalizeFitbit();
+      $('loadStatusBadge').textContent='【デモ】架空ログ / 録音なし';
+    }
+
+    function offset(v) {
+      motionOffset=clamp(num(v,0),-3600,3600);
+      $('motionOffsetSlider').value=clamp(motionOffset,-300,300);
+      $('motionOffsetInput').value=motionOffset.toFixed(1);
+      $('motionOffsetDirection').textContent=Math.abs(motionOffset)<.001
+        ? '補正なし'
+        : `体動を${Math.abs(motionOffset).toFixed(1)}秒${motionOffset>0?'後':'前'}へ`;
+      save('sleepScopeMotionOffsetSec',motionOffset);
+      requestDraw();
+    }
+    function scale(v) {
+      motionSetting=['auto',...SCALES.map(String)].includes(String(v))
+        ? String(v):'auto';
+      $('motionScaleSelect').value=motionSetting;
+      save('sleepScopeMotionScale',motionSetting);
+      requestDraw();
+    }
+    function updateGain() {
+      $('waveformGainValue').textContent=waveGain.toFixed(2)+'倍';
+      $('volumeGainValue').textContent=volumeGain+'倍';
+      $('pcmScaleText').textContent=(waveGain*volumeGain).toFixed(2);
+      requestDraw();
+    }
+    function page(showReport) {
+      $('scopePage').hidden=showReport;
+      $('reportPage').hidden=!showReport;
+      $('scopeTab').setAttribute('aria-selected',String(!showReport));
+      $('reportTab').setAttribute('aria-selected',String(showReport));
+      if(showReport) report();
+      else requestAnimationFrame(()=>{
+        resize();
+        requestDraw();
+        updateLines();
+      });
+    }
+    function moveCenter(v) {
+      if(playing||preparing||gesture||trackerLoading) return;
+      const next=clamp(v,0,duration),delta=next-center;
+      center=next;cursor+=delta;
+      $('timeSlider').value=center;
+      requestDraw();
+      updateLines();
+    }
+
+    on($('masterInput'),'change',async e=>{
+      const file=e.target.files?.[0];
+      if(!file) return;
+      const generation=++trackerGeneration;
+      trackerLoading=true;
+      gesture=null;
+      try {
+        await loadTracker(file,generation);
+      } catch(error) {
+        if(generation===trackerGeneration&&!disposed) {
+          $('loadStatusBadge').textContent='読込失敗: '+error.message;
+          console.error(error);
+        }
+      } finally {
+        if(generation===trackerGeneration) trackerLoading=false;
+      }
+    });
+
+    on($('fitbitInput'),'change',async e=>{
+      const files=Array.from(e.target.files||[]);
+      if(!files.length) return;
+      const generation=++fitbitGeneration;
+      fitbitLoading=true;
+      try {
+        await loadFitbit(files,generation);
+      } catch(error) {
+        if(generation===fitbitGeneration&&!disposed) {
+          $('fitbitStatus').textContent='読込失敗: '+error.message;
+          console.error(error);
+        }
+      } finally {
+        if(generation===fitbitGeneration) fitbitLoading=false;
+      }
+    });
+
+    on($('demoBtn'),'click',demo);
+    on($('scopeTab'),'click',()=>page(false));
+    on($('reportTab'),'click',()=>page(true));
+    on($('printBtn'),'click',()=>window.print());
+    on(window,'beforeprint',stageChart);
+
+    on($('waveformGainSlider'),'input',e=>{
+      waveGain=clamp(num(e.target.value,1),.25,10);
+      updateGain();
+    });
+    on($('volumeGainSlider'),'input',e=>{
+      volumeGain=clamp(num(e.target.value,1),1,100);
+      updateGain();
+    });
+    on($('motionOffsetSlider'),'input',e=>offset(e.target.value));
+    on($('motionOffsetInput'),'change',e=>offset(e.target.value));
+    on($('motionOffsetMinusBtn'),'click',()=>offset(motionOffset-1));
+    on($('motionOffsetPlusBtn'),'click',()=>offset(motionOffset+1));
+    on($('motionOffsetResetBtn'),'click',()=>offset(0));
+    on($('motionScaleSelect'),'change',e=>scale(e.target.value));
+
+    on($('timeSlider'),'input',e=>moveCenter(Number(e.target.value)));
+    on($('timePrevBtn'),'click',()=>moveCenter(center-Math.max(1,span*.2)));
+    on($('timeNextBtn'),'click',()=>moveCenter(center+Math.max(1,span*.2)));
+    on(viewport,'wheel',e=>{
+      e.preventDefault();
+      moveCenter(center+Math.sign(e.deltaY)*Math.max(1,span/30));
+    },{passive:false});
+
+    on($('windowScaleSelect'),'change',e=>{
+      if(trackerLoading) {
+        e.target.value=span;
+        return;
+      }
+      if(playing||preparing) stopPlayback();
+      gesture=null;
+      const a=yToSec(ya),b=yToSec(yb),aAbove=ya<=yb;
+      span=Number(e.target.value);
+      center=clamp((a+b)/2,0,duration);
+      const h=canvas.height,margin=Math.min(10,h/4);
+      const visible=span*(h-2*margin)/Math.max(1,h);
+      if(Math.abs(b-a)<=visible) {
+        ya=clamp(secToY(a),margin,h-margin);
+        yb=clamp(secToY(b),margin,h-margin);
+      } else {
+        ya=h*(aAbove?.32:.68);
+        yb=h*(aAbove?.68:.32);
+      }
+      $('timeSlider').value=center;
+      requestDraw();
+      updateLines();
+    });
+
+    on(viewport,'pointerdown',e=>{
+      if(gesture||trackerLoading||e.button!==0||
+          e.target.closest('#intervalHud')) return;
+      const head=e.target.closest('#playheadLine');
+      const measurement=e.target.closest('.measureLine');
+      let kind='pan',resume=false;
+      if(head) {
+        kind='head';resume=playing;
+        currentCursor();
+        if(playing||preparing) stopPlayback('位置を選択中');
+      } else {
+        if(playing||preparing) return;
+        if(measurement) kind=measurement.id==='lineA'?'A':'B';
+      }
+      e.preventDefault();
+      gesture={id:e.pointerId,kind,resume,y:e.clientY,center,cursor};
+      try {
+        viewport.setPointerCapture(e.pointerId);
+      } catch(_) {
+        gesture=null;
+        return;
+      }
+      if(kind==='head') $('audioStatusText').textContent='位置を選択中';
+    });
+
+    on(viewport,'pointermove',e=>{
+      if(!gesture||e.pointerId!==gesture.id) return;
+      e.preventDefault();
+      const rect=canvas.getBoundingClientRect();
+      const h=canvas.height,margin=Math.min(10,h/4);
+      if(gesture.kind==='pan') {
+        const next=clamp(
+          gesture.center-(e.clientY-gesture.y)/Math.max(1,h)*span,
+          0,duration
+        );
+        center=next;
+        cursor=gesture.cursor+next-gesture.center;
+        $('timeSlider').value=center;
+        requestDraw();updateLines();
+        return;
+      }
+      const y=clamp(e.clientY-rect.top,margin,h-margin);
+      if(gesture.kind==='A') ya=y;
+      else if(gesture.kind==='B') yb=y;
+      else {
+        cursor=clamp(yToSec(y),intervalStart,intervalEnd);
+        showHead();
+        return;
+      }
+      updateLines();
+    });
+
+    function endGesture(e,cancelled=false) {
+      if(!gesture||e.pointerId!==gesture.id) return;
+      const ended=gesture;
+      gesture=null;
+      try {viewport.releasePointerCapture(e.pointerId);} catch(_) {}
+      if(ended.kind==='head') {
+        if(!cancelled&&ended.resume&&cursor<intervalEnd-.01) {
+          schedule(cursor);
+        } else {
+          $('audioStatusText').textContent=cancelled
+            ? '位置選択を終了':'再生位置を設定';
+          updateLines();
         }
       }
-
-      // ビルド名が同じでもコミット指定で取得した内容を適用候補にする。
-      candidate = {
-        html,
-        sha,
-        config,
-        remoteBuild: checked.remoteBuild
-      };
-      applyButton.hidden = false;
-      applyButton.textContent = '最新版を適用';
-      say(
-        '最新版取得済み ' + checked.remoteBuild + ' / ' +
-        sha.slice(0, 7) + '。「最新版を適用」で切り替え'
-      );
-    } catch (error) {
-      // 確認失敗時に古い候補を「最新版」として適用しない。
-      candidate = null;
-      applyButton.hidden = true;
-      say('更新確認失敗: ' + (error.message || error) + '。現在の版を継続');
-      console.warn('[ST-SCOPE update]', error);
-    } finally {
-      checking = false;
-      checkButton.disabled = false;
-      applyButton.disabled = false;
     }
-  }
+    on(viewport,'pointerup',e=>endGesture(e));
+    on(viewport,'pointercancel',e=>endGesture(e,true));
+    on(viewport,'lostpointercapture',e=>endGesture(e,true));
 
-  function applyUpdate() {
-    if (!candidate || checking || applying) return;
-    if (busy()) {
-      say('再生・読込処理の終了後に最新版を適用してください');
-      return;
-    }
-
-    const selected = candidate;
-    if (!confirm(
-      'GitHubのコミット ' + selected.sha.slice(0, 7) +
-      ' のHTMLを適用します。\n\n' +
-      '選択中のログ・音声・Fitbitデータと、未保存の医師所見は消えます。\n' +
-      '必要な内容を保存済みですか？'
-    )) return;
-
-    if (busy()) {
-      say('処理中のため適用を中止しました');
-      return;
-    }
-
-    try {
-      const checked = validate(selected.html);
-      const parsed = checked.parsed;
-
-      // 取得先が旧更新処理でも、この最新コミット取得方式を引き継ぐ。
-      checked.updateScript.textContent = ownSource;
-      setMeta(parsed, 'st-scope-source-url', selected.config.url);
-      setMeta(parsed, 'st-scope-repository', selected.config.repo);
-      setMeta(parsed, 'st-scope-path', selected.config.path);
-      setMeta(parsed, 'st-scope-branch', selected.config.branch || '');
-      setMeta(parsed, 'st-scope-applied-commit', selected.sha);
-
-      // 相対参照は元の公開ページを基準にする。
-      let base = parsed.querySelector('base');
-      if (!base) {
-        base = parsed.createElement('base');
-        parsed.head.prepend(base);
+    on($('playheadLine'),'keydown',e=>{
+      if(!['ArrowUp','ArrowDown','Home','End'].includes(e.key)) return;
+      e.preventDefault();
+      if(e.key==='ArrowUp') seekBy(e.shiftKey?-5:-1);
+      else if(e.key==='ArrowDown') seekBy(e.shiftKey?5:1);
+      else seekBy((e.key==='Home'?intervalStart:intervalEnd)-currentCursor());
+    });
+    on($('playIntervalBtn'),'click',()=>{
+      if(playing||preparing) {
+        stopPlayback('停止');
+        return;
       }
-      base.href = selected.config.url;
+      if(gesture||trackerLoading) return;
+      updateLines();
+      schedule(cursor>=intervalEnd-.01?intervalStart:cursor);
+    });
+    on($('rewindBtn'),'click',()=>seekBy(-5));
+    on($('forwardBtn'),'click',()=>seekBy(5));
 
-      const html = '<!DOCTYPE html>\n' + parsed.documentElement.outerHTML;
-      applying = true;
-
-      // 旧更新処理のタイマー・イベントを止める。
-      controller.abort();
-      clearInterval(interval);
-
-      // 同じwindow内での更新後初期化が再適用を繰り返さないよう保持する。
-      window.__STScopeAppliedCommit = selected.sha;
-
-      // 公開ページに戻らず、SHA指定で取得したHTML本体を実行する。
-      document.open();
-      document.write(html);
-      document.close();
-    } catch (error) {
-      applying = false;
-      say('適用失敗: ' + (error.message || error));
-      console.error('[ST-SCOPE apply]', error);
+    on(window,'resize',()=>{
+      resize();
+      if(!$('reportPage').hidden) stageChart();
+    });
+    if(typeof ResizeObserver==='function') {
+      observer=new ResizeObserver(resize);
+      observer.observe(viewport);
     }
-  }
 
-  document.getElementById('configureUpdateBtn')?.addEventListener('click', () => {
-    if (checking || applying) return;
-    let current;
-    try { current = sourceConfig(); } catch (_) { current = savedSettings(); }
-    const repo = prompt('GitHub取得先：所有者/リポジトリ（公開リポジトリ）', current.repo || '');
-    if (repo === null) return;
-    const path = prompt('対象HTMLのリポジトリ内パス（例：ST-SCOPE-V30.html または docs/index.html）', current.path || 'ST-SCOPE-V30.html');
-    if (path === null) return;
-    const branch = prompt('取得ブランチ（空欄＝リポジトリの既定ブランチ。Pagesが別ブランチなら指定）', current.branch || '');
-    if (branch === null) return;
-    const value = {repo: repo.trim(), path: path.trim(), branch: branch.trim()};
-    if (!/^[a-z0-9_.-]+\/[a-z0-9_.-]+$/i.test(value.repo) || !value.path ||
-        value.path.startsWith('/') || value.path.split('/').some(p => p === '..' || p === '.')) {
-      say('取得先設定が不正です'); return;
+    scale(stored('sleepScopeMotionScale','auto'));
+    offset(num(stored('sleepScopeMotionOffsetSec','0'),0));
+    updateGain();
+    resize();
+    refresh();
+    requestAnimationFrame(()=>{
+      resize();
+      requestDraw();
+    });
+  })();
+  </script>
+
+  <script id="st-scope-updater" data-update-protocol="6">
+  'use strict';
+  (() => {
+    const $=id=>document.getElementById(id);
+    const meta=name=>
+      document.querySelector('meta[name="'+name+'"]')?.content||'';
+    const build=meta('st-scope-build');
+    const sourceURL=meta('st-scope-source-url')||location.href;
+    const settingsKey='st-scope-update-source:'+sourceURL.split(/[?#]/)[0];
+    const status=$('updateStatus');
+    const checkButton=$('checkUpdateBtn');
+    const applyButton=$('applyUpdateBtn');
+    const configureButton=$('configureUpdateBtn');
+    const lifetime=new AbortController();
+    const on=(target,event,fn)=>
+      target.addEventListener(event,fn,{signal:lifetime.signal});
+
+    let checking=false,applying=false,candidate=null;
+    let timer=0,lastCheck=0,requestController=null;
+    let fallbackTimer=0,objectURL='',disposed=false;
+
+    function say(message) {
+      status.textContent=build+' / '+message;
+      status.title=status.textContent;
     }
-    try { localStorage.setItem(settingsKey, JSON.stringify(value)); } catch (_) {
-      // 保存できなくてもこの画面ではmetaで設定を保持する。
+    function savedSettings() {
+      try {
+        const value=JSON.parse(localStorage.getItem(settingsKey)||'{}');
+        return value&&typeof value==='object'&&!Array.isArray(value)?value:{};
+      } catch(_) {
+        return {};
+      }
     }
-    setMeta(document, 'st-scope-repository', value.repo);
-    setMeta(document, 'st-scope-path', value.path);
-    setMeta(document, 'st-scope-branch', value.branch);
-    candidate = null;
-    applyButton.hidden = true;
-    checkUpdate(true);
-  }, {signal: controller.signal});
+    function validateConfig(config) {
+      if(typeof config.repo!=='string'||
+          !/^[a-z0-9_.-]+\/[a-z0-9_.-]+$/i.test(config.repo)) {
+        throw Error('リポジトリ設定が不正です');
+      }
+      if(typeof config.path!=='string'||!config.path||
+          config.path.startsWith('/')||
+          /[\\?#\u0000-\u001f]/.test(config.path)||
+          config.path.split('/').some(v=>!v||v==='.'||v==='..')||
+          !/\.html?$/i.test(config.path)) {
+        throw Error('対象HTMLのパスが不正です');
+      }
+      if(typeof config.branch!=='string'||
+          /[\u0000-\u001f]/.test(config.branch)) {
+        throw Error('ブランチ設定が不正です');
+      }
+      return config;
+    }
+    function sourceConfig() {
+      const saved=savedSettings(),url=new URL(sourceURL);
+      let repo=meta('st-scope-repository')||saved.repo||'';
+      let path=meta('st-scope-path')||saved.path||'';
+      if(!repo||!path) {
+        if(!/^[a-z0-9-]+\.github\.io$/i.test(url.hostname)) {
+          throw Error('「取得先設定」で公開リポジトリとHTMLパスを指定してください');
+        }
+        const owner=url.hostname.split('.')[0];
+        const segments=url.pathname.split('/').filter(Boolean).map(decodeURIComponent);
+        if(!segments.length) {
+          repo||=owner+'/'+owner+'.github.io';
+          path||='index.html';
+        } else if(segments.length===1&&/\.html?$/i.test(segments[0])) {
+          repo||=owner+'/'+owner+'.github.io';
+          path||=segments[0];
+        } else {
+          repo||=owner+'/'+segments.shift();
+          path||=segments.length
+            ? segments.join('/')+(url.pathname.endsWith('/')?'/index.html':'')
+            : 'index.html';
+        }
+      }
+      const branchElement=document.querySelector('meta[name="st-scope-branch"]');
+      const branch=branchElement?branchElement.content:saved.branch||'';
+      return validateConfig({repo,path,branch,url:url.href});
+    }
+    const sourceKey=config=>[config.repo,config.path,config.branch].join('\n');
+    function setMeta(doc,name,content) {
+      let element=doc.querySelector('meta[name="'+name+'"]');
+      if(!element) {
+        element=doc.createElement('meta');
+        element.name=name;
+        doc.head.appendChild(element);
+      }
+      element.content=content;
+    }
 
-  checkButton.addEventListener('click', () => checkUpdate(true), {
-    signal: controller.signal
-  });
-  applyButton.addEventListener('click', applyUpdate, {
-    signal: controller.signal
-  });
-  document.addEventListener('visibilitychange', () => {
-    if (!document.hidden) checkUpdate();
-  }, {signal: controller.signal});
-  window.addEventListener('online', () => checkUpdate(), {
-    signal: controller.signal
-  });
+    // 全更新要求でキャッシュを回避。認証情報・ユーザーデータは送信しない。
+    async function getText(address,accept) {
+      const parent=requestController;
+      if(!parent) throw Error('更新要求が初期化されていません');
+      const url=new URL(address);
+      url.searchParams.set('cb',Date.now()+'-'+Math.random().toString(36).slice(2));
+      const controller=new AbortController();
+      const abort=()=>controller.abort();
+      parent.signal.addEventListener('abort',abort,{once:true});
+      if(parent.signal.aborted) abort();
+      const timeout=setTimeout(abort,15000);
+      try {
+        const response=await fetch(url.href,{
+          cache:'no-store',
+          credentials:'omit',
+          referrerPolicy:'no-referrer',
+          signal:controller.signal,
+          headers:{Accept:accept}
+        });
+        if(!response.ok) {
+          throw Error('HTTP '+response.status+
+            ([403,429].includes(response.status)
+              ? '（GitHub API制限または権限を確認）':''));
+        }
+        return await response.text();
+      } finally {
+        clearTimeout(timeout);
+        parent.signal.removeEventListener('abort',abort);
+      }
+    }
+    const getJSON=async url=>
+      JSON.parse(await getText(url,'application/vnd.github+json'));
 
-  const interval = setInterval(() => {
-    if (!document.hidden) checkUpdate();
-  }, 5 * 60 * 1000);
+    function validate(html) {
+      if(!/^\s*<!doctype html>/i.test(html)||!/<\/html>\s*$/i.test(html)) {
+        throw Error('取得HTMLが不完全です');
+      }
+      const doc=new DOMParser().parseFromString(html,'text/html');
+      const remote=doc.querySelector('meta[name="st-scope-build"]')?.content;
+      const pattern=/^ST-SCOPE-V(\d+)-(\d{8})-(\d+)$/;
+      const localVersion=build.match(pattern);
+      const remoteVersion=(remote||'').match(pattern);
+      if(!remoteVersion) throw Error('取得先のビルド名が不正です');
 
-  // 初回は取得・通知まで。データを無断で消す自動適用はしない。
-  if (window.__STScopeAppliedCommit) {
-    say('最新コミット適用済み ' + window.__STScopeAppliedCommit.slice(0, 7));
-  } else {
+      for(const id of [
+        'waveCanvas','masterInput','fitbitInput',
+        'playheadLine','waveformGainSlider','volumeGainSlider',
+        'updateStatus','checkUpdateBtn','applyUpdateBtn','configureUpdateBtn'
+      ]) {
+        if(doc.querySelectorAll('[id="'+id+'"]').length!==1) {
+          throw Error('必須要素が欠損・重複しています: '+id);
+        }
+      }
+      const volume=doc.getElementById('volumeGainSlider');
+      if(!volume.closest('label')?.textContent.includes('音量スケール')) {
+        throw Error('音量スケールの操作部を確認できません');
+      }
+      const scripts=doc.querySelectorAll('script#st-scope-updater');
+      if(scripts.length!==1||Number(scripts[0].dataset.updateProtocol||0)<6) {
+        throw Error('V32対応の更新処理がありません');
+      }
+      if(localVersion) {
+        for(let i=1;i<=3;i++) {
+          if(+remoteVersion[i]<+localVersion[i]) {
+            throw Error('現在より古い版の適用を停止しました');
+          }
+          if(+remoteVersion[i]>+localVersion[i]) break;
+        }
+      }
+      // 構造検査のみ。任意の取得先コードの安全性を保証するものではない。
+      return {doc,remote};
+    }
+    function buttons() {
+      checkButton.disabled=checking||applying;
+      configureButton.disabled=checking||applying;
+      applyButton.disabled=checking||applying;
+      applyButton.hidden=!candidate;
+    }
+
+    async function checkUpdate(manual=false) {
+      if(disposed||checking||applying) return;
+      if(!manual&&Date.now()-lastCheck<60000) return;
+      lastCheck=Date.now();
+      checking=true;candidate=null;
+      requestController=new AbortController();
+      buttons();
+      try {
+        const config=sourceConfig();
+        say('GitHubの最新コミットを確認中…');
+        const api='https://api.github.com/repos/'+config.repo;
+        let branch=config.branch;
+        if(!branch) {
+          branch=(await getJSON(api)).default_branch;
+          if(!branch) throw Error('既定ブランチを取得できません');
+        }
+
+        // 最新ブランチ先端を確認後、取得HTMLをそのSHAに固定する。
+        const commit=await getJSON(api+'/commits/'+encodeURIComponent(branch));
+        const sha=commit.sha;
+        if(!/^[a-f0-9]{40}$/i.test(sha||'')) {
+          throw Error('最新コミットSHAが不正です');
+        }
+        if(meta('st-scope-applied-commit')===sha&&
+            meta('st-scope-applied-source')===sourceKey(config)) {
+          say('最新コミット適用済み '+sha.slice(0,7));
+          return;
+        }
+        const encodedPath=config.path.split('/').map(encodeURIComponent).join('/');
+        const html=await getText(
+          'https://raw.githubusercontent.com/'+config.repo+'/'+sha+'/'+encodedPath,
+          'text/html'
+        );
+        const checked=validate(html);
+        if(disposed) return;
+        candidate={html,sha,config,remoteBuild:checked.remote};
+        say('最新版取得済み '+checked.remote+' / '+sha.slice(0,7)+
+          '。「最新版を適用」で切り替え');
+      } catch(error) {
+        if(!disposed) {
+          candidate=null;
+          say('更新確認失敗: '+error.message+'。現在の版を継続');
+          console.warn('[ST-SCOPE update]',error);
+        }
+      } finally {
+        checking=false;
+        if(!disposed) buttons();
+      }
+    }
+
+    const busy=()=>window.STScope?.busy()??true;
+    function applyUpdate() {
+      if(disposed||!candidate||checking||applying) return;
+      if(busy()) {
+        say('再生・読込・ドラッグの終了後に適用してください');
+        return;
+      }
+      const selected=candidate;
+      if(!confirm(
+        'GitHubのコミット '+selected.sha.slice(0,7)+' のHTMLを適用します。\n\n'+
+        '取得先: '+selected.config.repo+'/'+selected.config.path+'\n\n'+
+        '信頼できる取得先であることを確認してください。\n'+
+        '選択中のログ・録音・Fitbitデータと未保存の医師所見は消えます。\n'+
+        '必要な内容を保存済みですか？'
+      )) return;
+      if(busy()) {
+        say('処理中のため適用を中止しました');
+        return;
+      }
+
+      try {
+        const doc=validate(selected.html).doc;
+        setMeta(doc,'st-scope-source-url',selected.config.url);
+        setMeta(doc,'st-scope-repository',selected.config.repo);
+        setMeta(doc,'st-scope-path',selected.config.path);
+        setMeta(doc,'st-scope-branch',selected.config.branch);
+        setMeta(doc,'st-scope-applied-commit',selected.sha);
+        setMeta(doc,'st-scope-applied-source',sourceKey(selected.config));
+
+        let baseElement=doc.querySelector('base');
+        if(!baseElement) baseElement=doc.createElement('base');
+        baseElement.href=selected.config.url;
+        doc.head.prepend(baseElement);
+
+        const html='<!DOCTYPE html>\n'+doc.documentElement.outerHTML;
+        objectURL=URL.createObjectURL(new Blob([html],{
+          type:'text/html;charset=utf-8'
+        }));
+        applying=true;
+        buttons();
+        say('取得したコミットのHTMLへ切り替え中…');
+
+        // 別Documentへ遷移し、旧画面のイベントとタイマーを残さない。
+        location.replace(objectURL);
+        fallbackTimer=setTimeout(()=>{
+          applying=false;
+          buttons();
+          say('切り替わらない場合はブラウザのBlob遷移制限を確認してください');
+          URL.revokeObjectURL(objectURL);
+          objectURL='';
+        },10000);
+      } catch(error) {
+        applying=false;
+        if(objectURL) URL.revokeObjectURL(objectURL);
+        objectURL='';
+        buttons();
+        say('適用失敗: '+error.message);
+        console.error('[ST-SCOPE apply]',error);
+      }
+    }
+
+    on(configureButton,'click',()=>{
+      if(checking||applying) return;
+      let current;
+      try {current=sourceConfig();}
+      catch(_) {current=savedSettings();}
+      const repo=prompt(
+        '信頼できる公開GitHub取得先：所有者/リポジトリ',
+        current.repo||''
+      );
+      if(repo===null) return;
+      const path=prompt(
+        '対象HTMLのリポジトリ内パス\n例：docs/ST-SCOPE-V32-20261005-01.html',
+        current.path||'ST-SCOPE-V32-20261005-01.html'
+      );
+      if(path===null) return;
+      const branch=prompt(
+        '取得ブランチ（空欄＝リポジトリの既定ブランチ）',
+        current.branch||''
+      );
+      if(branch===null) return;
+      const value={repo:repo.trim(),path:path.trim(),branch:branch.trim()};
+      try {validateConfig(value);}
+      catch(error) {say(error.message);return;}
+      try {localStorage.setItem(settingsKey,JSON.stringify(value));}
+      catch(_) {}
+      setMeta(document,'st-scope-repository',value.repo);
+      setMeta(document,'st-scope-path',value.path);
+      setMeta(document,'st-scope-branch',value.branch);
+      candidate=null;
+      checkUpdate(true);
+    });
+    on(checkButton,'click',()=>checkUpdate(true));
+    on(applyButton,'click',applyUpdate);
+    on(document,'visibilitychange',()=>{
+      if(!document.hidden) checkUpdate();
+    });
+    on(window,'online',()=>checkUpdate());
+
+    function startTimer() {
+      clearInterval(timer);
+      timer=setInterval(()=>{
+        if(!document.hidden) checkUpdate();
+      },5*60*1000);
+    }
+    on(window,'pagehide',e=>{
+      clearInterval(timer);
+      clearTimeout(fallbackTimer);
+      requestController?.abort();
+      if(!e.persisted) {
+        disposed=true;
+        lifetime.abort();
+        window.STScope?.dispose();
+      }
+    });
+    on(window,'pageshow',e=>{
+      if(e.persisted) {
+        applying=false;
+        buttons();
+        startTimer();
+        checkUpdate();
+      }
+    });
+
+    startTimer();
+    // 自動確認は取得・通知まで。適用にはユーザーの確認が必要。
     checkUpdate();
-  }
-})();
-</script>
-</body>
-</html> 
+  })();
+  </script>
+  </body>
+  </html>
