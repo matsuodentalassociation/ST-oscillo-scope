@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="st-scope-build" content="ST-Oscillograph-V41-20261012-01">
-<title>ST-Oscillograph-V41-20261012-01</title>
+<meta name="st-scope-build" content="ST-Oscillograph-V44-20261108-01">
+<title>ST-Oscillograph-V44-20261108-01</title>
 <style>
 *{box-sizing:border-box}
 body{margin:0;height:100dvh;display:flex;flex-direction:column;overflow:hidden;background:#f8fafc;color:#1e293b;font:11px Consolas,"Noto Sans JP",monospace;user-select:none}
@@ -47,14 +47,15 @@ main{flex:1;min-height:0;padding:5px}
 .measureLine{position:absolute;left:0;width:100%;height:24px;margin-top:-12px;z-index:5;cursor:row-resize;touch-action:none}
 .measureLine:before{content:"";position:absolute;top:11px;width:100%;height:2px;background:#0f172a}
 #lineB:before{background:#dc2626}
-.lineLabel{position:absolute;right:14%;top:1px;display:flex;gap:5px;white-space:nowrap;padding:3px 5px;background:#fff;border:1px solid #0f172a;border-radius:4px;font-weight:bold;pointer-events:none}
+.labelWrap{position:absolute;right:14%;top:1px;display:flex;gap:4px;align-items:stretch}
+.lineLabel{display:flex;gap:5px;white-space:nowrap;padding:3px 5px;background:#fff;border:1px solid #0f172a;border-radius:4px;font-weight:bold;pointer-events:none}
 #lineB .lineLabel{border-color:#dc2626;color:#b91c1c}
 .clockLabel{color:#1d4ed8}.hzLabel{color:#4338ca}
+.grabTag{display:flex;align-items:center;padding:0 7px;font-size:10px;font-weight:bold;color:#fff;background:#0f172a;border-radius:4px;user-select:none}
+#lineB .grabTag{background:#dc2626}
 #intervalBracket{position:absolute;right:14%;border-right:2px dashed #3b82f6;pointer-events:none;z-index:3}
 #playheadLine{position:absolute;left:0;width:100%;height:24px;margin-top:-12px;z-index:7;cursor:row-resize;touch-action:none}
 #playheadLine:before{content:"";position:absolute;top:11px;width:100%;height:3px;background:#fbbf24;box-shadow:0 1px 3px #0006}
-#playheadLine:after{content:"";position:absolute;left:2px;top:3px;width:18px;height:18px;background:#f59e0b;border:2px solid #fff;border-radius:50%}
-#playheadLine span{position:absolute;left:24px;top:13px;padding:2px 4px;background:#fbbf24;font-weight:bold;pointer-events:none}
 #intervalHud{position:absolute;right:4px;width:12%;min-width:108px;max-width:145px;z-index:8;padding:5px;background:#fff;border:1px solid #3b82f6;border-radius:4px;display:flex;flex-direction:column;gap:4px;text-align:center}
 #intervalSec{color:#1d4ed8}
 #seekButtons{display:grid;grid-template-columns:1fr 1fr;gap:3px}
@@ -102,7 +103,7 @@ main{flex:1;min-height:0;padding:5px}
 <body>
 <header id="appHeader">
   <div class="topBar">
-    <div class="brand">ST-Oscillograph-V41</div>
+    <div class="brand">ST-Oscillograph-V44</div>
     <label>ログ種別
       <select id="logTypeSelect" aria-label="ログ種別">
         <option value="tracker">睡眠ログ</option>
@@ -149,12 +150,12 @@ main{flex:1;min-height:0;padding:5px}
   </div>
   <div id="screenViewport">
     <canvas id="waveCanvas"></canvas>
-    <div id="lineA" class="measureLine"><div class="lineLabel"><span id="labelATime" class="clockLabel">--:--:--</span><span id="labelADb">-- dB</span><span id="labelAHz" class="hzLabel">-- Hz</span></div></div>
-    <div id="lineB" class="measureLine"><div class="lineLabel"><span id="labelBTime" class="clockLabel">--:--:--</span><span id="labelBDb">-- dB</span><span id="labelBHz" class="hzLabel">-- Hz</span></div></div>
-    <div id="playheadLine" role="slider" tabindex="0" aria-label="区間内の再生位置" aria-orientation="vertical" aria-valuemin="0" aria-valuemax="1" aria-valuenow="0"><span>↕ 再生位置</span></div>
+    <div id="lineA" class="measureLine"><div class="labelWrap"><div class="grabTag">A</div><div class="lineLabel"><span id="labelATime" class="clockLabel">--:--:--</span><span id="labelADb">-- dB</span><span id="labelAHz" class="hzLabel">-- Hz</span></div></div></div>
+    <div id="lineB" class="measureLine"><div class="labelWrap"><div class="grabTag">B</div><div class="lineLabel"><span id="labelBTime" class="clockLabel">--:--:--</span><span id="labelBDb">-- dB</span><span id="labelBHz" class="hzLabel">-- Hz</span></div></div></div>
+    <div id="playheadLine" role="slider" tabindex="0" aria-label="区間内の再生位置" aria-orientation="vertical" aria-valuemin="0" aria-valuemax="1" aria-valuenow="0"></div>
     <div id="intervalBracket"></div>
     <div id="intervalHud">
-      <div>計測区間 <span id="intervalSec">0.0</span> 秒</div>
+      <div>計測区間 <span id="intervalSec">0秒</span></div>
       <div><span id="replayTime">--:--:--</span><br><span id="replayDb">-- dB</span> / <span id="replayHz">-- Hz</span></div>
       <div id="seekButtons"><button id="rewindBtn">−5秒</button><button id="forwardBtn">＋5秒</button></div>
       <button id="playIntervalBtn" class="primary"><span id="playIcon">▶</span> <span id="playText">区間再生</span></button>
@@ -218,6 +219,7 @@ main{flex:1;min-height:0;padding:5px}
   function num(v,f=null){if(v===null||v===undefined||v==='')return f;const n=Number(v);return Number.isFinite(n)?n:f}
   function ms(v){if(v===null||v===undefined||v==='')return null;const n=Number(v);if(Number.isFinite(n))return n<1e11?n*1000:n;const t=Date.parse(v);return Number.isFinite(t)?t:null}
   function clock(s){const d=new Date(startMs+s*1000);return[d.getHours(),d.getMinutes(),d.getSeconds()].map(v=>String(v).padStart(2,'0')).join(':')}
+  function formatInterval(s){const m=Math.floor(s/60);let rest=(s-m*60).toFixed(1);if(rest.endsWith('.0'))rest=rest.slice(0,-2);return m>0?m+'分'+rest+'秒':rest+'秒'}
   function datetime(s){const d=new Date(startMs+s*1000);return`${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')} ${clock(s)}`}
   function save(k,v){try{localStorage.setItem(k,String(v))}catch(_){}}
   function stored(k,d){try{return localStorage.getItem(k)??d}catch(_){return d}}
@@ -303,6 +305,76 @@ main{flex:1;min-height:0;padding:5px}
       let bin=-1,power=1e-10;for(let i=Math.max(1,Math.ceil(40*n/rate));i<=Math.min(n/2-1,Math.floor(4000*n/rate));i++){const p=real[i]*real[i]+imag[i]*imag[i];if(p>power){power=p;bin=i}}if(bin>0)frequency[k]=bin*rate/n}
     return{envelope,minimum,maximum,frequency,noiseFloor}
   }
+  // IMA-ADPCM WAV（fmtタグ 0x11）の自前デコード。録音アプリの decodeImaWav を移植。
+  // decodeAudioData が ADPCM WAV を読めない環境でも、音のグラフ（エンベロープ）と再生に使えるようにする。
+  const IMA_STEP = [7,8,9,10,11,12,13,14,16,17,19,21,23,25,28,31,34,37,41,45,50,55,60,66,73,80,88,97,107,118,130,143,157,173,190,209,230,253,279,307,337,371,408,449,494,544,598,658,724,796,876,963,1060,1166,1282,1411,1552,1707,1878,2066,2272,2499,2749,3024,3327,3660,4026,4428,4871,5358,5894,6484,7132,7845,8630,9493,10442,11487,12635,13899,15289,16818,18500,20350,22385,24623,27086,29794,32767];
+  const IMA_IDX = [-1, -1, -1, -1, 2, 4, 6, 8];
+  const IMA_BLOCK = 256;
+  const IMA_SPB = (IMA_BLOCK - 4) * 2 + 1;
+  function decodeImaWav(data, wantSamples) {
+    const u8 = data instanceof Uint8Array ? data : new Uint8Array(data.buffer || data);
+    const dv = new DataView(u8.buffer, u8.byteOffset, u8.byteLength);
+    let p = 12, blockAlign = IMA_BLOCK, spb = IMA_SPB, dStart = -1, dLen = 0, fact = -1;
+    while (p + 8 <= u8.length) {
+      const id = String.fromCharCode(u8[p], u8[p + 1], u8[p + 2], u8[p + 3]);
+      const sz = dv.getUint32(p + 4, true);
+      if (id === "fmt ") {
+        blockAlign = dv.getUint16(p + 8 + 12, true);
+        spb = sz >= 20 ? dv.getUint16(p + 8 + 18, true) : (blockAlign - 4) * 2 + 1;
+      } else if (id === "fact") {
+        fact = dv.getUint32(p + 8, true);
+      } else if (id === "data") {
+        dStart = p + 8;
+        dLen = Math.min(sz, u8.length - dStart);
+        break;
+      }
+      p += 8 + sz + (sz & 1);
+    }
+    if (dStart < 0) throw new Error("音声データの形式を読み取れません");
+    const total = wantSamples || (fact >= 0 ? fact : Math.floor(dLen / blockAlign) * spb);
+    const out = new Int16Array(total);
+    let w = 0;
+    for (let b = 0; b * blockAlign + 4 <= dLen && w < total; b++) {
+      const o = dStart + b * blockAlign;
+      let pred = dv.getInt16(o, true);
+      let idx = clamp(u8[o + 2], 0, 88);
+      out[w++] = pred;
+      for (let i = 4; i < blockAlign && w < total; i++) {
+        const byte = u8[o + i];
+        for (let h = 0; h < 2 && w < total; h++) {
+          const code = (byte >> (h * 4)) & 15;
+          const step = IMA_STEP[idx];
+          let vp = step >> 3;
+          if (code & 4) vp += step;
+          if (code & 2) vp += step >> 1;
+          if (code & 1) vp += step >> 2;
+          pred = clamp(pred + ((code & 8) ? -vp : vp), -32768, 32767);
+          idx = clamp(idx + IMA_IDX[code & 7], 0, 88);
+          out[w++] = pred;
+        }
+      }
+    }
+    return out;
+  }
+  function wavFmtInfo(data){
+    const u8=data instanceof Uint8Array?data:new Uint8Array(data);
+    if(u8.length<44)return null;
+    if(String.fromCharCode(u8[0],u8[1],u8[2],u8[3])!=='RIFF'||String.fromCharCode(u8[8],u8[9],u8[10],u8[11])!=='WAVE')return null;
+    const dv=new DataView(u8.buffer,u8.byteOffset,u8.byteLength);let p=12;
+    while(p+8<=u8.length){const id=String.fromCharCode(u8[p],u8[p+1],u8[p+2],u8[p+3]),sz=dv.getUint32(p+4,true);
+      if(id==='fmt '&&sz>=16)return{tag:dv.getUint16(p+8,true),channels:dv.getUint16(p+10,true),sampleRate:dv.getUint32(p+12,true)};
+      if(id==='data')break;p+=8+sz+(sz&1)}
+    return null
+  }
+  async function decodeClipAudio(context,data){
+    const fmt=wavFmtInfo(data);
+    if(fmt&&fmt.tag===0x11){
+      const pcm=decodeImaWav(data),buffer=context.createBuffer(1,pcm.length,fmt.sampleRate||16000),ch=buffer.getChannelData(0);
+      for(let i=0;i<pcm.length;i++)ch[i]=pcm[i]/32768;
+      return buffer
+    }
+    return context.decodeAudioData(data)
+  }
   async function loadTracker(file,generation){
     const current=()=>generation===trackerGeneration&&!disposed;stopPlayback();$('loadStatusBadge').textContent='JSONを解析中…';const result=await documentsFrom(file,current);if(!result||!current())return;const{entries,documents}=result;
     const candidates=documents.filter(d=>d.obj&&typeof d.obj==='object'&&!Array.isArray(d.obj)&&base(d.name)!=='clips.json'),rank=d=>(base(d.name)==='session.json'?1000000:0)+rawLogs(d.obj).length*2+rawBins(d.obj).length+(d.obj.session||d.obj.startedAt||d.obj.startTime?1000:0);candidates.sort((a,b)=>rank(b)-rank(a));if(!candidates.length)throw Error('セッションJSONがありません');parseTracker(candidates[0].obj);
@@ -315,7 +387,7 @@ main{flex:1;min-height:0;padding:5px}
     if(!audio.length){$('loadStatusBadge').textContent=`読込完了 ${done}/${Math.max(1,total)} / ログ${logs.length}点 / 音声なし`;return}
     const context=audioContext();let next=0,audioDone=0,failed=0,unplaced=0;
     $('loadStatusBadge').textContent=`読込達成数 ${done}/${total} / 音声 0/${audio.length}`;
-    async function worker(){while(current()){const i=next++;if(i>=audio.length)return;const entry=audio[i];try{const meta=findMeta(entry.name),position=clipStart(meta,entry.name);if(position===null){unplaced++;continue}const data=await entry.data();if(!current())return;const buffer=await context.decodeAudioData(data);if(!current())return;clips.push({start:position,length:buffer.duration,name:entry.name,category:categoryOf(meta),...features(buffer),loadBuffer:async()=>context.decodeAudioData(await entry.data())})}catch(error){if(current()){failed++;console.warn(entry.name,error)}}finally{audioDone++;done++;if(current()){$('loadStatusBadge').textContent=`読込達成数 ${done}/${total} / 音声 ${audioDone}/${audio.length} / 失敗 ${failed} / 時刻不明 ${unplaced}`;if(audioDone%10===0||audioDone===audio.length){clips.sort((a,b)=>a.start-b.start);refresh()}await new Promise(resolve=>setTimeout(resolve,0))}}}}
+    async function worker(){while(current()){const i=next++;if(i>=audio.length)return;const entry=audio[i];try{const meta=findMeta(entry.name),position=clipStart(meta,entry.name);if(position===null){unplaced++;continue}const data=await entry.data();if(!current())return;const buffer=await decodeClipAudio(context,data);if(!current())return;clips.push({start:position,length:buffer.duration,name:entry.name,category:categoryOf(meta),...features(buffer),loadBuffer:async()=>decodeClipAudio(context,await entry.data())})}catch(error){if(current()){failed++;console.warn(entry.name,error)}}finally{audioDone++;done++;if(current()){$('loadStatusBadge').textContent=`読込達成数 ${done}/${total} / 音声 ${audioDone}/${audio.length} / 失敗 ${failed} / 時刻不明 ${unplaced}`;if(audioDone%10===0||audioDone===audio.length){clips.sort((a,b)=>a.start-b.start);refresh()}await new Promise(resolve=>setTimeout(resolve,0))}}}}
     await Promise.all(Array.from({length:Math.min(2,audio.length)},worker));if(!current())return;clips.sort((a,b)=>a.start-b.start);refresh();$('loadStatusBadge').textContent=`読込完了 ${done}/${total} / ログ${logs.length}点 / 配置${clips.length}本 / 時刻不明${unplaced}本 / 失敗${failed}本`
   }
   function stage(v){const s=String(v||'').toLowerCase();return['deep','light','rem'].includes(s)?s:/^(wake|awake)$/.test(s)?'wake':null}
@@ -349,8 +421,8 @@ main{flex:1;min-height:0;padding:5px}
   function nearest(s){if(!logs.length)return null;let lo=0,hi=logs.length-1;while(lo<hi){const m=(lo+hi)>>1;if(logs[m].sec<s)lo=m+1;else hi=m}const r=logs[lo],l=lo?logs[lo-1]:null;return l&&Math.abs(l.sec-s)<=Math.abs(r.sec-s)?l:r}
   function measure(s){const near=nearest(s),close=near&&Math.abs(near.sec-s)<=1.5;let db=close?near.db:null,hz=close&&near.hz>0?near.hz:null;if(db===null||hz===null){const clip=clips.find(c=>s>=c.start&&s<c.start+c.length);if(clip&&clip.envelope.length){const i=clamp(Math.round((s-clip.start)*RATE),0,clip.envelope.length-1);if(db===null)db=clip.envelope[i];if(hz===null&&clip.frequency[i]>0)hz=clip.frequency[i]}}return{db,hz}}
   function metrics(s,t,d,h){const m=measure(s);$(t).textContent=clock(s);$(d).textContent=Number.isFinite(m.db)?m.db.toFixed(1)+' dB':'-- dB';$(h).textContent=Number.isFinite(m.hz)&&m.hz>0?Math.round(m.hz)+' Hz':'-- Hz'}
-  function showHead(){const head=$('playheadLine');head.style.top=secToY(cursor)+'px';head.querySelector('span').textContent=(playing?'↕ 再生中 ':'↕ 再生位置 ')+clock(cursor);head.setAttribute('aria-valuemin',intervalStart);head.setAttribute('aria-valuemax',intervalEnd);head.setAttribute('aria-valuenow',cursor);head.setAttribute('aria-valuetext',clock(cursor));metrics(cursor,'replayTime','replayDb','replayHz')}
-  function updateLines(){const top=Math.min(ya,yb),bottom=Math.max(ya,yb);intervalStart=yToSec(top);intervalEnd=yToSec(bottom);cursor=clamp(cursor,intervalStart,intervalEnd);$('lineA').style.top=ya+'px';$('lineB').style.top=yb+'px';$('intervalBracket').style.top=top+'px';$('intervalBracket').style.height=bottom-top+'px';metrics(yToSec(ya),'labelATime','labelADb','labelAHz');metrics(yToSec(yb),'labelBTime','labelBDb','labelBHz');$('intervalSec').textContent=(intervalEnd-intervalStart).toFixed(1);for(const id of['lineA','lineB'])$(id).querySelector('.lineLabel').style.visibility=playing?'hidden':'visible';const hud=$('intervalHud'),height=hud.offsetHeight||150;hud.style.top=clamp(top+(bottom-top-height)/2,0,Math.max(0,canvas.height-height))+'px';const active=playing||preparing;$('playIcon').textContent=active?'■':'▶';$('playText').textContent=preparing?'準備を中止':playing?'停止':'区間再生';$('playIntervalBtn').classList.toggle('stopping',active);$('playIntervalBtn').classList.toggle('primary',!active);const fullView=$('windowScaleSelect').value==='all';for(const id of['timeSlider','timePrevBtn','timeNextBtn'])$(id).disabled=active||fullView;$('windowScaleSelect').disabled=active;showHead()}
+  function showHead(){const head=$('playheadLine');head.style.top=secToY(cursor)+'px';head.setAttribute('aria-valuemin',intervalStart);head.setAttribute('aria-valuemax',intervalEnd);head.setAttribute('aria-valuenow',cursor);head.setAttribute('aria-valuetext',clock(cursor));metrics(cursor,'replayTime','replayDb','replayHz')}
+  function updateLines(){const top=Math.min(ya,yb),bottom=Math.max(ya,yb);intervalStart=yToSec(top);intervalEnd=yToSec(bottom);cursor=clamp(cursor,intervalStart,intervalEnd);$('lineA').style.top=ya+'px';$('lineB').style.top=yb+'px';$('intervalBracket').style.top=top+'px';$('intervalBracket').style.height=bottom-top+'px';metrics(yToSec(ya),'labelATime','labelADb','labelAHz');metrics(yToSec(yb),'labelBTime','labelBDb','labelBHz');$('intervalSec').textContent=formatInterval(intervalEnd-intervalStart);for(const id of['lineA','lineB'])$(id).querySelector('.labelWrap').style.visibility=playing?'hidden':'visible';const hud=$('intervalHud'),height=hud.offsetHeight||150;hud.style.top=clamp(top+(bottom-top-height)/2,0,Math.max(0,canvas.height-height))+'px';const active=playing||preparing;$('playIcon').textContent=active?'■':'▶';$('playText').textContent=preparing?'準備を中止':playing?'停止':'区間再生';$('playIntervalBtn').classList.toggle('stopping',active);$('playIntervalBtn').classList.toggle('primary',!active);const fullView=$('windowScaleSelect').value==='all';for(const id of['timeSlider','timePrevBtn','timeNextBtn'])$(id).disabled=active||fullView;$('windowScaleSelect').disabled=active;showHead()}
   function currentCursor(){if(playing&&ac)cursor=clamp(anchorSec+Math.max(0,ac.currentTime-anchorTime),intervalStart,intervalEnd);return cursor}
   function stopSources(){for(const source of sources){try{source.stop()}catch(_){}source.disconnect()}sources=[]}
   function stopPlayback(message='待機中'){currentCursor();playGeneration++;playing=preparing=false;cancelAnimationFrame(playFrame);playFrame=0;stopSources();if(!disposed){$('audioStatusText').textContent=message;updateLines()}}
@@ -374,9 +446,9 @@ main{flex:1;min-height:0;padding:5px}
   on($('motionOffsetSlider'),'input',e=>offset(e.target.value));on($('motionOffsetInput'),'change',e=>offset(e.target.value));on($('motionOffsetMinusBtn'),'click',()=>offset(motionOffset-1));on($('motionOffsetPlusBtn'),'click',()=>offset(motionOffset+1));on($('motionOffsetResetBtn'),'click',()=>offset(0));on($('motionScaleSelect'),'change',e=>scale(e.target.value));
   on($('timeSlider'),'input',e=>moveCenter(Number(e.target.value)));on($('timePrevBtn'),'click',()=>moveCenter(center-Math.max(1,span*.2)));on($('timeNextBtn'),'click',()=>moveCenter(center+Math.max(1,span*.2)));
   on(viewport,'wheel',e=>{e.preventDefault();moveCenter(center+Math.sign(e.deltaY)*Math.max(1,span/30))},{passive:false});
-  on($('windowScaleSelect'),'change',e=>{if(trackerLoading){e.target.value=span;return}if(playing||preparing)stopPlayback();gesture=null;const a=yToSec(ya),b=yToSec(yb),aAbove=ya<=yb;if(e.target.value==='all'){span=Math.max(1,duration);center=duration/2;ya=secToY(clamp(a,0,duration));yb=secToY(clamp(b,0,duration))}else{span=Number(e.target.value);center=clamp((a+b)/2,0,duration);const h=canvas.height,margin=Math.min(10,h/4),visible=span*(h-2*margin)/Math.max(1,h);if(Math.abs(b-a)<=visible){ya=clamp(secToY(a),margin,h-margin);yb=clamp(secToY(b),margin,h-margin)}else{ya=h*(aAbove?.32:.68);yb=h*(aAbove?.68:.32)}}$('timeSlider').max=duration;$('timeSlider').value=center;requestDraw();updateLines()});
-  on(viewport,'pointerdown',e=>{if(gesture||trackerLoading||e.button!==0||e.target.closest('#intervalHud'))return;const head=e.target.closest('#playheadLine'),measurement=e.target.closest('.measureLine');let kind='pan',resume=false;if(head){kind='head';resume=playing;currentCursor();if(playing||preparing)stopPlayback('位置を選択中')}else{if(playing||preparing)return;if(measurement)kind=measurement.id==='lineA'?'A':'B'}e.preventDefault();gesture={id:e.pointerId,kind,resume,y:e.clientY,center,cursor};try{viewport.setPointerCapture(e.pointerId)}catch(_){gesture=null;return}if(kind==='head')$('audioStatusText').textContent='位置を選択中'});
-  on(viewport,'pointermove',e=>{if(!gesture||e.pointerId!==gesture.id)return;e.preventDefault();const rect=canvas.getBoundingClientRect(),h=canvas.height,margin=Math.min(10,h/4);if(gesture.kind==='pan'){const next=clamp(gesture.center-(e.clientY-gesture.y)/Math.max(1,h)*span,0,duration);center=next;cursor=gesture.cursor+next-gesture.center;$('timeSlider').value=center;requestDraw();updateLines();return}const y=clamp(e.clientY-rect.top,margin,h-margin);if(gesture.kind==='A')ya=y;else if(gesture.kind==='B')yb=y;else{cursor=clamp(yToSec(y),intervalStart,intervalEnd);showHead();return}updateLines()});
+  on($('windowScaleSelect'),'change',e=>{if(trackerLoading){e.target.value=span;return}if(playing||preparing)stopPlayback();gesture=null;const C=currentCursor(),a=yToSec(ya),b=yToSec(yb),aAbove=ya<=yb;if(e.target.value==='all'){span=Math.max(1,duration);center=duration/2;ya=secToY(clamp(a,0,duration));yb=secToY(clamp(b,0,duration))}else{span=Number(e.target.value);center=clamp(C,0,duration);const h=canvas.height,margin=Math.min(10,h/4),visible=span*(h-2*margin)/Math.max(1,h);if(Math.abs(b-a)<=visible){ya=clamp(secToY(a),margin,h-margin);yb=clamp(secToY(b),margin,h-margin)}else{ya=h*(aAbove?.32:.68);yb=h*(aAbove?.68:.32)}const na=yToSec(ya),nb=yToSec(yb),lo=Math.min(na,nb),hi=Math.max(na,nb);if(C<lo){if(na<=nb)ya=secToY(C);else yb=secToY(C)}else if(C>hi){if(na>=nb)ya=secToY(C);else yb=secToY(C)}}cursor=C;$('timeSlider').max=duration;$('timeSlider').value=center;requestDraw();updateLines()});
+  on(viewport,'pointerdown',e=>{if(gesture||trackerLoading||e.button!==0||e.target.closest('#intervalHud'))return;const head=e.target.closest('#playheadLine'),measurement=e.target.closest('.measureLine');let kind='pan',resume=false;if(head){kind='head';resume=playing;currentCursor();if(playing||preparing)stopPlayback('位置を選択中')}else{if(playing||preparing)return;if(measurement)kind=measurement.id==='lineA'?'A':'B'}e.preventDefault();gesture={id:e.pointerId,kind,resume,y:e.clientY,center,cursor,a0:yToSec(ya),b0:yToSec(yb),c0:cursor};try{viewport.setPointerCapture(e.pointerId)}catch(_){gesture=null;return}if(kind==='head')$('audioStatusText').textContent='位置を選択中'});
+  on(viewport,'pointermove',e=>{if(!gesture||e.pointerId!==gesture.id)return;e.preventDefault();const rect=canvas.getBoundingClientRect(),h=canvas.height,margin=Math.min(10,h/4);if(gesture.kind==='pan'){const next=clamp(gesture.center-(e.clientY-gesture.y)/Math.max(1,h)*span,0,duration);center=next;cursor=gesture.cursor+next-gesture.center;$('timeSlider').value=center;requestDraw();updateLines();return}const y=clamp(e.clientY-rect.top,margin,h-margin);if(gesture.kind==='A')ya=y;else if(gesture.kind==='B')yb=y;else{const lo=Math.min(gesture.a0,gesture.b0),hi=Math.max(gesture.a0,gesture.b0),delta=clamp(yToSec(y)-gesture.c0,-lo,duration-hi);ya=secToY(gesture.a0+delta);yb=secToY(gesture.b0+delta);cursor=gesture.c0+delta;updateLines();return}updateLines()});
   function endGesture(e,cancelled=false){if(!gesture||e.pointerId!==gesture.id)return;const ended=gesture;gesture=null;try{viewport.releasePointerCapture(e.pointerId)}catch(_){}if(ended.kind==='head'){if(!cancelled&&ended.resume&&cursor<intervalEnd-.01)schedule(cursor);else{$('audioStatusText').textContent=cancelled?'位置選択を終了':'再生位置を設定';updateLines()}}}
   on(viewport,'pointerup',e=>endGesture(e));on(viewport,'pointercancel',e=>endGesture(e,true));on(viewport,'lostpointercapture',e=>endGesture(e,true));
   on($('playheadLine'),'keydown',e=>{if(!['ArrowUp','ArrowDown','Home','End'].includes(e.key))return;e.preventDefault();if(e.key==='ArrowUp')seekBy(e.shiftKey?-5:-1);else if(e.key==='ArrowDown')seekBy(e.shiftKey?5:1);else seekBy((e.key==='Home'?intervalStart:intervalEnd)-currentCursor())});
