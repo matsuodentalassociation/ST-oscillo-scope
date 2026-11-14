@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="st-scope-build" content="ST-Oscillograph-V49-20261114-01">
-<title>ST-Oscillograph-V49-20261114-01</title>
+<meta name="st-scope-build" content="ST-Oscillograph-V50-20261114-01">
+<title>ST-Oscillograph-V50-20261114-01</title>
 <style>
 *{box-sizing:border-box}
 body{margin:0;height:100dvh;display:flex;flex-direction:column;overflow:hidden;background:#f8fafc;color:#1e293b;font:11px Consolas,"Noto Sans JP",monospace;user-select:none}
@@ -28,9 +28,6 @@ header#appHeader{display:block;flex:none;width:min(1120px,calc(100% - 10px));mar
 #timelineCompression{margin-left:auto}
 .tabs{margin-left:0;display:flex;gap:4px;flex:0 0 auto}
 .tabs button[aria-selected=true]{background:#1e40af;color:#fff}
-#updatePanel{display:flex;align-items:center;gap:4px}
-#updateStatus{display:none}
-#applyUpdateBtn[hidden]{display:none}
 .subBar>label{flex:1 1 190px;min-width:190px}
 .patientField{height:25px;width:100%;min-width:0;flex:1;border:1px solid #cbd5e1;border-radius:4px;padding:3px 6px;color:#64748b;background:#fff}
 main{flex:1;min-height:0;padding:5px}
@@ -102,7 +99,7 @@ main,#reportPage{display:block!important;height:auto;overflow:visible;padding:0}
 <body>
 <header id="appHeader">
 <div class="topBar">
-  <div class="brand">ST-Oscillograph-V49</div>
+  <div class="brand">ST-Oscillograph-V50</div>
   <label>ログ種別
     <select id="logTypeSelect" aria-label="ログ種別">
       <option value="tracker">睡眠ログ</option>
@@ -121,11 +118,6 @@ main,#reportPage{display:block!important;height:auto;overflow:visible;padding:0}
       <option value="all">全表示</option>
     </select>
   </label>
-  <div id="updatePanel">
-    <button id="checkUpdateBtn" type="button">更新を確認</button>
-    <span id="updateStatus" role="status" aria-live="polite"></span>
-    <button id="applyUpdateBtn" type="button" hidden>更新</button>
-  </div>
   <input id="masterInput" type="file" accept=".json,.zip" hidden>
   <input id="fitbitInput" type="file" accept=".json,.zip" multiple hidden>
 </div>
@@ -180,7 +172,6 @@ main,#reportPage{display:block!important;height:auto;overflow:visible;padding:0}
     <input id="motionOffsetInput" aria-label="体動位置補正秒の数値入力" type="number" min="-3600" max="3600" step="0.5" value="0"><span>秒</span>
     <button id="motionOffsetMinusBtn">−1秒</button><button id="motionOffsetPlusBtn">＋1秒</button><button id="motionOffsetResetBtn">0に戻す</button><span id="motionOffsetDirection">補正なし</span>
   </div>
-  <input type="hidden" id="volumeGainSlider" value="1">
   <div id="dataNotice">青い波形は読み込んだ音声範囲のみ。環境音推定を差し引いた表示用波形です。波形倍率は再生音量やdB／Hz計測値を変更しません。dBは未校正の参考値です。</div>
 </div>
 </div>
@@ -207,16 +198,18 @@ main,#reportPage{display:block!important;height:auto;overflow:visible;padding:0}
 (() => {
 const $=id=>document.getElementById(id),canvas=$('waveCanvas'),ctx=canvas.getContext('2d'),viewport=$('screenViewport');
 const RATE=10,PEAK_RATE=200,SCALES=[.005,.01,.02,.05,.1,.2],COLORS={deep:'#4338ca',light:'#60a5fa',rem:'#a855f7',wake:'#f97316'};
+const LOOKAHEAD=3,LEAD=.4;
 const lifetime=new AbortController();
 let logs=[],bins=[],clips=[],metadata=[],motionPoints=[],motionPeak=0,fitbit=emptyFitbit();
 let startMs=Date.now(),duration=1,center=0,span=3600,motionOffset=0,motionSetting='auto',waveGain=1,motionMode='both';
 let ya=0,yb=0,cursor=0,intervalStart=0,intervalEnd=1,initialized=false,hasTracker=false;
 let trackerLoading=false,fitbitLoading=false,trackerGeneration=0,fitbitGeneration=0,playGeneration=0;
-let ac=null,sources=[],playing=false,preparing=false,anchorSec=0,anchorTime=0,playFrame=0,drawFrame=0,gesture=null,observer=null,disposed=false;
+let ac=null,sources=[],playing=false,anchorSec=0,anchorTime=0,playFrame=0,drawFrame=0,gesture=null,observer=null,disposed=false;
 let pendingTrackerFile=null,pendingFitbitFiles=[];
-let refClip=null,refSource=null,refPreparing=false,refGeneration=0;
+let refEntry=null,refSource=null,refPreparing=false,refGeneration=0;
 const on=(t,e,f,o={})=>t.addEventListener(e,f,{...o,signal:lifetime.signal});
 const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 function num(v,f=null){if(v===null||v===undefined||v==='')return f;const n=Number(v);return Number.isFinite(n)?n:f}
 function ms(v){if(v===null||v===undefined||v==='')return null;const n=Number(v);if(Number.isFinite(n))return n<1e11?n*1000:n;const t=Date.parse(v);return Number.isFinite(t)?t:null}
 function clock(s){const d=new Date(startMs+s*1000);return[d.getHours(),d.getMinutes(),d.getSeconds()].map(v=>String(v).padStart(2,'0')).join(':')}
@@ -226,11 +219,7 @@ function save(k,v){try{localStorage.setItem(k,String(v))}catch(_){}}
 function stored(k,d){try{return localStorage.getItem(k)??d}catch(_){return d}}
 function emptyFitbit(){return{stages:[],bpm:[],spo2:[],temperature:[],score:null,spo2Range:null,sourceCount:0}}
 
-/* ===== 音声（Int16で保持し、メモリを節約） =====
-   1) 読込時は AudioContext を作らない
-   2) 音声は Int16 の数値で保持する
-   3) 再生時は、必要な区間だけを Float32 に変換して AudioBuffer を作る
-   4) 再生ボタンのクリック処理の中で、await せずに同期的に再生を開始する */
+/* ===== 音声デコード（音声は保持せず、必要な時だけ読んで展開する） ===== */
 function audioContext(){
   if(!ac){
     const C=window.AudioContext||window.webkitAudioContext;
@@ -239,6 +228,7 @@ function audioContext(){
   }
   return ac
 }
+// クリックの同期部分で呼ぶ。await はしない。
 function unlockAudioSync(){
   const c=audioContext();
   try{if(navigator.audioSession)navigator.audioSession.type='playback'}catch(_){}
@@ -288,6 +278,7 @@ function decodePcmWav(data){
   }
   return{rate,channels:chans}
 }
+// 音声バイト列を {rate, channels:[Int16Array...]} に展開する（呼び出し側が使い終わったら捨てる）
 async function decodeClip(data){
   const fmt=wavFmtInfo(data);
   if(fmt&&fmt.tag===0x11){
@@ -305,6 +296,7 @@ async function decodeClip(data){
     throw error
   }
 }
+// 展開済みの Int16 から、指定区間だけの AudioBuffer を作る
 function toAudioBuffer(context,clip,offsetSec=0,lengthSec=null){
   const total=clip.channels[0].length,rate=clip.rate;
   const from=clamp(Math.floor(offsetSec*rate),0,total);
@@ -318,6 +310,7 @@ function toAudioBuffer(context,clip,offsetSec=0,lengthSec=null){
   }
   return b
 }
+// 解析用に AudioBuffer と同じ形の入れ物を作る
 function clipAsBuffer(clip){
   const len=clip.channels[0].length;
   return{
@@ -326,7 +319,7 @@ function clipAsBuffer(clip){
   }
 }
 
-window.STScope={busy:()=>trackerLoading||fitbitLoading||playing||preparing||!!gesture||!!refSource||refPreparing,dispose(){if(disposed)return;disposed=true;trackerGeneration++;fitbitGeneration++;stopPlayback();stopRef();lifetime.abort();observer?.disconnect();cancelAnimationFrame(drawFrame);ac?.close().catch(()=>{});logs=[];bins=[];clips=[];metadata=[];motionPoints=[]}};
+window.STScope={busy:()=>trackerLoading||fitbitLoading||playing||!!gesture||refPreparing||!!refSource,dispose(){if(disposed)return;disposed=true;trackerGeneration++;fitbitGeneration++;stopPlayback();stopRef();lifetime.abort();observer?.disconnect();cancelAnimationFrame(drawFrame);ac?.close().catch(()=>{});logs=[];bins=[];clips=[];metadata=[];motionPoints=[]}};
 
 /* ===== ログ解析 ===== */
 function path(v){let s=String(v??'').replace(/\\/g,'/');try{s=decodeURIComponent(s)}catch(_){}return s.replace(/^\.\//,'').split(/[?#]/)[0].toLowerCase()}
@@ -365,7 +358,7 @@ function parseTracker(data){
   $('patientNameField').value=p.name??p.patientName??'ログから取得'
 }
 
-/* ===== ZIP展開（非暗号化・格納/DEFLATEのみ） ===== */
+/* ===== ZIP（中央ディレクトリだけ読み、各ファイルは必要な時に部分的に読む） ===== */
 function inflate(input,expected){
   const LB=[3,4,5,6,7,8,9,10,11,13,15,17,19,23,27,31,35,43,51,59,67,83,99,115,131,163,195,227,258],LE=[0,0,0,0,0,0,0,0,1,1,1,1,2,2,2,2,3,3,3,3,4,4,4,4,5,5,5,5,0],DB=[1,2,3,4,5,7,9,13,17,25,33,49,65,97,129,193,257,385,513,769,1025,1537,2049,3073,4097,6145,8193,12289,16385,24577],DE=[0,0,0,0,1,1,2,2,3,3,4,4,5,5,6,6,7,7,8,8,9,9,10,10,11,11,12,12,13,13];
   let pos=0,buffer=0,count=0,used=0;const out=new Uint8Array(expected);
@@ -379,21 +372,55 @@ function inflate(input,expected){
     for(;;){const v=symbol(literal);if(v<256){put(v);continue}if(v===256)break;const li=v-257;if(li<0||li>=LB.length)throw Error('ZIP長さ符号が不正');const length=LB[li]+bits(LE[li]),di=symbol(distance);if(di>=DB.length)throw Error('ZIP距離符号が不正');const dist=DB[di]+bits(DE[di]);if(dist>used)throw Error('ZIPコピー距離が不正');for(let i=0;i<length;i++)put(out[used-dist])}}
   if(used!==expected)throw Error('ZIP展開サイズ不一致');return out.buffer
 }
-async function unzip(file){
-  const bytes=new Uint8Array(await file.arrayBuffer()),view=new DataView(bytes.buffer),u16=p=>view.getUint16(p,true),u32=p=>view.getUint32(p,true);let end=-1;
-  for(let p=bytes.length-22;p>=Math.max(0,bytes.length-65557);p--)if(u32(p)===0x06054b50&&p+22+u16(p+20)===bytes.length){end=p;break}
-  if(end<0)throw Error('ZIP中央ディレクトリがありません');if(u16(end+4)||u16(end+6))throw Error('分割ZIPは非対応');
-  const count=u16(end+10),offset=u32(end+16);if(count===65535||offset===0xffffffff)throw Error('ZIP64は非対応');
-  const entries=[],decoder=new TextDecoder();let p=offset;
-  for(let i=0;i<count;i++){if(p+46>bytes.length||u32(p)!==0x02014b50)throw Error('ZIP中央ディレクトリが不正');const flags=u16(p+8),method=u16(p+10),compressed=u32(p+20),expanded=u32(p+24),nl=u16(p+28),extra=u16(p+30),comment=u16(p+32),local=u32(p+42);if(p+46+nl+extra+comment>bytes.length)throw Error('ZIPヘッダーが不完全');const name=decoder.decode(bytes.subarray(p+46,p+46+nl));
-    if(!name.endsWith('/')&&/\.(json|wav|webm|mp3|ogg|m4a|mp4|aac)$/i.test(name)){if(flags&1)throw Error('暗号化ZIPは非対応');entries.push({name,async data(){if(local+30>bytes.length||u32(local)!==0x04034b50)throw Error('ZIPローカルヘッダーが不正');const begin=local+30+u16(local+26)+u16(local+28);if(begin+compressed>bytes.length||expanded>268435456)throw Error('ZIPエントリー破損または256MB超');const data=bytes.subarray(begin,begin+compressed);if(method===0){if(compressed!==expanded)throw Error('ZIP格納サイズ不一致');return data.slice().buffer}if(method===8)return inflate(data,expanded);throw Error('未対応ZIP方式: '+method)}})}p+=46+nl+extra+comment}
+const u16=(dv,p)=>dv.getUint16(p,true),u32=(dv,p)=>dv.getUint32(p,true);
+// ZIPは中央ディレクトリだけを読み、音声本体はファイルの一部だけを読む
+async function zipEntries(file){
+  const size=file.size,tailStart=Math.max(0,size-65557);
+  const tail=new DataView(await file.slice(tailStart,size).arrayBuffer());
+  let end=-1;
+  for(let p=tail.byteLength-22;p>=0;p--){
+    if(u32(tail,p)===0x06054b50&&p+22+u16(tail,p+20)===tail.byteLength){end=p;break}
+  }
+  if(end<0)throw Error('ZIP中央ディレクトリがありません');
+  if(u16(tail,end+4)||u16(tail,end+6))throw Error('分割ZIPは非対応');
+  const count=u16(tail,end+10),cdSize=u32(tail,end+12),cdOffset=u32(tail,end+16);
+  if(count===65535||cdOffset===0xffffffff||cdSize===0xffffffff)throw Error('ZIP64は非対応');
+  const cdBytes=new Uint8Array(await file.slice(cdOffset,cdOffset+cdSize).arrayBuffer());
+  const cd=new DataView(cdBytes.buffer);
+  const decoder=new TextDecoder(),entries=[];let p=0;
+  for(let i=0;i<count;i++){
+    if(p+46>cdBytes.length||u32(cd,p)!==0x02014b50)throw Error('ZIP中央ディレクトリが不正');
+    const flags=u16(cd,p+8),method=u16(cd,p+10),compressed=u32(cd,p+20),expanded=u32(cd,p+24),nl=u16(cd,p+28),extra=u16(cd,p+30),comment=u16(cd,p+32),local=u32(cd,p+42);
+    const name=decoder.decode(cdBytes.subarray(p+46,p+46+nl));
+    p+=46+nl+extra+comment;
+    if(name.endsWith('/')||!/\.(json|wav|webm|mp3|ogg|m4a|mp4|aac)$/i.test(name))continue;
+    if(flags&1)throw Error('暗号化ZIPは非対応');
+    if(method!==0&&method!==8)throw Error('未対応ZIP方式: '+method);
+    if(expanded>268435456)throw Error('ZIPエントリーが256MB超');
+    entries.push({
+      name,
+      async read(){
+        const head=new DataView(await file.slice(local,local+30).arrayBuffer());
+        if(u32(head,0)!==0x04034b50)throw Error('ZIPローカルヘッダーが不正');
+        const begin=local+30+u16(head,26)+u16(head,28);
+        const raw=await file.slice(begin,begin+compressed).arrayBuffer();
+        if(method===0)return raw;
+        return inflate(new Uint8Array(raw),expanded)
+      }
+    })
+  }
   return entries
 }
 const jsonText=text=>JSON.parse(text.replace(/^\uFEFF/,''));
 async function documentsFrom(file,isCurrent){
   if(/\.json$/i.test(file.name)){const obj=jsonText(await file.text());return isCurrent()?{entries:[],documents:[{name:file.name,obj}]}:null}
-  if(!/\.zip$/i.test(file.name))throw Error('JSONかZIPを選択してください');const entries=await unzip(file),documents=[];
-  for(const e of entries){if(!isCurrent())return null;if(!/\.json$/i.test(e.name))continue;try{documents.push({name:e.name,obj:jsonText(new TextDecoder().decode(await e.data()))})}catch(error){console.warn(e.name,error)}}
+  if(!/\.zip$/i.test(file.name))throw Error('JSONかZIPを選択してください');
+  const entries=await zipEntries(file),documents=[];
+  for(const e of entries){
+    if(!isCurrent())return null;
+    if(!/\.json$/i.test(e.name))continue;
+    try{documents.push({name:e.name,obj:jsonText(new TextDecoder().decode(await e.read()))})}catch(error){console.warn(e.name,error)}
+  }
   return isCurrent()?{entries,documents}:null
 }
 
@@ -412,7 +439,7 @@ function features(buffer){
   return{envelope,minimum,maximum,frequency,noiseFloor}
 }
 
-/* ===== IMA-ADPCM WAV（fmtタグ 0x11）の自前デコード。Int16 を返す ===== */
+/* ===== IMA-ADPCM WAV（fmtタグ 0x11）の自前デコード ===== */
 const IMA_STEP=[7,8,9,10,11,12,13,14,16,17,19,21,23,25,28,31,34,37,41,45,50,55,60,66,73,80,88,97,107,118,130,143,157,173,190,209,230,253,279,307,337,371,408,449,494,544,598,658,724,796,876,963,1060,1166,1282,1411,1552,1707,1878,2066,2272,2499,2749,3024,3327,3660,4026,4428,4871,5358,5894,6484,7132,7845,8630,9493,10442,11487,12635,13899,15289,16818,18500,20350,22385,24623,27086,29794,32767];
 const IMA_IDX=[-1,-1,-1,-1,2,4,6,8];
 const IMA_BLOCK=256;
@@ -471,10 +498,10 @@ function wavFmtInfo(data){
   return null
 }
 
-/* ===== 読込（音声は Int16 で保持。1本ずつ処理） ===== */
+/* ===== 読込（音声は1本ずつ読み、解析後は特徴量だけ残す） ===== */
 async function loadTracker(file,generation){
   const current=()=>generation===trackerGeneration&&!disposed;
-  stopPlayback();stopRef();refClip=null;$('refPlayBtn').disabled=true;$('refPlayBtn').textContent='基準音を再生';
+  stopPlayback();stopRef();refEntry=null;$('refPlayBtn').disabled=true;$('refPlayBtn').textContent='基準音を再生';
   $('loadStatusBadge').textContent='JSONを解析中…';
   const result=await documentsFrom(file,current);if(!result||!current())return;
   const{entries,documents}=result;
@@ -486,15 +513,9 @@ async function loadTracker(file,generation){
   metadata=[...merged.values(),...anonymous];
   for(const m of metadata){const s=clipStart(m,clipFiles(m)[0]);if(s!==null)duration=Math.max(duration,s+Math.max(0,num(m.durationSec??m.duration,0)))}
   center=duration/2;cursor=center;refresh();
+  // 基準音は読込時には展開せず、再生時に必要になったら読む
   const refFound=entries.find(e=>base(e.name)==='reference.wav');
-  if(refFound){
-    try{
-      const decoded=await decodeClip(await refFound.data());
-      if(!current())return;
-      refClip={rate:decoded.rate,channels:decoded.channels};
-      $('refPlayBtn').disabled=false
-    }catch(error){console.warn('基準音の読込:',error)}
-  }
+  if(refFound){refEntry=refFound;$('refPlayBtn').disabled=false}
   const audio=entries.filter(e=>/\.(wav|webm|mp3|ogg|m4a|mp4|aac)$/i.test(e.name)&&base(e.name)!=='reference.wav');
   const jsonTotal=entries.length?entries.filter(e=>/\.json$/i.test(e.name)).length:documents.length;
   const total=jsonTotal+audio.length;let done=jsonTotal;
@@ -503,23 +524,27 @@ async function loadTracker(file,generation){
   $('loadStatusBadge').textContent=`読込達成数 ${done}/${total} / 音声 0/${audio.length}`;
   for(let i=0;i<audio.length&&current();i++){
     const entry=audio[i];
+    let decoded=null;
     try{
       const meta=findMeta(entry.name),position=clipStart(meta,entry.name);
       if(position===null){unplaced++}
       else{
-        const data=await entry.data();if(!current())return;
-        const decoded=await decodeClip(data);if(!current())return;
+        const data=await entry.read();if(!current())return;
+        decoded=await decodeClip(data);if(!current())return;
         const probe=clipAsBuffer(decoded);
-        clips.push({start:position,length:decoded.channels[0].length/decoded.rate,rate:decoded.rate,channels:decoded.channels,name:entry.name,category:categoryOf(meta),...features(probe)})
+        const length=decoded.channels[0].length/decoded.rate;
+        const feature=features(probe);
+        clips.push({start:position,length,rate:decoded.rate,entry,name:entry.name,category:categoryOf(meta),...feature})
       }
     }catch(error){
       if(current()){failed++;console.warn(entry.name,error)}
     }finally{
+      decoded=null;
       audioDone++;done++;
       if(current()){
         $('loadStatusBadge').textContent=`読込達成数 ${done}/${total} / 音声 ${audioDone}/${audio.length} / 失敗 ${failed} / 時刻不明 ${unplaced}`;
         if(audioDone%10===0||audioDone===audio.length){clips.sort((a,b)=>a.start-b.start);refresh()}
-        await new Promise(resolve=>setTimeout(resolve,0))
+        await sleep(0)
       }
     }
   }
@@ -555,40 +580,35 @@ async function loadFitbit(files,generation){
   if(!current())return;fitbit=target;normalizeFitbit()
 }
 
-/* ===== 再生（すべて同期。途中で await しない） ===== */
-function stopSources(){for(const source of sources){try{source.stop()}catch(_){}try{source.disconnect()}catch(_){}}sources=[]}
+/* ===== 再生
+   クリック処理の同期部分で AudioContext を解錠し、そのあと区間内の音声を
+   数秒先まで順番に読んで展開し、1本ずつ予約する。展開したデータは再生後に捨てる。 ===== */
+function stopSources(){for(const s of sources){try{s.onended=null;s.stop()}catch(_){}try{s.disconnect()}catch(_){}}sources=[]}
 function stopPlayback(message='待機中'){
-  currentCursor();playGeneration++;playing=preparing=false;
+  currentCursor();playGeneration++;playing=false;
   cancelAnimationFrame(playFrame);playFrame=0;stopSources();
   if(!disposed){$('audioStatusText').textContent=message;updateLines()}
 }
 function schedule(s){
   stopPlayback();
-  const start=Math.max(0,clamp(s,intervalStart,intervalEnd)),end=Math.min(duration,intervalEnd);
-  cursor=clamp(start,intervalStart,intervalEnd);
+  const start=clamp(s,intervalStart,intervalEnd),end=Math.min(duration,intervalEnd);
+  cursor=start;
   if(end-start<=.05){stopPlayback('再生できる区間がありません');return}
-  const targets=clips.filter(c=>c.start+c.length>start&&c.start<end);
+  const targets=clips.filter(c=>c.start+c.length>start&&c.start<end).sort((a,b)=>a.start-b.start);
   if(!targets.length){stopPlayback('この区間に音声はありません');return}
   let context;
   try{context=unlockAudioSync()}catch(error){stopPlayback('再生失敗: '+error.message);return}
-  const baseTime=context.currentTime+.05;
-  anchorSec=start;anchorTime=baseTime;
-  for(const clip of targets){
-    const offset=Math.max(0,start-clip.start),when=baseTime+Math.max(0,clip.start-start),length=Math.min(clip.length-offset,end-Math.max(start,clip.start));
-    if(length<=0)continue;
-    const source=context.createBufferSource();
-    source.buffer=toAudioBuffer(context,clip,offset,length);
-    source.connect(context.destination);
-    sources.push(source);
-    source.start(when)
-  }
-  if(!sources.length){stopPlayback('再生できる音声がありません');return}
-  playing=true;preparing=false;
-  $('audioStatusText').textContent='再生中・黄色線をドラッグ可能';
+  const gen=playGeneration;
+  anchorSec=start;anchorTime=context.currentTime+LEAD;
+  playing=true;
+  $('audioStatusText').textContent='再生準備中…';
   updateLines();
-  const generation=playGeneration;
+  playLoop(gen,context,targets,start,end).catch(error=>{
+    console.error(error);
+    if(gen===playGeneration)stopPlayback('再生失敗: '+error.message)
+  });
   const tick=()=>{
-    if(generation!==playGeneration||!playing)return;
+    if(gen!==playGeneration||!playing)return;
     currentCursor();
     if(cursor>=end-.01){cursor=end;stopPlayback('再生終了');return}
     showHead();
@@ -596,24 +616,60 @@ function schedule(s){
   };
   tick()
 }
+async function playLoop(gen,context,targets,start,end){
+  for(const clip of targets){
+    if(gen!==playGeneration)return;
+    const offset=Math.max(0,start-clip.start),length=Math.min(clip.length-offset,end-Math.max(start,clip.start));
+    if(length<=0)continue;
+    const when=anchorTime+Math.max(0,clip.start-start);
+    // 再生時刻の少し前になるまで待ってから読み込む（メモリを抑えるため）
+    while(gen===playGeneration&&context.currentTime<when-LOOKAHEAD)await sleep(200);
+    if(gen!==playGeneration)return;
+    let decoded=null;
+    try{decoded=await decodeClip(await clip.entry.read())}catch(error){console.warn(clip.name,error);continue}
+    if(gen!==playGeneration)return;
+    const buffer=toAudioBuffer(context,decoded,offset,length);
+    decoded=null;
+    const source=context.createBufferSource();
+    source.buffer=buffer;
+    source.connect(context.destination);
+    const remove=()=>{sources=sources.filter(s=>s!==source);try{source.disconnect()}catch(_){}};
+    source.onended=remove;
+    sources.push(source);
+    const now=context.currentTime+.02;
+    if(when>=now){
+      source.start(when)
+    }else{
+      // 読み込みが遅れた場合は、途中から再生する
+      const skip=now-when;
+      if(skip>=length){remove();continue}
+      source.start(now,skip)
+    }
+    $('audioStatusText').textContent='再生中・黄色線をドラッグ可能';
+  }
+}
 function stopRef(){
   refGeneration++;refPreparing=false;
   if(refSource){
-    try{refSource.stop()}catch(_){}
+    try{refSource.onended=null;refSource.stop()}catch(_){}
     try{refSource.disconnect()}catch(_){}
     refSource=null
   }
   const b=$('refPlayBtn');if(b)b.textContent='基準音を再生'
 }
-function playRef(){
-  if(!refClip)return;
-  if(refSource){stopRef();$('audioStatusText').textContent='基準音を停止';return}
-  if(playing||preparing)stopPlayback('基準音のため区間再生を停止');
+async function playRef(){
+  if(!refEntry)return;
+  if(refSource||refPreparing){stopRef();$('audioStatusText').textContent='基準音を停止';return}
+  if(playing)stopPlayback('基準音のため区間再生を停止');
   let context;
   try{context=unlockAudioSync()}catch(error){$('audioStatusText').textContent='基準音の再生失敗: '+error.message;return}
+  const gen=++refGeneration;refPreparing=true;
+  $('refPlayBtn').textContent='基準音を準備中';
   try{
+    const decoded=await decodeClip(await refEntry.read());
+    if(gen!==refGeneration)return;
     const source=context.createBufferSource();
-    source.buffer=toAudioBuffer(context,refClip);
+    source.buffer=toAudioBuffer(context,decoded);
     source.connect(context.destination);
     source.onended=()=>{
       if(refSource===source){
@@ -628,13 +684,17 @@ function playRef(){
     $('refPlayBtn').textContent='基準音を停止';
     $('audioStatusText').textContent='基準音を再生中'
   }catch(error){
-    stopRef();
-    $('audioStatusText').textContent='基準音の再生失敗: '+error.message;
+    if(gen===refGeneration){
+      stopRef();
+      $('audioStatusText').textContent='基準音の再生失敗: '+error.message
+    }
     console.error(error)
+  }finally{
+    if(gen===refGeneration)refPreparing=false
   }
 }
 function seekBy(delta){
-  if(preparing||gesture||trackerLoading)return;
+  if(gesture||trackerLoading)return;
   const resume=playing,next=clamp(currentCursor()+delta,intervalStart,intervalEnd);
   if(resume){
     if(next>=intervalEnd-.01){stopPlayback('再生終了');cursor=next;showHead()}
@@ -786,14 +846,13 @@ function updateLines(){
   for(const id of['lineA','lineB'])$(id).querySelector('.labelWrap').style.visibility=playing?'hidden':'visible';
   const hud=$('intervalHud'),height=hud.offsetHeight||150;
   hud.style.top=clamp(top+(bottom-top-height)/2,0,Math.max(0,canvas.height-height))+'px';
-  const active=playing||preparing;
-  $('playIcon').textContent=active?'■':'▶';
-  $('playText').textContent=preparing?'準備を中止':playing?'停止':'区間再生';
-  $('playIntervalBtn').classList.toggle('stopping',active);
-  $('playIntervalBtn').classList.toggle('primary',!active);
+  $('playIcon').textContent=playing?'■':'▶';
+  $('playText').textContent=playing?'停止':'区間再生';
+  $('playIntervalBtn').classList.toggle('stopping',playing);
+  $('playIntervalBtn').classList.toggle('primary',!playing);
   const fullView=$('windowScaleSelect').value==='all';
-  for(const id of['timeSlider','timePrevBtn','timeNextBtn'])$(id).disabled=active||fullView;
-  $('windowScaleSelect').disabled=active;
+  for(const id of['timeSlider','timePrevBtn','timeNextBtn'])$(id).disabled=playing||fullView;
+  $('windowScaleSelect').disabled=playing;
   showHead()
 }
 function currentCursor(){if(playing&&ac)cursor=clamp(anchorSec+Math.max(0,ac.currentTime-anchorTime),intervalStart,intervalEnd);return cursor}
@@ -871,7 +930,7 @@ function page(showReport){
   if(showReport)report();else requestAnimationFrame(()=>{resize();requestDraw();updateLines()})
 }
 function moveCenter(v){
-  if(playing||preparing||gesture||trackerLoading||$('windowScaleSelect').value==='all')return;
+  if(playing||gesture||trackerLoading||$('windowScaleSelect').value==='all')return;
   const next=clamp(v,0,duration),delta=next-center;
   center=next;cursor+=delta;$('timeSlider').value=center;requestDraw();updateLines()
 }
@@ -914,7 +973,7 @@ on($('timeNextBtn'),'click',()=>moveCenter(center+Math.max(1,span*.2)));
 on(viewport,'wheel',e=>{e.preventDefault();moveCenter(center+Math.sign(e.deltaY)*Math.max(1,span/30))},{passive:false});
 on($('windowScaleSelect'),'change',e=>{
   if(trackerLoading){e.target.value=span;return}
-  if(playing||preparing)stopPlayback();
+  if(playing)stopPlayback();
   gesture=null;
   const C=currentCursor(),a=yToSec(ya),b=yToSec(yb),aAbove=ya<=yb;
   if(e.target.value==='all'){span=Math.max(1,duration);center=duration/2;ya=secToY(clamp(a,0,duration));yb=secToY(clamp(b,0,duration))}
@@ -934,11 +993,11 @@ on($('windowScaleSelect'),'change',e=>{
 on(viewport,'pointerdown',e=>{
   if(gesture||trackerLoading||e.button!==0||e.target.closest('#intervalHud'))return;
   const head=e.target.closest('#playheadLine'),measurement=e.target.closest('.measureLine');
-  let kind='pan',resume=false;
-  if(head){kind='head';resume=playing;currentCursor();if(playing||preparing)stopPlayback('位置を選択中')}
-  else{if(playing||preparing)return;if(measurement)kind=measurement.id==='lineA'?'A':'B'}
+  let kind='pan';
+  if(head){kind='head';currentCursor();if(playing)stopPlayback('位置を選択中')}
+  else{if(playing)return;if(measurement)kind=measurement.id==='lineA'?'A':'B'}
   e.preventDefault();
-  gesture={id:e.pointerId,kind,resume,y:e.clientY,center,cursor,a0:yToSec(ya),b0:yToSec(yb),c0:cursor};
+  gesture={id:e.pointerId,kind,y:e.clientY,center,cursor,a0:yToSec(ya),b0:yToSec(yb),c0:cursor};
   try{viewport.setPointerCapture(e.pointerId)}catch(_){gesture=null;return}
   if(kind==='head')$('audioStatusText').textContent='位置を選択中'
 });
@@ -982,12 +1041,12 @@ on($('playheadLine'),'keydown',e=>{
 
 /* ----- 再生ボタン ----- */
 on($('playIntervalBtn'),'click',()=>{
-  if(playing||preparing){stopPlayback('停止');return}
+  if(playing){stopPlayback('停止');return}
   if(gesture||trackerLoading)return;
   updateLines();
   schedule(cursor>=intervalEnd-.01?intervalStart:cursor)
 });
-on($('refPlayBtn'),'click',()=>playRef());
+on($('refPlayBtn'),'click',()=>{playRef()});
 on($('rewindBtn'),'click',()=>seekBy(-5));
 on($('forwardBtn'),'click',()=>seekBy(5));
 
