@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="st-scope-build" content="ST-Oscillograph-V48-20261114-01">
-<title>ST-Oscillograph-V48-20261114-01</title>
+<meta name="st-scope-build" content="ST-Oscillograph-V49-20261114-01">
+<title>ST-Oscillograph-V49-20261114-01</title>
 <style>
 *{box-sizing:border-box}
 body{margin:0;height:100dvh;display:flex;flex-direction:column;overflow:hidden;background:#f8fafc;color:#1e293b;font:11px Consolas,"Noto Sans JP",monospace;user-select:none}
@@ -102,7 +102,7 @@ main,#reportPage{display:block!important;height:auto;overflow:visible;padding:0}
 <body>
 <header id="appHeader">
 <div class="topBar">
-  <div class="brand">ST-Oscillograph-V48</div>
+  <div class="brand">ST-Oscillograph-V49</div>
   <label>ログ種別
     <select id="logTypeSelect" aria-label="ログ種別">
       <option value="tracker">睡眠ログ</option>
@@ -180,7 +180,6 @@ main,#reportPage{display:block!important;height:auto;overflow:visible;padding:0}
     <input id="motionOffsetInput" aria-label="体動位置補正秒の数値入力" type="number" min="-3600" max="3600" step="0.5" value="0"><span>秒</span>
     <button id="motionOffsetMinusBtn">−1秒</button><button id="motionOffsetPlusBtn">＋1秒</button><button id="motionOffsetResetBtn">0に戻す</button><span id="motionOffsetDirection">補正なし</span>
   </div>
-  <!-- 旧版の更新チェックが必須要素として数えるため、画面に出さない形で残す -->
   <input type="hidden" id="volumeGainSlider" value="1">
   <div id="dataNotice">青い波形は読み込んだ音声範囲のみ。環境音推定を差し引いた表示用波形です。波形倍率は再生音量やdB／Hz計測値を変更しません。dBは未校正の参考値です。</div>
 </div>
@@ -229,7 +228,7 @@ function emptyFitbit(){return{stages:[],bpm:[],spo2:[],temperature:[],score:null
 
 /* ===== 音声（Int16で保持し、メモリを節約） =====
    1) 読込時は AudioContext を作らない
-   2) 音声は Int16 の数値で保持する（Float32 の半分のメモリ）
+   2) 音声は Int16 の数値で保持する
    3) 再生時は、必要な区間だけを Float32 に変換して AudioBuffer を作る
    4) 再生ボタンのクリック処理の中で、await せずに同期的に再生を開始する */
 function audioContext(){
@@ -240,7 +239,6 @@ function audioContext(){
   }
   return ac
 }
-// クリック処理の最初の同期部分から呼ぶ。ここでは await しない。
 function unlockAudioSync(){
   const c=audioContext();
   try{if(navigator.audioSession)navigator.audioSession.type='playback'}catch(_){}
@@ -251,7 +249,6 @@ function unlockAudioSync(){
   if(c.state!=='running'){c.resume().catch(()=>{})}
   return c
 }
-// 読込時のデコード用（再生はしないので操作の外で使ってよい）
 function decodeWithOffline(data,rate){
   const O=window.OfflineAudioContext||window.webkitOfflineAudioContext;
   if(!O)return Promise.reject(Error('OfflineAudioContext非対応'));
@@ -265,7 +262,6 @@ function decodeWithOffline(data,rate){
     }catch(e){ng(e)}
   })
 }
-// Float32 の数値を Int16 に変換する（保持用）
 function toInt16(f32){
   const out=new Int16Array(f32.length);
   for(let i=0;i<f32.length;i++){
@@ -274,7 +270,6 @@ function toInt16(f32){
   }
   return out
 }
-// 16bit PCM WAV の自前デコード（標準デコードが失敗した時の予備）。Int16 のまま返す
 function decodePcmWav(data){
   const u8=data instanceof Uint8Array?data:new Uint8Array(data);
   const dv=new DataView(u8.buffer,u8.byteOffset,u8.byteLength);
@@ -293,7 +288,6 @@ function decodePcmWav(data){
   }
   return{rate,channels:chans}
 }
-// 音声を {rate, channels:[Int16Array...]} にする（AudioContext は使わない）
 async function decodeClip(data){
   const fmt=wavFmtInfo(data);
   if(fmt&&fmt.tag===0x11){
@@ -311,7 +305,6 @@ async function decodeClip(data){
     throw error
   }
 }
-// 保持している Int16 から、指定区間だけの再生用 AudioBuffer を作る（必要な分だけ展開）
 function toAudioBuffer(context,clip,offsetSec=0,lengthSec=null){
   const total=clip.channels[0].length,rate=clip.rate;
   const from=clamp(Math.floor(offsetSec*rate),0,total);
@@ -325,7 +318,6 @@ function toAudioBuffer(context,clip,offsetSec=0,lengthSec=null){
   }
   return b
 }
-// 解析用に AudioBuffer と同じ形の入れ物を作る（解析の間だけ Float32 を作る）
 function clipAsBuffer(clip){
   const len=clip.channels[0].length;
   return{
@@ -479,7 +471,7 @@ function wavFmtInfo(data){
   return null
 }
 
-/* ===== 読込（音声は Int16 で保持。AudioContext は使わない。音声は1本ずつ処理） ===== */
+/* ===== 読込（音声は Int16 で保持。1本ずつ処理） ===== */
 async function loadTracker(file,generation){
   const current=()=>generation===trackerGeneration&&!disposed;
   stopPlayback();stopRef();refClip=null;$('refPlayBtn').disabled=true;$('refPlayBtn').textContent='基準音を再生';
@@ -494,7 +486,6 @@ async function loadTracker(file,generation){
   metadata=[...merged.values(),...anonymous];
   for(const m of metadata){const s=clipStart(m,clipFiles(m)[0]);if(s!==null)duration=Math.max(duration,s+Math.max(0,num(m.durationSec??m.duration,0)))}
   center=duration/2;cursor=center;refresh();
-  // 基準音は読込時に用意しておく（再生ボタンでは待たずに鳴らすため）
   const refFound=entries.find(e=>base(e.name)==='reference.wav');
   if(refFound){
     try{
@@ -510,7 +501,6 @@ async function loadTracker(file,generation){
   if(!audio.length){$('loadStatusBadge').textContent=`読込完了 ${done}/${Math.max(1,total)} / ログ${logs.length}点 / 音声なし`;return}
   let audioDone=0,failed=0,unplaced=0;
   $('loadStatusBadge').textContent=`読込達成数 ${done}/${total} / 音声 0/${audio.length}`;
-  // 同時処理は1本だけ（メモリ使用量を抑えるため、順番に1ファイルずつ処理する）
   for(let i=0;i<audio.length&&current();i++){
     const entry=audio[i];
     try{
@@ -565,7 +555,7 @@ async function loadFitbit(files,generation){
   if(!current())return;fitbit=target;normalizeFitbit()
 }
 
-/* ===== 再生（すべて同期。再生ボタンのクリック処理の中で呼ぶ。途中で await しない） ===== */
+/* ===== 再生（すべて同期。途中で await しない） ===== */
 function stopSources(){for(const source of sources){try{source.stop()}catch(_){}try{source.disconnect()}catch(_){}}sources=[]}
 function stopPlayback(message='待機中'){
   currentCursor();playGeneration++;playing=preparing=false;
@@ -587,7 +577,6 @@ function schedule(s){
     const offset=Math.max(0,start-clip.start),when=baseTime+Math.max(0,clip.start-start),length=Math.min(clip.length-offset,end-Math.max(start,clip.start));
     if(length<=0)continue;
     const source=context.createBufferSource();
-    // 区間の分だけ展開して渡す（全体を展開しない）
     source.buffer=toAudioBuffer(context,clip,offset,length);
     source.connect(context.destination);
     sources.push(source);
@@ -976,7 +965,6 @@ function endGesture(e,cancelled=false){
   const ended=gesture;gesture=null;
   try{viewport.releasePointerCapture(e.pointerId)}catch(_){}
   if(ended.kind==='head'){
-    // ドラッグ後の自動再開は行わない（iPhoneで無音になりやすいため）。再生は再生ボタンから。
     $('audioStatusText').textContent=cancelled?'位置選択を終了':'再生位置を設定';
     updateLines()
   }
@@ -992,7 +980,7 @@ on($('playheadLine'),'keydown',e=>{
   else seekBy((e.key==='Home'?intervalStart:intervalEnd)-currentCursor())
 });
 
-/* ----- 再生ボタン（クリックの最初の同期部分で再生を開始する） ----- */
+/* ----- 再生ボタン ----- */
 on($('playIntervalBtn'),'click',()=>{
   if(playing||preparing){stopPlayback('停止');return}
   if(gesture||trackerLoading)return;
@@ -1013,34 +1001,6 @@ scale(stored('sleepScopeMotionScale','auto'));
 offset(num(stored('sleepScopeMotionOffsetSec','0'),0));
 updateGain();resize();refresh();
 requestAnimationFrame(()=>{resize();requestDraw()});
-})();
-</script>
-<script id="st-scope-updater" data-update-protocol="6">
-'use strict';
-(() => {
-const $=id=>document.getElementById(id),meta=name=>document.querySelector('meta[name="'+name+'"]')?.content||'';
-const build=meta('st-scope-build'),sourceURL=meta('st-scope-source-url')||location.href,settingsKey='st-scope-update-source:'+sourceURL.split(/[?#]/)[0];
-const status=$('updateStatus'),checkButton=$('checkUpdateBtn'),applyButton=$('applyUpdateBtn'),lifetime=new AbortController();
-const on=(t,e,f)=>t.addEventListener(e,f,{signal:lifetime.signal});
-let checking=false,applying=false,candidate=null,timer=0,lastCheck=0,requestController=null,fallbackTimer=0,objectURL='',disposed=false;
-function say(message){status.textContent=build+' / '+message;status.title=status.textContent}
-function savedSettings(){try{const v=JSON.parse(localStorage.getItem(settingsKey)||'{}');return v&&typeof v==='object'&&!Array.isArray(v)?v:{}}catch(_){return{}}}
-function validateConfig(c){if(typeof c.repo!=='string'||!/^[a-z0-9_.-]+\/[a-z0-9_.-]+$/i.test(c.repo))throw Error('リポジトリ設定が不正です');if(typeof c.path!=='string'||!c.path||c.path.startsWith('/')||/[\\?#\u0000-\u001f]/.test(c.path)||c.path.split('/').some(v=>!v||v==='.'||v==='..')||!/\.html?$/i.test(c.path))throw Error('対象HTMLのパスが不正です');if(typeof c.branch!=='string'||/[\u0000-\u001f]/.test(c.branch))throw Error('ブランチ設定が不正です');return c}
-function sourceConfig(){const saved=savedSettings(),url=new URL(sourceURL);let repo=meta('st-scope-repository')||saved.repo||'',path=meta('st-scope-path')||saved.path||'';if(!repo||!path){if(!/^[a-z0-9-]+\.github\.io$/i.test(url.hostname))throw Error('取得先設定がありません');const owner=url.hostname.split('.')[0],segments=url.pathname.split('/').filter(Boolean).map(decodeURIComponent);if(!segments.length){repo||=owner+'/'+owner+'.github.io';path||='index.html'}else if(segments.length===1&&/\.html?$/i.test(segments[0])){repo||=owner+'/'+owner+'.github.io';path||=segments[0]}else{repo||=owner+'/'+segments.shift();path||=segments.length?segments.join('/')+(url.pathname.endsWith('/')?'/index.html'):'index.html'}}const branch=document.querySelector('meta[name="st-scope-branch"]')?.content||saved.branch||'';return validateConfig({repo,path,branch,url:url.href})}
-const sourceKey=c=>[c.repo,c.path,c.branch].join('\n');
-function setMeta(doc,name,content){let e=doc.querySelector('meta[name="'+name+'"]');if(!e){e=doc.createElement('meta');e.name=name;doc.head.appendChild(e)}e.content=content}
-async function getText(address,accept){const parent=requestController;if(!parent)throw Error('更新要求が初期化されていません');const url=new URL(address);url.searchParams.set('cb',Date.now()+'-'+Math.random().toString(36).slice(2));const controller=new AbortController(),abort=()=>controller.abort();parent.signal.addEventListener('abort',abort,{once:true});if(parent.signal.aborted)abort();const timeout=setTimeout(abort,15000);try{const response=await fetch(url.href,{cache:'no-store',credentials:'omit',referrerPolicy:'no-referrer',signal:controller.signal,headers:{Accept:accept}});if(!response.ok)throw Error('HTTP '+response.status);return await response.text()}finally{clearTimeout(timeout);parent.signal.removeEventListener('abort',abort)}}
-const getJSON=async url=>JSON.parse(await getText(url,'application/vnd.github+json'));
-function validate(html){if(!/^\s*<!doctype html>/i.test(html)||!/<\/html>\s*$/i.test(html))throw Error('取得HTMLが不完全です');const doc=new DOMParser().parseFromString(html,'text/html'),remote=doc.querySelector('meta[name="st-scope-build"]')?.content,pattern=/^ST-Oscillograph-V(\d+)-(\d{8})-(\d+)$/,localVersion=build.match(pattern),remoteVersion=(remote||'').match(pattern);if(!remoteVersion)throw Error('取得先のビルド名が不正です');for(const id of['waveCanvas','masterInput','fitbitInput','playheadLine','waveformGainSlider','motionScaleSlider','motionModeSelect','refPlayBtn','updateStatus','checkUpdateBtn','applyUpdateBtn'])if(doc.querySelectorAll('[id="'+id+'"]').length!==1)throw Error('必須要素が欠損・重複しています: '+id);const scripts=doc.querySelectorAll('script#st-scope-updater');if(scripts.length!==1||Number(scripts[0].dataset.updateProtocol||0)<6)throw Error('V32対応の更新処理がありません');if(localVersion)for(let i=1;i<=3;i++){if(+remoteVersion[i]<+localVersion[i])throw Error('現在より古い版の適用を停止しました');if(+remoteVersion[i]>+localVersion[i])break}return{doc,remote}}
-function buttons(){checkButton.disabled=checking||applying;applyButton.hidden=!candidate;applyButton.disabled=checking||applying||!candidate}
-async function checkUpdate(manual=false){if(disposed||checking||applying)return;if(!manual&&Date.now()-lastCheck<60000)return;lastCheck=Date.now();checking=true;candidate=null;requestController=new AbortController();buttons();try{const config=sourceConfig();say('GitHubの最新コミットを確認中…');const api='https://api.github.com/repos/'+config.repo;let branch=config.branch;if(!branch){branch=(await getJSON(api)).default_branch;if(!branch)throw Error('既定ブランチを取得できません')}const commit=await getJSON(api+'/commits/'+encodeURIComponent(branch)),sha=commit.sha;if(!/^[a-f0-9]{40}$/i.test(sha||''))throw Error('最新コミットSHAが不正です');if(meta('st-scope-applied-commit')===sha&&meta('st-scope-applied-source')===sourceKey(config)){say('最新コミット適用済み '+sha.slice(0,7));return}const encodedPath=config.path.split('/').map(encodeURIComponent).join('/'),html=await getText('https://raw.githubusercontent.com/'+config.repo+'/'+sha+'/'+encodedPath,'text/html'),checked=validate(html);if(disposed)return;candidate={html,sha,config,remoteBuild:checked.remote};say('最新版取得済み '+checked.remote+' / '+sha.slice(0,7)+'。「更新」で切り替え')}catch(error){if(!disposed){candidate=null;say('更新確認失敗: '+error.message+'。現在の版を継続');console.warn('[ST-SCOPE update]',error)}}finally{checking=false;if(!disposed)buttons()}}
-const busy=()=>window.STScope?.busy()??true;
-function applyUpdate(){if(disposed||!candidate||checking||applying)return;if(busy()){say('再生・読込・ドラッグの終了後に適用してください');return}const selected=candidate;if(!confirm('GitHubのコミット '+selected.sha.slice(0,7)+' のHTMLを適用します。\n\n取得先: '+selected.config.repo+'/'+selected.config.path+'\n\n現在のログ・Fitbitデータ・未保存の所見は消えます。適用しますか？'))return;if(busy()){say('処理中のため適用を中止しました');return}try{const doc=validate(selected.html).doc;setMeta(doc,'st-scope-source-url',selected.config.url);setMeta(doc,'st-scope-repository',selected.config.repo);setMeta(doc,'st-scope-path',selected.config.path);setMeta(doc,'st-scope-branch',selected.config.branch);setMeta(doc,'st-scope-applied-commit',selected.sha);setMeta(doc,'st-scope-applied-source',sourceKey(selected.config));let baseElement=doc.querySelector('base');if(!baseElement)baseElement=doc.createElement('base');baseElement.href=selected.config.url;doc.head.prepend(baseElement);const html='<!DOCTYPE html>\n'+doc.documentElement.outerHTML;objectURL=URL.createObjectURL(new Blob([html],{type:'text/html;charset=utf-8'}));applying=true;buttons();say('取得したコミットのHTMLへ切り替え中…');location.replace(objectURL);fallbackTimer=setTimeout(()=>{applying=false;buttons();say('切り替わらない場合はブラウザのBlob遷移制限を確認してください');URL.revokeObjectURL(objectURL);objectURL=''},10000)}catch(error){applying=false;if(objectURL)URL.revokeObjectURL(objectURL);objectURL='';buttons();say('適用失敗: '+error.message);console.error('[ST-SCOPE apply]',error)}}
-on(checkButton,'click',()=>checkUpdate(true));on(applyButton,'click',applyUpdate);on(document,'visibilitychange',()=>{if(!document.hidden)checkUpdate()});on(window,'online',()=>checkUpdate());
-function startTimer(){clearInterval(timer);timer=setInterval(()=>{if(!document.hidden)checkUpdate()},5*60*1000)}
-on(window,'pagehide',e=>{clearInterval(timer);clearTimeout(fallbackTimer);requestController?.abort();if(!e.persisted){disposed=true;lifetime.abort();window.STScope?.dispose()}});
-on(window,'pageshow',e=>{if(e.persisted){applying=false;buttons();startTimer();checkUpdate()}});
-startTimer();checkUpdate();
 })();
 </script>
 </body>
