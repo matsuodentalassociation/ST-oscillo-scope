@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="st-scope-build" content="ST-Oscillograph-V47-20261114-01">
-<title>ST-Oscillograph-V47-20261114-01</title>
+<meta name="st-scope-build" content="ST-Oscillograph-V48-20261114-01">
+<title>ST-Oscillograph-V48-20261114-01</title>
 <style>
 *{box-sizing:border-box}
 body{margin:0;height:100dvh;display:flex;flex-direction:column;overflow:hidden;background:#f8fafc;color:#1e293b;font:11px Consolas,"Noto Sans JP",monospace;user-select:none}
@@ -102,7 +102,7 @@ main,#reportPage{display:block!important;height:auto;overflow:visible;padding:0}
 <body>
 <header id="appHeader">
 <div class="topBar">
-  <div class="brand">ST-Oscillograph-V47</div>
+  <div class="brand">ST-Oscillograph-V48</div>
   <label>ログ種別
     <select id="logTypeSelect" aria-label="ログ種別">
       <option value="tracker">睡眠ログ</option>
@@ -227,10 +227,11 @@ function save(k,v){try{localStorage.setItem(k,String(v))}catch(_){}}
 function stored(k,d){try{return localStorage.getItem(k)??d}catch(_){return d}}
 function emptyFitbit(){return{stages:[],bpm:[],spo2:[],temperature:[],score:null,spo2Range:null,sourceCount:0}}
 
-/* ===== 音声（iPhone対応） =====
+/* ===== 音声（Int16で保持し、メモリを節約） =====
    1) 読込時は AudioContext を作らない
-   2) 音声は読込時にデコードして数値（Float32）で保持する
-   3) 再生ボタンのクリック処理の中で、await せずに同期的に再生を開始する */
+   2) 音声は Int16 の数値で保持する（Float32 の半分のメモリ）
+   3) 再生時は、必要な区間だけを Float32 に変換して AudioBuffer を作る
+   4) 再生ボタンのクリック処理の中で、await せずに同期的に再生を開始する */
 function audioContext(){
   if(!ac){
     const C=window.AudioContext||window.webkitAudioContext;
@@ -264,7 +265,16 @@ function decodeWithOffline(data,rate){
     }catch(e){ng(e)}
   })
 }
-// 16bit PCM WAV の自前デコード（標準デコードが失敗した時の予備）
+// Float32 の数値を Int16 に変換する（保持用）
+function toInt16(f32){
+  const out=new Int16Array(f32.length);
+  for(let i=0;i<f32.length;i++){
+    const v=Math.round(f32[i]*32767);
+    out[i]=v>32767?32767:v<-32768?-32768:v
+  }
+  return out
+}
+// 16bit PCM WAV の自前デコード（標準デコードが失敗した時の予備）。Int16 のまま返す
 function decodePcmWav(data){
   const u8=data instanceof Uint8Array?data:new Uint8Array(data);
   const dv=new DataView(u8.buffer,u8.byteOffset,u8.byteLength);
@@ -277,25 +287,23 @@ function decodePcmWav(data){
   }
   if(dStart<0||bits!==16||!channels)throw Error('未対応のWAV形式です');
   const frames=Math.floor(dLen/(2*channels)),chans=[];
-  for(let c=0;c<channels;c++)chans.push(new Float32Array(frames));
+  for(let c=0;c<channels;c++)chans.push(new Int16Array(frames));
   for(let i=0;i<frames;i++)for(let c=0;c<channels;c++){
-    chans[c][i]=dv.getInt16(dStart+(i*channels+c)*2,true)/32768
+    chans[c][i]=dv.getInt16(dStart+(i*channels+c)*2,true)
   }
   return{rate,channels:chans}
 }
-// 音声を {rate, channels:[Float32Array...]} にする（AudioContext は使わない）
+// 音声を {rate, channels:[Int16Array...]} にする（AudioContext は使わない）
 async function decodeClip(data){
   const fmt=wavFmtInfo(data);
   if(fmt&&fmt.tag===0x11){
-    const pcm=decodeImaWav(data),f=new Float32Array(pcm.length);
-    for(let i=0;i<pcm.length;i++)f[i]=pcm[i]/32768;
-    return{rate:fmt.sampleRate||16000,channels:[f]}
+    return{rate:fmt.sampleRate||16000,channels:[decodeImaWav(data)]}
   }
   const rate=fmt&&fmt.sampleRate?fmt.sampleRate:44100;
   try{
     const buf=await decodeWithOffline(data,rate);
     const channels=[];
-    for(let i=0;i<buf.numberOfChannels;i++)channels.push(new Float32Array(buf.getChannelData(i)));
+    for(let i=0;i<buf.numberOfChannels;i++)channels.push(toInt16(buf.getChannelData(i)));
     return{rate:buf.sampleRate,channels}
   }catch(error){
     console.warn('標準デコード失敗、PCMとして読み直し:',error);
@@ -303,16 +311,27 @@ async function decodeClip(data){
     throw error
   }
 }
-// 保持していた数値から再生用の AudioBuffer を作る（再生ボタンの同期部分で使う）
-function toAudioBuffer(context,clip){
-  const len=clip.channels[0].length,b=context.createBuffer(clip.channels.length,len,clip.rate);
-  for(let i=0;i<clip.channels.length;i++)b.copyToChannel(clip.channels[i],i);
+// 保持している Int16 から、指定区間だけの再生用 AudioBuffer を作る（必要な分だけ展開）
+function toAudioBuffer(context,clip,offsetSec=0,lengthSec=null){
+  const total=clip.channels[0].length,rate=clip.rate;
+  const from=clamp(Math.floor(offsetSec*rate),0,total);
+  const want=lengthSec===null?total-from:Math.floor(lengthSec*rate);
+  const len=clamp(want,1,Math.max(1,total-from));
+  const b=context.createBuffer(clip.channels.length,len,rate),f=new Float32Array(len);
+  for(let i=0;i<clip.channels.length;i++){
+    const src=clip.channels[i];
+    for(let k=0;k<len;k++)f[k]=src[from+k]/32768;
+    b.copyToChannel(f,i)
+  }
   return b
 }
-// 解析用に AudioBuffer と同じ形の入れ物を作る
+// 解析用に AudioBuffer と同じ形の入れ物を作る（解析の間だけ Float32 を作る）
 function clipAsBuffer(clip){
   const len=clip.channels[0].length;
-  return{duration:len/clip.rate,length:len,sampleRate:clip.rate,numberOfChannels:clip.channels.length,getChannelData:i=>clip.channels[i]}
+  return{
+    duration:len/clip.rate,length:len,sampleRate:clip.rate,numberOfChannels:clip.channels.length,
+    getChannelData:i=>{const src=clip.channels[i],f=new Float32Array(src.length);for(let k=0;k<src.length;k++)f[k]=src[k]/32768;return f}
+  }
 }
 
 window.STScope={busy:()=>trackerLoading||fitbitLoading||playing||preparing||!!gesture||!!refSource||refPreparing,dispose(){if(disposed)return;disposed=true;trackerGeneration++;fitbitGeneration++;stopPlayback();stopRef();lifetime.abort();observer?.disconnect();cancelAnimationFrame(drawFrame);ac?.close().catch(()=>{});logs=[];bins=[];clips=[];metadata=[];motionPoints=[]}};
@@ -401,7 +420,7 @@ function features(buffer){
   return{envelope,minimum,maximum,frequency,noiseFloor}
 }
 
-/* ===== IMA-ADPCM WAV（fmtタグ 0x11）の自前デコード ===== */
+/* ===== IMA-ADPCM WAV（fmtタグ 0x11）の自前デコード。Int16 を返す ===== */
 const IMA_STEP=[7,8,9,10,11,12,13,14,16,17,19,21,23,25,28,31,34,37,41,45,50,55,60,66,73,80,88,97,107,118,130,143,157,173,190,209,230,253,279,307,337,371,408,449,494,544,598,658,724,796,876,963,1060,1166,1282,1411,1552,1707,1878,2066,2272,2499,2749,3024,3327,3660,4026,4428,4871,5358,5894,6484,7132,7845,8630,9493,10442,11487,12635,13899,15289,16818,18500,20350,22385,24623,27086,29794,32767];
 const IMA_IDX=[-1,-1,-1,-1,2,4,6,8];
 const IMA_BLOCK=256;
@@ -460,7 +479,7 @@ function wavFmtInfo(data){
   return null
 }
 
-/* ===== 読込（音声はデコードして数値で保持。AudioContext は使わない） ===== */
+/* ===== 読込（音声は Int16 で保持。AudioContext は使わない。音声は1本ずつ処理） ===== */
 async function loadTracker(file,generation){
   const current=()=>generation===trackerGeneration&&!disposed;
   stopPlayback();stopRef();refClip=null;$('refPlayBtn').disabled=true;$('refPlayBtn').textContent='基準音を再生';
@@ -489,31 +508,31 @@ async function loadTracker(file,generation){
   const jsonTotal=entries.length?entries.filter(e=>/\.json$/i.test(e.name)).length:documents.length;
   const total=jsonTotal+audio.length;let done=jsonTotal;
   if(!audio.length){$('loadStatusBadge').textContent=`読込完了 ${done}/${Math.max(1,total)} / ログ${logs.length}点 / 音声なし`;return}
-  let next=0,audioDone=0,failed=0,unplaced=0;
+  let audioDone=0,failed=0,unplaced=0;
   $('loadStatusBadge').textContent=`読込達成数 ${done}/${total} / 音声 0/${audio.length}`;
-  async function worker(){
-    while(current()){
-      const i=next++;if(i>=audio.length)return;
-      const entry=audio[i];
-      try{
-        const meta=findMeta(entry.name),position=clipStart(meta,entry.name);
-        if(position===null){unplaced++;continue}
+  // 同時処理は1本だけ（メモリ使用量を抑えるため、順番に1ファイルずつ処理する）
+  for(let i=0;i<audio.length&&current();i++){
+    const entry=audio[i];
+    try{
+      const meta=findMeta(entry.name),position=clipStart(meta,entry.name);
+      if(position===null){unplaced++}
+      else{
         const data=await entry.data();if(!current())return;
         const decoded=await decodeClip(data);if(!current())return;
-        clips.push({start:position,length:decoded.channels[0].length/decoded.rate,rate:decoded.rate,channels:decoded.channels,name:entry.name,category:categoryOf(meta),...features(clipAsBuffer(decoded))})
-      }catch(error){
-        if(current()){failed++;console.warn(entry.name,error)}
-      }finally{
-        audioDone++;done++;
-        if(current()){
-          $('loadStatusBadge').textContent=`読込達成数 ${done}/${total} / 音声 ${audioDone}/${audio.length} / 失敗 ${failed} / 時刻不明 ${unplaced}`;
-          if(audioDone%10===0||audioDone===audio.length){clips.sort((a,b)=>a.start-b.start);refresh()}
-          await new Promise(resolve=>setTimeout(resolve,0))
-        }
+        const probe=clipAsBuffer(decoded);
+        clips.push({start:position,length:decoded.channels[0].length/decoded.rate,rate:decoded.rate,channels:decoded.channels,name:entry.name,category:categoryOf(meta),...features(probe)})
+      }
+    }catch(error){
+      if(current()){failed++;console.warn(entry.name,error)}
+    }finally{
+      audioDone++;done++;
+      if(current()){
+        $('loadStatusBadge').textContent=`読込達成数 ${done}/${total} / 音声 ${audioDone}/${audio.length} / 失敗 ${failed} / 時刻不明 ${unplaced}`;
+        if(audioDone%10===0||audioDone===audio.length){clips.sort((a,b)=>a.start-b.start);refresh()}
+        await new Promise(resolve=>setTimeout(resolve,0))
       }
     }
   }
-  await Promise.all(Array.from({length:Math.min(2,audio.length)},worker));
   if(!current())return;
   clips.sort((a,b)=>a.start-b.start);refresh();
   $('loadStatusBadge').textContent=`読込完了 ${done}/${total} / ログ${logs.length}点 / 配置${clips.length}本 / 時刻不明${unplaced}本 / 失敗${failed}本`
@@ -568,10 +587,11 @@ function schedule(s){
     const offset=Math.max(0,start-clip.start),when=baseTime+Math.max(0,clip.start-start),length=Math.min(clip.length-offset,end-Math.max(start,clip.start));
     if(length<=0)continue;
     const source=context.createBufferSource();
-    source.buffer=toAudioBuffer(context,clip);
+    // 区間の分だけ展開して渡す（全体を展開しない）
+    source.buffer=toAudioBuffer(context,clip,offset,length);
     source.connect(context.destination);
     sources.push(source);
-    source.start(when,offset,length)
+    source.start(when)
   }
   if(!sources.length){stopPlayback('再生できる音声がありません');return}
   playing=true;preparing=false;
