@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="st-scope-build" content="ST-Oscillograph-V45-20261109-01">
-<title>ST-Oscillograph-V45-20261109-01</title>
+<meta name="st-scope-build" content="ST-Oscillograph-V46-20261109-01">
+<title>ST-Oscillograph-V46-20261109-01</title>
 <style>
 *{box-sizing:border-box}
 body{margin:0;height:100dvh;display:flex;flex-direction:column;overflow:hidden;background:#f8fafc;color:#1e293b;font:11px Consolas,"Noto Sans JP",monospace;user-select:none}
@@ -103,7 +103,7 @@ main{flex:1;min-height:0;padding:5px}
 <body>
 <header id="appHeader">
   <div class="topBar">
-    <div class="brand">ST-Oscillograph-V45</div>
+    <div class="brand">ST-Oscillograph-V46</div>
     <label>ログ種別
       <select id="logTypeSelect" aria-label="ログ種別">
         <option value="tracker">睡眠ログ</option>
@@ -216,7 +216,7 @@ main{flex:1;min-height:0;padding:5px}
   let trackerLoading=false,fitbitLoading=false,trackerGeneration=0,fitbitGeneration=0,playGeneration=0;
   let ac=null,sources=[],playing=false,preparing=false,anchorSec=0,anchorTime=0,playFrame=0,drawFrame=0,gesture=null,observer=null,disposed=false;
   let pendingTrackerFile=null,pendingFitbitFiles=[];
-  let refEntry=null,refSource=null;
+  let refEntry=null,refSource=null,refPreparing=false,refGeneration=0;
   const on=(t,e,f,o={})=>t.addEventListener(e,f,{...o,signal:lifetime.signal});
   const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
   function num(v,f=null){if(v===null||v===undefined||v==='')return f;const n=Number(v);return Number.isFinite(n)?n:f}
@@ -227,8 +227,64 @@ main{flex:1;min-height:0;padding:5px}
   function save(k,v){try{localStorage.setItem(k,String(v))}catch(_){}}
   function stored(k,d){try{return localStorage.getItem(k)??d}catch(_){return d}}
   function emptyFitbit(){return{stages:[],bpm:[],spo2:[],temperature:[],score:null,spo2Range:null,sourceCount:0}}
-  function audioContext(){if(!ac){const C=window.AudioContext||window.webkitAudioContext;if(!C)throw Error('Web Audio非対応');ac=new C()}return ac}
-  window.STScope={busy:()=>trackerLoading||fitbitLoading||playing||preparing||!!gesture||!!refSource,dispose(){if(disposed)return;disposed=true;trackerGeneration++;fitbitGeneration++;stopPlayback();stopRef();lifetime.abort();observer?.disconnect();cancelAnimationFrame(drawFrame);ac?.close().catch(()=>{});logs=[];bins=[];clips=[];metadata=[];motionPoints=[]}};
+  function audioContext(){
+    if(!ac){
+      const C=window.AudioContext||window.webkitAudioContext;
+      if(!C)throw Error('Web Audio非対応');
+      ac=new C()
+    }
+    return ac
+  }
+
+  // iPhoneでは、ユーザーの再生操作の中で音声を有効にする。
+  // 最初の await より前に resume() と無音バッファの再生を開始する。
+  async function activateAudio(context){
+    try{
+      if(navigator.audioSession){
+        navigator.audioSession.type='playback'
+      }
+    }catch(error){
+      console.warn('音声セッション設定:',error)
+    }
+
+    try{
+      const unlock=context.createBufferSource();
+      unlock.buffer=context.createBuffer(1,1,context.sampleRate);
+      unlock.connect(context.destination);
+      unlock.onended=()=>{
+        try{unlock.disconnect()}catch(_){}
+      };
+      unlock.start(0)
+    }catch(error){
+      console.warn('音声の有効化:',error)
+    }
+
+    let resumePromise;
+    try{
+      resumePromise=context.resume()
+    }catch(error){
+      throw Error('音声を有効にできません: '+error.message)
+    }
+
+    let timer;
+    try{
+      await Promise.race([
+        resumePromise,
+        new Promise((_,reject)=>{
+          timer=setTimeout(()=>{
+            reject(Error('音声の有効化がタイムアウトしました。再生ボタンをもう一度押してください'))
+          },8000)
+        })
+      ])
+    }finally{
+      clearTimeout(timer)
+    }
+
+    if(context.state!=='running'){
+      throw Error('音声を再開できませんでした（状態: '+context.state+'）')
+    }
+  }
+  window.STScope={busy:()=>trackerLoading||fitbitLoading||playing||preparing||!!gesture||!!refSource||refPreparing,dispose(){if(disposed)return;disposed=true;trackerGeneration++;fitbitGeneration++;stopPlayback();stopRef();lifetime.abort();observer?.disconnect();cancelAnimationFrame(drawFrame);ac?.close().catch(()=>{});logs=[];bins=[];clips=[];metadata=[];motionPoints=[]}};
   function path(v){let s=String(v??'').replace(/\\/g,'/');try{s=decodeURIComponent(s)}catch(_){}return s.replace(/^\.\//,'').split(/[?#]/)[0].toLowerCase()}
   const base=v=>path(v).split('/').pop();
   function rawLogs(d){return[d?.session?.timeSeriesLogs,d?.timeSeriesLogs,d?.session?.logs,d?.logs,d?.session?.measurements,d?.measurements,d?.session?.samples,d?.samples].find(Array.isArray)||[]}
@@ -429,9 +485,78 @@ main{flex:1;min-height:0;padding:5px}
   function currentCursor(){if(playing&&ac)cursor=clamp(anchorSec+Math.max(0,ac.currentTime-anchorTime),intervalStart,intervalEnd);return cursor}
   function stopSources(){for(const source of sources){try{source.stop()}catch(_){}source.disconnect()}sources=[]}
   function stopPlayback(message='待機中'){currentCursor();playGeneration++;playing=preparing=false;cancelAnimationFrame(playFrame);playFrame=0;stopSources();if(!disposed){$('audioStatusText').textContent=message;updateLines()}}
-  async function schedule(s){stopPlayback();const generation=playGeneration,current=()=>generation===playGeneration&&!disposed,start=Math.max(0,clamp(s,intervalStart,intervalEnd)),end=Math.min(duration,intervalEnd);cursor=clamp(start,intervalStart,intervalEnd);if(end-start<=.05){stopPlayback('再生できる区間がありません');return}const targets=clips.filter(c=>c.start+c.length>start&&c.start<end);if(!targets.length){stopPlayback('この区間に音声はありません');return}preparing=true;$('audioStatusText').textContent='音声準備中…';updateLines();try{const context=audioContext();await context.resume();if(!current())return;const buffers=new Array(targets.length);let next=0;async function worker(){while(current()){const i=next++;if(i>=targets.length)return;buffers[i]=await targets[i].loadBuffer()}}await Promise.all(Array.from({length:Math.min(2,targets.length)},worker));if(!current())return;const baseTime=context.currentTime+.05;anchorSec=start;anchorTime=baseTime;cursor=start;for(let i=0;i<targets.length;i++){const clip=targets[i],buffer=buffers[i],offset=Math.max(0,start-clip.start),segmentStart=Math.max(start,clip.start),length=Math.min(buffer.duration-offset,end-segmentStart);if(length<=0)continue;const source=context.createBufferSource();source.buffer=buffer;source.connect(context.destination);sources.push(source);source.start(baseTime+Math.max(0,clip.start-start),offset,length)}if(!sources.length){stopPlayback('再生できる音声がありません');return}preparing=false;playing=true;$('audioStatusText').textContent='再生中・黄色線をドラッグ可能';updateLines();function tick(){if(!current()||!playing)return;currentCursor();if(cursor>=end-.01){cursor=end;stopPlayback('再生終了');return}showHead();playFrame=requestAnimationFrame(tick)}tick()}catch(error){if(current()){stopPlayback('再生失敗: '+error.message);console.error(error)}}}
-  function stopRef(){if(refSource){try{refSource.stop()}catch(_){}try{refSource.disconnect()}catch(_){}refSource=null}const b=$('refPlayBtn');if(b)b.textContent='基準音を再生'}
-  async function playRef(){if(!refEntry)return;if(refSource){stopRef();return}try{const context=audioContext();await context.resume();const buffer=await decodeClipAudio(context,await refEntry.data());const source=context.createBufferSource();source.buffer=buffer;source.connect(context.destination);refSource=source;$('refPlayBtn').textContent='基準音を停止';source.onended=()=>{if(refSource===source){refSource=null;$('refPlayBtn').textContent='基準音を再生'}};source.start()}catch(error){refSource=null;$('refPlayBtn').textContent='基準音を再生';$('audioStatusText').textContent='基準音の再生失敗: '+error.message}}
+  async function schedule(s){stopPlayback();const generation=playGeneration,current=()=>generation===playGeneration&&!disposed,start=Math.max(0,clamp(s,intervalStart,intervalEnd)),end=Math.min(duration,intervalEnd);cursor=clamp(start,intervalStart,intervalEnd);if(end-start<=.05){stopPlayback('再生できる区間がありません');return}const targets=clips.filter(c=>c.start+c.length>start&&c.start<end);if(!targets.length){stopPlayback('この区間に音声はありません');return}preparing=true;$('audioStatusText').textContent='音声準備中…';updateLines();try{const context=audioContext();await activateAudio(context);if(!current())return;const buffers=new Array(targets.length);let next=0;async function worker(){while(current()){const i=next++;if(i>=targets.length)return;buffers[i]=await targets[i].loadBuffer()}}await Promise.all(Array.from({length:Math.min(2,targets.length)},worker));if(!current())return;const baseTime=context.currentTime+.05;anchorSec=start;anchorTime=baseTime;cursor=start;for(let i=0;i<targets.length;i++){const clip=targets[i],buffer=buffers[i],offset=Math.max(0,start-clip.start),segmentStart=Math.max(start,clip.start),length=Math.min(buffer.duration-offset,end-segmentStart);if(length<=0)continue;const source=context.createBufferSource();source.buffer=buffer;source.connect(context.destination);sources.push(source);source.start(baseTime+Math.max(0,clip.start-start),offset,length)}if(!sources.length){stopPlayback('再生できる音声がありません');return}preparing=false;playing=true;$('audioStatusText').textContent='再生中・黄色線をドラッグ可能';updateLines();function tick(){if(!current()||!playing)return;currentCursor();if(cursor>=end-.01){cursor=end;stopPlayback('再生終了');return}showHead();playFrame=requestAnimationFrame(tick)}tick()}catch(error){if(current()){stopPlayback('再生失敗: '+error.message);console.error(error)}}}
+  function stopRef(){
+    refGeneration++;
+    refPreparing=false;
+    if(refSource){
+      try{refSource.stop()}catch(_){}
+      try{refSource.disconnect()}catch(_){}
+      refSource=null
+    }
+    const b=$('refPlayBtn');
+    if(b)b.textContent='基準音を再生'
+  }
+
+  async function playRef(){
+    if(!refEntry)return;
+    if(refSource||refPreparing){
+      stopRef();
+      $('audioStatusText').textContent='基準音を停止';
+      return
+    }
+
+    const generation=++refGeneration;
+    const entry=refEntry;
+    const current=()=>generation===refGeneration&&!disposed;
+
+    refPreparing=true;
+    $('refPlayBtn').textContent='基準音の準備を中止';
+    $('audioStatusText').textContent='基準音を準備中…';
+
+    try{
+      const context=audioContext();
+
+      // タップの処理から直接呼び出す。
+      await activateAudio(context);
+      if(!current())return;
+
+      const data=await entry.data();
+      if(!current())return;
+
+      const buffer=await decodeClipAudio(context,data);
+      if(!current())return;
+
+      if(context.state!=='running'){
+        throw Error('音声が中断されました。もう一度再生してください')
+      }
+
+      const source=context.createBufferSource();
+      source.buffer=buffer;
+      source.connect(context.destination);
+      refSource=source;
+
+      source.onended=()=>{
+        try{source.disconnect()}catch(_){}
+        if(refSource===source){
+          refSource=null;
+          $('refPlayBtn').textContent='基準音を再生';
+          $('audioStatusText').textContent='基準音の再生終了'
+        }
+      };
+
+      source.start();
+      refPreparing=false;
+      $('refPlayBtn').textContent='基準音を停止';
+      $('audioStatusText').textContent='基準音を再生中'
+    }catch(error){
+      if(current()){
+        stopRef();
+        $('audioStatusText').textContent='基準音の再生失敗: '+error.message;
+        console.error(error)
+      }
+    }
+  }
   function seekBy(delta){if(preparing||gesture||trackerLoading)return;const resume=playing,next=clamp(currentCursor()+delta,intervalStart,intervalEnd);if(resume){if(next>=intervalEnd-.01){stopPlayback('再生終了');cursor=next;showHead()}else schedule(next)}else{cursor=next;showHead()}}
   function candidates(){if(!hasTracker)return{movement:0,low:0};const points=bins.length?bins.map(b=>({sec:b.start+b.length/2,value:b.max})):motionPoints.map(x=>({sec:x.sec,value:x.motion}));let movement=0,last=-Infinity;for(const p of points)if(p.value!==null&&p.value>=.025&&p.sec-last>=60){movement++;last=p.sec}let low=0,begin=null,previous=null;function finishLow(){if(begin!==null&&previous!==null&&previous-begin>=9)low++;begin=null}for(const x of logs){if(previous!==null&&x.sec-previous>2)finishLow();if(x.db!==null&&x.db<22){if(begin===null)begin=x.sec}else finishLow();previous=x.sec}finishLow();return{movement,low}}
   function stageChart(){const chart=$('stageChart');chart.width=Math.max(1,Math.round(chart.getBoundingClientRect().width));chart.height=110;const c=chart.getContext('2d');c.fillStyle='#fff';c.fillRect(0,0,chart.width,chart.height);c.font='11px monospace';if(!fitbit.stages.length){c.fillStyle='#64748b';c.fillText('睡眠ステージなし',10,25);return}let first=Infinity,last=-Infinity;for(const s of fitbit.stages){first=Math.min(first,s.start);last=Math.max(last,s.end)}const total=Math.max(1,last-first),width=Math.max(1,chart.width-68),rows={wake:0,rem:1,light:2,deep:3};for(const s of fitbit.stages){const x=60+(s.start-first)/total*width,right=60+(s.end-first)/total*width;c.fillStyle=COLORS[s.level];c.fillRect(x,rows[s.level]*25+5,Math.max(1,right-x),18)}c.fillStyle='#334155';for(const[label,row]of[['覚醒',0],['REM',1],['浅い',2],['深い',3]])c.fillText(label,7,row*25+19)}
