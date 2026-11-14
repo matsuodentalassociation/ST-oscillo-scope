@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="st-scope-build" content="ST-Oscillograph-V50-20261114-01">
-<title>ST-Oscillograph-V50-20261114-01</title>
+<meta name="st-scope-build" content="ST-Oscillograph-V51-20261114-01">
+<title>ST-Oscillograph-V51-20261114-01</title>
 <style>
 *{box-sizing:border-box}
 body{margin:0;height:100dvh;display:flex;flex-direction:column;overflow:hidden;background:#f8fafc;color:#1e293b;font:11px Consolas,"Noto Sans JP",monospace;user-select:none}
@@ -25,6 +25,7 @@ header#appHeader{display:block;flex:none;width:min(1120px,calc(100% - 10px));mar
 .status{max-width:150px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#1d4ed8}
 #loadStatusBadge{flex:1 1 145px;min-width:145px}
 #fitbitStatus{flex:0 1 auto}
+#lastFileText{flex:0 1 auto;max-width:260px;color:#b45309}
 #timelineCompression{margin-left:auto}
 .tabs{margin-left:0;display:flex;gap:4px;flex:0 0 auto}
 .tabs button[aria-selected=true]{background:#1e40af;color:#fff}
@@ -99,7 +100,7 @@ main,#reportPage{display:block!important;height:auto;overflow:visible;padding:0}
 <body>
 <header id="appHeader">
 <div class="topBar">
-  <div class="brand">ST-Oscillograph-V50</div>
+  <div class="brand">ST-Oscillograph-V51</div>
   <label>ログ種別
     <select id="logTypeSelect" aria-label="ログ種別">
       <option value="tracker">睡眠ログ</option>
@@ -107,8 +108,11 @@ main,#reportPage{display:block!important;height:auto;overflow:visible;padding:0}
     </select>
   </label>
   <button id="logSelectBtn" type="button">ログ選択</button>
+  <label>開始番号<input id="loadFromInput" aria-label="読込開始番号" type="number" min="1" step="1" value="1" style="width:64px"></label>
+  <label>件数<select id="loadCountSelect" aria-label="読込件数"><option value="all" selected>全部</option><option value="50">50本</option><option value="100">100本</option><option value="200">200本</option><option value="500">500本</option></select></label>
   <button id="logReadBtn" type="button">ログ読込み</button>
   <span id="loadStatusBadge" class="status" role="status">ログ未読込み</span>
+  <span id="lastFileText" class="status" role="status"></span>
   <span id="fitbitStatus" class="status" role="status">未読込</span>
   <label id="timelineCompression">タイムライン圧縮
     <select id="windowScaleSelect">
@@ -198,7 +202,7 @@ main,#reportPage{display:block!important;height:auto;overflow:visible;padding:0}
 (() => {
 const $=id=>document.getElementById(id),canvas=$('waveCanvas'),ctx=canvas.getContext('2d'),viewport=$('screenViewport');
 const RATE=10,PEAK_RATE=200,SCALES=[.005,.01,.02,.05,.1,.2],COLORS={deep:'#4338ca',light:'#60a5fa',rem:'#a855f7',wake:'#f97316'};
-const LOOKAHEAD=3,LEAD=.4;
+const LOOKAHEAD=3,LEAD=.4,LAST_FILE_KEY='sleepScopeLastFile';
 const lifetime=new AbortController();
 let logs=[],bins=[],clips=[],metadata=[],motionPoints=[],motionPeak=0,fitbit=emptyFitbit();
 let startMs=Date.now(),duration=1,center=0,span=3600,motionOffset=0,motionSetting='auto',waveGain=1,motionMode='both';
@@ -217,6 +221,7 @@ function formatInterval(s){const m=Math.floor(s/60);let rest=(s-m*60).toFixed(1)
 function datetime(s){const d=new Date(startMs+s*1000);return`${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')} ${clock(s)}`}
 function save(k,v){try{localStorage.setItem(k,String(v))}catch(_){}}
 function stored(k,d){try{return localStorage.getItem(k)??d}catch(_){return d}}
+function clearStored(k){try{localStorage.removeItem(k)}catch(_){}}
 function emptyFitbit(){return{stages:[],bpm:[],spo2:[],temperature:[],score:null,spo2Range:null,sourceCount:0}}
 
 /* ===== 音声デコード（音声は保持せず、必要な時だけ読んで展開する） ===== */
@@ -334,12 +339,13 @@ function clipList(d){
   return Object.entries(d).filter(([k,v])=>/\.(wav|webm|mp3|ogg|m4a|mp4|aac)$/i.test(k)&&v&&typeof v==='object').map(([k,v])=>({...v,audioFile:k}))
 }
 function categoryOf(m){const v=m?.category??m?.type??m?.label??m?.classification??m?.audio?.category;return typeof v==='object'?(v?.category??v?.label??v?.type??'unknown'):(v??'unknown')}
+// 開始時刻: メタデータ → ファイル名の秒数（clip_連番_秒数s_種別）の順
 function clipStart(m,name){
   for(const k of['startSec','elapsedSec','offsetSec','timeSec','startSeconds']){const n=num(m?.[k]);if(n!==null&&n>=0)return n}
   for(const k of['startMs','offsetMs','elapsedMs']){const n=num(m?.[k]);if(n!==null){const s=n>=1e11?(n-startMs)/1000:n/1000;if(s>=0)return s}}
   for(const k of['startedAt','startTime','startAt','timestamp','recordedAt','createdAt']){const t=ms(m?.[k]);if(t!==null&&t>=startMs)return(t-startMs)/1000}
   const id=num(m?.id);if(id!==null&&id>=1e9){const t=ms(id);if(t>=startMs)return(t-startMs)/1000}
-  const n=base(name),a=n.match(/^clip_(\d+(?:\.\d+)?)_[^/]+\.(wav|webm|mp3|ogg|m4a|mp4|aac)$/i),b=n.match(/(?:^|[_-])(\d+(?:\.\d+)?)s(?:[_-]|\.)/i),c=n.match(/(?:^|[_-])(\d{10,13})(?:[_-]|\.)/);
+  const n=base(name),a=n.match(/^clip_\d+_(\d+(?:\.\d+)?)s_/i),b=n.match(/(?:^|[_-])(\d+(?:\.\d+)?)s(?:[_-]|\.)/i),c=n.match(/(?:^|[_-])(\d{10,13})(?:[_-]|\.)/);
   if(a)return Number(a[1]);if(b)return Number(b[1]);if(c){const t=ms(Number(c[1]));if(t>=startMs)return(t-startMs)/1000}return null
 }
 function findMeta(name){let f=metadata.filter(m=>clipFiles(m).some(p=>path(p)===path(name)));if(!f.length)f=metadata.filter(m=>clipFiles(m).some(p=>base(p)===base(name)));if(f.length)return Object.assign({},...f);const stem=base(name).replace(/\.[^.]+$/,'');f=metadata.filter(m=>m.id!==undefined&&String(m.id).toLowerCase()===stem);return f.length===1?f[0]:{}}
@@ -424,13 +430,14 @@ async function documentsFrom(file,isCurrent){
   return isCurrent()?{entries,documents}:null
 }
 
-/* ===== 音声の包絡・最小最大・基準周波数 ===== */
+/* ===== 音声の包絡・最小最大・基準周波数（最小・最大は Int16 で保持して省メモリ化） ===== */
+const i16=v=>clamp(Math.round(v*32767),-32768,32767);
 function features(buffer){
   const channels=Array.from({length:buffer.numberOfChannels},(_,i)=>buffer.getChannelData(i)),mix=i=>{let v=0;for(const c of channels)v+=c[i];return v/channels.length},rate=buffer.sampleRate;
-  const envelope=new Float32Array(Math.ceil(buffer.duration*RATE)),minimum=new Float32Array(Math.ceil(buffer.duration*PEAK_RATE)),maximum=new Float32Array(minimum.length),frequency=new Float32Array(envelope.length);
+  const envelope=new Float32Array(Math.ceil(buffer.duration*RATE)),minimum=new Int16Array(Math.ceil(buffer.duration*PEAK_RATE)),maximum=new Int16Array(minimum.length),frequency=new Float32Array(envelope.length);
   for(let k=0;k<envelope.length;k++){let sum=0;const a=Math.floor(k*rate/RATE),b=Math.min(buffer.length,Math.floor((k+1)*rate/RATE));for(let i=a;i<b;i++){const v=mix(i);sum+=v*v}const rms=b>a?Math.sqrt(sum/(b-a)):0;envelope[k]=clamp(rms>1e-7?20*Math.log10(rms)+72:0,0,60)}
-  for(let k=0;k<minimum.length;k++){let low=1,high=-1;const a=Math.floor(k*rate/PEAK_RATE),b=Math.min(buffer.length,Math.floor((k+1)*rate/PEAK_RATE));for(let i=a;i<b;i++){const v=mix(i);low=Math.min(low,v);high=Math.max(high,v)}minimum[k]=a<b?low:0;maximum[k]=a<b?high:0}
-  const quiet=new Float32Array(envelope.length),block=PEAK_RATE/RATE;for(let k=0;k<quiet.length;k++){let peak=0;for(let i=k*block;i<Math.min((k+1)*block,minimum.length);i++)peak=Math.max(peak,Math.abs(minimum[i]),Math.abs(maximum[i]));quiet[k]=peak}quiet.sort();const noiseFloor=quiet.length?Math.min(.05,quiet[Math.floor((quiet.length-1)*.2)]*1.2):0;
+  for(let k=0;k<minimum.length;k++){let low=1,high=-1;const a=Math.floor(k*rate/PEAK_RATE),b=Math.min(buffer.length,Math.floor((k+1)*rate/PEAK_RATE));for(let i=a;i<b;i++){const v=mix(i);low=Math.min(low,v);high=Math.max(high,v)}minimum[k]=a<b?i16(low):0;maximum[k]=a<b?i16(high):0}
+  const quiet=new Float32Array(envelope.length),block=PEAK_RATE/RATE;for(let k=0;k<quiet.length;k++){let peak=0;for(let i=k*block;i<Math.min((k+1)*block,minimum.length);i++)peak=Math.max(peak,Math.abs(minimum[i]),Math.abs(maximum[i]));quiet[k]=peak/32767}quiet.sort();const noiseFloor=quiet.length?Math.min(.05,quiet[Math.floor((quiet.length-1)*.2)]*1.2):0;
   const n=2048,real=new Float64Array(n),imag=new Float64Array(n);
   for(let k=0;k<envelope.length;k++){if(envelope[k]<15)continue;const begin=clamp(Math.round(k*rate/RATE)-n/2,0,Math.max(0,buffer.length-n)),available=Math.min(n,buffer.length-begin);if(available<64)continue;let avg=0;for(let i=0;i<available;i++){real[i]=mix(begin+i);avg+=real[i]}avg/=available;for(let i=0;i<n;i++){real[i]=i<available?(real[i]-avg)*(.5-.5*Math.cos(2*Math.PI*i/(n-1))):0;imag[i]=0}
     let j=0;for(let i=1;i<n;i++){let bit=n>>1;while(j&bit){j^=bit;bit>>=1}j^=bit;if(i<j){[real[i],real[j]]=[real[j],real[i]];[imag[i],imag[j]]=[imag[j],imag[i]]}}
@@ -509,22 +516,31 @@ async function loadTracker(file,generation){
   candidates.sort((a,b)=>rank(b)-rank(a));if(!candidates.length)throw Error('セッションJSONがありません');
   parseTracker(candidates[0].obj);
   const merged=new Map(),anonymous=[];documents.sort((a,b)=>(base(a.name)==='clips.json')-(base(b.name)==='clips.json'));
-  for(const m of[...metadata,...documents.flatMap(d=>clipList(d.obj))]){const names=clipFiles(m),key=names.length?base(names[0]):m.id!==undefined?'id:'+m.id:null;if(!key){anonymous.push(m);continue}const clean=Object.fromEntries(Object.entries(m).filter(([,v])=>v!==null&&v!==undefined&&v!==''));merged.set(key,{...merged.get(key),...clean})}
+  for(const m of[...metadata,...documents.flatMap(d=>clipList(d.obj))]){const names=clipFiles(m),key=names.length?base(names[0]):m.id!==undefined?'id:'+m.id:null;if(!key){anonymous.push(m);continue}const clean=Object.fromEntries(Object.entries(m).filter(([,v])=>v!==null&&v!==undefined&&v!=='')));merged.set(key,{...merged.get(key),...clean})}
   metadata=[...merged.values(),...anonymous];
   for(const m of metadata){const s=clipStart(m,clipFiles(m)[0]);if(s!==null)duration=Math.max(duration,s+Math.max(0,num(m.durationSec??m.duration,0)))}
   center=duration/2;cursor=center;refresh();
   // 基準音は読込時には展開せず、再生時に必要になったら読む
   const refFound=entries.find(e=>base(e.name)==='reference.wav');
   if(refFound){refEntry=refFound;$('refPlayBtn').disabled=false}
-  const audio=entries.filter(e=>/\.(wav|webm|mp3|ogg|m4a|mp4|aac)$/i.test(e.name)&&base(e.name)!=='reference.wav');
+  // 音声は名前順（連番順）に並べ、指定された開始番号と件数の範囲だけ読む
+  const audioAll=entries.filter(e=>/\.(wav|webm|mp3|ogg|m4a|mp4|aac)$/i.test(e.name)&&base(e.name)!=='reference.wav');
+  audioAll.sort((a,b)=>base(a.name).localeCompare(base(b.name),undefined,{numeric:true}));
+  const fromNo=Math.max(1,Math.floor(num($('loadFromInput').value,1)));
+  const countValue=$('loadCountSelect').value;
+  const audio=countValue==='all'?audioAll.slice(fromNo-1):audioAll.slice(fromNo-1,fromNo-1+Number(countValue));
   const jsonTotal=entries.length?entries.filter(e=>/\.json$/i.test(e.name)).length:documents.length;
   const total=jsonTotal+audio.length;let done=jsonTotal;
-  if(!audio.length){$('loadStatusBadge').textContent=`読込完了 ${done}/${Math.max(1,total)} / ログ${logs.length}点 / 音声なし`;return}
+  if(!audio.length){$('loadStatusBadge').textContent=`読込完了 ${done}/${Math.max(1,total)} / ログ${logs.length}点 / 音声なし（対象範囲${fromNo}〜）`;return}
   let audioDone=0,failed=0,unplaced=0;
   $('loadStatusBadge').textContent=`読込達成数 ${done}/${total} / 音声 0/${audio.length}`;
   for(let i=0;i<audio.length&&current();i++){
     const entry=audio[i];
     let decoded=null;
+    // 落ちた場合に次回起動時に確認できるよう、処理中のファイル名を保存する
+    save(LAST_FILE_KEY,entry.name);
+    $('lastFileText').textContent='処理中: '+entry.name;
+    $('lastFileText').title=entry.name;
     try{
       const meta=findMeta(entry.name),position=clipStart(meta,entry.name);
       if(position===null){unplaced++}
@@ -550,6 +566,8 @@ async function loadTracker(file,generation){
   }
   if(!current())return;
   clips.sort((a,b)=>a.start-b.start);refresh();
+  clearStored(LAST_FILE_KEY);
+  $('lastFileText').textContent='';
   $('loadStatusBadge').textContent=`読込完了 ${done}/${total} / ログ${logs.length}点 / 配置${clips.length}本 / 時刻不明${unplaced}本 / 失敗${failed}本`
 }
 
@@ -753,7 +771,7 @@ function soundGraph(start,end,c){
     const flush=()=>{if(row>=0&&(low!==0||high!==0))line(mid+clamp(low*amp,-c.sw/2,c.sw/2),row+.5,mid+clamp(high*amp,-c.sw/2,c.sw/2),row+.5,'#2563eb',1)};
     for(let i=first;i<=last;i++){
       const y=Math.floor(secToY(clip.start+i/PEAK_RATE));if(y<0||y>=canvas.height)continue;
-      const lo=clip.minimum[i],hi=clip.maximum[i],l=Math.sign(lo)*Math.max(0,Math.abs(lo)-floor),h=Math.sign(hi)*Math.max(0,Math.abs(hi)-floor);
+      const lo=clip.minimum[i]/32767,hi=clip.maximum[i]/32767,l=Math.sign(lo)*Math.max(0,Math.abs(lo)-floor),h=Math.sign(hi)*Math.max(0,Math.abs(hi)-floor);
       if(y!==row){flush();row=y;low=l;high=h}else{low=Math.min(low,l);high=Math.max(high,h)}
     }
     flush()
@@ -1058,6 +1076,9 @@ motionMode=['both','bar','line'].includes(stored('sleepScopeMotionMode','both'))
 $('motionModeSelect').value=motionMode;
 scale(stored('sleepScopeMotionScale','auto'));
 offset(num(stored('sleepScopeMotionOffsetSec','0'),0));
+// 前回の読込が途中で止まった場合（ページが落ちた場合）、そのファイル名を表示する
+const previousFile=stored(LAST_FILE_KEY,'');
+if(previousFile)$('lastFileText').textContent='前回の停止候補: '+previousFile;
 updateGain();resize();refresh();
 requestAnimationFrame(()=>{resize();requestDraw()});
 })();
