@@ -6,525 +6,312 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <title>ST-Oscillograph v5.1.0 — 音響解析・波形モニタリング</title>
+  <title>ST-Oscillograph v5.1.1</title>
   <style>
     :root {
-      color-scheme: dark;
-      --background: #0c1214;
-      --surface-container-low: #111a1e;
-      --surface-container: #152024;
-      --surface-container-high: #1c2a30;
-      --on-surface: #edf3f5;
-      --on-surface-variant: #94a8b0;
-      --outline: #38515c;
-      --outline-variant: #213138;
-
+      --bg: #0c1317;
+      --surface: #131d23;
+      --surface-2: #19262e;
+      --border: #243640;
+      --on-surface: #e6eff3;
+      --on-surface-variant: #8fa6b2;
       --primary: #63c7d6;
-      --on-primary: #081214;
-      --primary-container: #163840;
-      --on-primary-container: #c7f0f7;
-      --tertiary: #87d69b;
-      --error: #f27474;
-
-      --data-1: #63c7d6; /* 音圧 */
-      --data-2: #f27474; /* 体動（上から下） */
-      --data-3: #e8b954; /* 基準音 / 再生カーソル */
-      --data-4: #f08c70; /* イベント帯 */
-      --spo2-color: #34d399; /* SpO2 エメラルド */
-      --hr-color: #f87171; /* 心拍 赤 */
-      --phasic-color: #60a5fa; /* 青 */
-      --tonic-color: #4ade80; /* 緑 */
-      --mixed-color: #fb923c; /* 橙 */
-
-      --font-sans: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Noto Sans JP", "Yu Gothic UI", sans-serif;
-      --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-
-      --rounded: 0.5rem;
-      --rounded-lg: 0.75rem;
-      --hairline: 1px solid var(--outline-variant);
-      --hairline-strong: 1px solid var(--outline);
-      --panel-gradient: linear-gradient(180deg, #162226 0%, #111a1e 100%);
+      --primary-dim: rgba(99, 199, 214, 0.14);
+      --amber: #e8b954;
+      --coral: #f27474;
+      --emerald: #34d399;
+      --radius: 10px;
     }
-
-    *, *::before, *::after { box-sizing: border-box; }
-    html, body {
-      margin: 0; padding: 0;
-      background-color: var(--background);
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Hiragino Kaku Gothic ProN", sans-serif;
+      background: var(--bg);
       color: var(--on-surface);
-      font-family: var(--font-sans);
-      font-size: 15px;
-      line-height: 1.55;
-      -webkit-font-smoothing: antialiased;
+      line-height: 1.5;
+      padding: 16px;
     }
+    .app-shell { max-width: 1360px; margin: 0 auto; display: flex; flex-direction: column; gap: 14px; }
 
-    button, input, select { font-family: inherit; font-size: inherit; color: inherit; }
-    :focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
-
-    .page-grid {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr);
-      gap: 1.25rem;
-      padding: 1.25rem;
-      max-width: 1280px;
-      margin: 0 auto;
-    }
-
-    /* Header */
+    /* ヘッダー */
     .app-header {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      justify-content: space-between;
-      gap: 1rem;
-      padding-bottom: 1rem;
-      border-bottom: var(--hairline);
-    }
-    .header-left { display: flex; flex-direction: column; gap: 0.35rem; }
-    .app-title {
-      margin: 0;
-      font-size: clamp(1.35rem, 1.1rem + 1vw, 1.85rem);
-      font-weight: 700;
-      display: flex;
-      align-items: center;
-      gap: 0.6rem;
-      flex-wrap: wrap;
-    }
-    .version-badge {
-      font-family: var(--font-mono);
-      font-size: 0.75rem;
-      font-weight: 600;
-      padding: 2px 8px;
-      border-radius: 999px;
-      background: var(--primary-container);
-      color: var(--on-primary-container);
-      border: 1px solid var(--primary);
-    }
-    .session-meta-badge {
-      font-family: var(--font-mono);
-      font-size: 0.8rem;
-      color: var(--on-surface-variant);
-    }
-    .header-actions {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.6rem;
-      align-items: center;
-    }
-
-    /* Dropzone & Panels */
-    .panel {
-      background: var(--panel-gradient);
-      border: var(--hairline);
-      border-radius: var(--rounded-lg);
-      padding: 1.25rem;
-    }
-    .dropzone {
-      border: 2px dashed var(--outline);
-      border-radius: var(--rounded-lg);
-      padding: 1rem 1.25rem;
-      background: var(--surface-container-low);
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      justify-content: space-between;
-      gap: 1rem;
-      transition: border-color 0.15s, background-color 0.15s;
-    }
-    .dropzone.is-dragover {
-      border-color: var(--primary);
-      background: color-mix(in srgb, var(--primary) 12%, var(--surface-container-low));
-    }
-
-    .section-head {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: baseline;
-      justify-content: space-between;
-      gap: 0.5rem 1rem;
-      margin-bottom: 1rem;
-    }
-    .section-title { margin: 0; font-size: 1.15rem; font-weight: 600; }
-    .section-note { font-family: var(--font-mono); font-size: 0.75rem; color: var(--on-surface-variant); }
-    .data-label {
-      display: block;
-      font-family: var(--font-mono);
-      font-size: 0.75rem;
-      color: var(--on-surface-variant);
-      margin-bottom: 0.25rem;
-    }
-
-    /* Buttons & Inputs */
-    .btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.4rem;
-      min-height: 40px;
-      padding: 0.45rem 0.9rem;
-      border-radius: var(--rounded);
-      border: var(--hairline-strong);
-      background: var(--surface-container);
-      color: var(--on-surface);
-      font-weight: 600;
-      font-size: 0.85rem;
-      cursor: pointer;
-      white-space: nowrap;
-    }
-    .btn:hover:not(:disabled) { background: var(--surface-container-high); }
-    .btn:disabled { opacity: 0.45; cursor: not-allowed; }
-    .btn-primary { background: var(--primary); color: var(--on-primary); border-color: var(--primary); }
-    .btn-primary:hover:not(:disabled) { background: var(--on-primary-container); }
-    .btn-active { background: var(--primary-container); color: var(--on-primary-container); border-color: var(--primary); }
-    .btn-danger {
-      background: color-mix(in srgb, var(--error) 14%, transparent);
-      color: var(--error);
-      border-color: color-mix(in srgb, var(--error) 45%, transparent);
-    }
-    .btn-sm { min-height: 34px; padding: 0.3rem 0.7rem; font-size: 0.78rem; }
-
-    .control-input, .control-select {
-      width: 100%;
-      min-height: 40px;
-      padding: 0.4rem 0.75rem;
-      background: var(--background);
-      border: var(--hairline-strong);
-      border-radius: var(--rounded);
-      color: var(--on-surface);
-      font-family: var(--font-mono);
-      font-size: 0.85rem;
-    }
-
-    input[type="range"] {
-      -webkit-appearance: none; appearance: none;
-      width: 100%; height: 6px;
-      background: var(--surface-container-high);
-      border-radius: 999px; outline: none; cursor: pointer;
-    }
-    input[type="range"]::-webkit-slider-thumb {
-      -webkit-appearance: none; appearance: none;
-      width: 18px; height: 18px; border-radius: 50%;
-      background: var(--primary); border: 2px solid var(--background);
-    }
-
-    .inline-status {
-      margin-top: 0.75rem;
-      padding: 0.6rem 0.9rem;
-      border-radius: var(--rounded);
-      border: var(--hairline);
-      background: var(--background);
-      font-size: 0.85rem;
-      color: var(--on-surface-variant);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 0.75rem;
-      flex-wrap: wrap;
-    }
-    .inline-status.is-active {
-      border-color: color-mix(in srgb, var(--primary) 45%, transparent);
-      background: color-mix(in srgb, var(--primary) 12%, transparent);
-      color: var(--on-surface);
-    }
-    .inline-status.is-error {
-      border-color: color-mix(in srgb, var(--error) 45%, transparent);
-      background: color-mix(in srgb, var(--error) 14%, transparent);
-      color: var(--on-surface);
-    }
-
-    /* KPI Grid */
-    .kpi-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 1rem;
-    }
-    .kpi-card {
-      background: var(--panel-gradient);
-      border: var(--hairline);
-      border-radius: var(--rounded-lg);
-      padding: 1rem 1.25rem;
-      display: flex;
-      flex-direction: column;
-      gap: 0.3rem;
-    }
-    .metric-value {
-      font-size: clamp(1.6rem, 1.3rem + 0.8vw, 2.1rem);
-      font-weight: 700;
-      font-variant-numeric: tabular-nums;
-      line-height: 1.1;
-    }
-    .metric-unit { font-family: var(--font-mono); font-size: 0.78rem; color: var(--on-surface-variant); margin-left: 4px; }
-    .metric-delta { font-family: var(--font-mono); font-size: 0.75rem; color: var(--on-surface-variant); }
-
-    /* Canvases & Lanes */
-    .canvas-well {
-      background: var(--background);
-      border: var(--hairline);
-      border-radius: var(--rounded);
-      padding: 0.5rem;
-      margin-bottom: 0.75rem;
-    }
-    .timeline-canvas { display: block; width: 100%; height: 190px; cursor: pointer; }
-    .sub-lane-canvas { display: block; width: 100%; height: 95px; cursor: pointer; }
-    .waveform-canvas { display: block; width: 100%; height: 120px; cursor: pointer; }
-    .dsp-canvas { display: block; width: 100%; height: 180px; }
-
-    .legend-row {
-      display: flex; flex-wrap: wrap; gap: 1rem;
-      font-family: var(--font-mono); font-size: 0.75rem; color: var(--on-surface-variant);
-      margin-top: 0.35rem;
-    }
-    .legend-item { display: inline-flex; align-items: center; gap: 6px; }
-    .swatch { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
-
-    .player-controls {
       display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
-      gap: 0.75rem; margin-bottom: 0.9rem;
+      gap: 12px; background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 14px 18px;
     }
-    .player-transport { display: flex; flex-wrap: wrap; align-items: center; gap: 0.5rem; }
+    .brand-group { display: flex; flex-direction: column; gap: 4px; }
+    .brand-top { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .brand-title { font-size: 1.25rem; font-weight: 700; letter-spacing: 0.02em; }
+    .badge-ver {
+      background: var(--primary-dim); color: var(--primary); border: 1px solid rgba(99,199,214,0.35);
+      font-size: 0.75rem; font-weight: 700; padding: 2px 8px; border-radius: 999px;
+    }
+    .meta-text { font-size: 0.85rem; color: var(--on-surface-variant); }
+    .github-bar { display: flex; align-items: center; gap: 8px; font-size: 0.78rem; color: var(--on-surface-variant); }
+
+    .header-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+    .btn {
+      background: var(--surface-2); color: var(--on-surface); border: 1px solid var(--border);
+      border-radius: 8px; padding: 8px 14px; font-size: 0.85rem; font-weight: 600;
+      cursor: pointer; transition: 0.15s;
+    }
+    .btn:hover:not(:disabled) { border-color: var(--primary); color: var(--primary); }
+    .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+    .btn-primary { background: var(--primary); color: #081216; border-color: var(--primary); }
+    .btn-primary:hover:not(:disabled) { opacity: 0.9; color: #081216; }
+    .btn-sm { padding: 4px 10px; font-size: 0.78rem; }
+    .select-input {
+      background: var(--surface-2); color: var(--on-surface); border: 1px solid var(--border);
+      border-radius: 8px; padding: 8px 10px; font-size: 0.85rem;
+    }
+
+    /* ドロップゾーン */
+    .dropzone {
+      display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px;
+      background: var(--surface); border: 1.5px dashed var(--border); border-radius: var(--radius);
+      padding: 14px 18px; transition: 0.2s;
+    }
+    .dropzone.is-dragover { border-color: var(--primary); background: var(--primary-dim); }
+    .dropzone-title { font-weight: 600; font-size: 0.95rem; }
+    .dropzone-sub { font-size: 0.8rem; color: var(--on-surface-variant); }
+    .inline-status {
+      padding: 6px 12px; border-radius: 8px; font-size: 0.82rem; background: var(--surface-2);
+      border: 1px solid var(--border); color: var(--on-surface-variant);
+    }
+    .inline-status.is-active { border-color: var(--primary); color: var(--primary); }
+    .inline-status.is-error { border-color: var(--coral); color: var(--coral); }
+
+    /* KPI */
+    .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
+    @media (max-width: 900px) { .kpi-grid { grid-template-columns: repeat(2, 1fr); } }
+    .kpi-card {
+      background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px;
+    }
+    .kpi-label { font-size: 0.8rem; color: var(--on-surface-variant); margin-bottom: 6px; }
+    .kpi-value { font-size: 1.6rem; font-weight: 700; display: flex; align-items: baseline; gap: 4px; }
+    .kpi-unit { font-size: 0.85rem; color: var(--on-surface-variant); font-weight: 400; }
+    .kpi-sub { font-size: 0.78rem; color: var(--on-surface-variant); margin-top: 4px; }
+
+    /* パネル共通 */
+    .panel {
+      background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px;
+      display: flex; flex-direction: column; gap: 12px;
+    }
+    .panel-header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
+    .panel-title { font-size: 1rem; font-weight: 700; }
+    .panel-sub { font-size: 0.8rem; color: var(--on-surface-variant); }
+
+    canvas { width: 100%; display: block; background: #091014; border: 1px solid var(--border); border-radius: 8px; }
+    #timeline-canvas { height: 190px; cursor: crosshair; }
+    #sub-lane-canvas { height: 110px; cursor: crosshair; margin-top: 8px; }
+    #waveform-canvas { height: 150px; }
+    #dsp-canvas { height: 120px; }
+
+    .legend-row { display: flex; flex-wrap: wrap; gap: 14px; font-size: 0.78rem; color: var(--on-surface-variant); }
+    .legend-item { display: flex; align-items: center; gap: 6px; }
+    .dot { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+
+    .controls-bar {
+      display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px;
+      padding-top: 4px;
+    }
+    .controls-left { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
     .time-readout {
-      font-family: var(--font-mono); font-size: 0.9rem;
-      padding: 0.35rem 0.65rem;
-      background: var(--background); border: var(--hairline); border-radius: var(--rounded);
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.88rem;
+      background: var(--surface-2); padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border);
     }
 
-    /* DSP & Events */
-    .dsp-events-grid {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr);
-      gap: 1.25rem;
-      align-items: start;
-    }
-    .filter-row {
-      display: grid; grid-template-columns: minmax(0, 1fr) 84px;
-      gap: 0.5rem; align-items: end;
-    }
-    .event-list {
-      max-height: 360px; overflow-y: auto;
-      display: flex; flex-direction: column; gap: 0.4rem;
-    }
+    /* 2カラム */
+    .two-col { display: grid; grid-template-columns: 1.4fr 1fr; gap: 14px; }
+    @media (max-width: 960px) { .two-col { grid-template-columns: 1fr; } }
+
+    .event-list { max-height: 220px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
     .event-row {
-      display: grid; grid-template-columns: 68px minmax(0, 1fr) auto;
-      gap: 0.6rem; align-items: center;
-      padding: 0.55rem 0.75rem;
-      background: var(--background); border: var(--hairline); border-radius: var(--rounded);
+      display: flex; align-items: center; justify-content: space-between; gap: 8px;
+      background: var(--surface-2); padding: 8px 12px; border-radius: 8px; font-size: 0.84rem;
     }
-    .event-row:hover { background: var(--surface-container-high); }
-    .event-time { font-family: var(--font-mono); font-size: 0.78rem; color: var(--primary); }
+    .event-row:hover { border: 1px solid var(--primary); }
+    .event-time { font-family: monospace; color: var(--amber); }
+    .status-chip { padding: 2px 8px; border-radius: 999px; font-size: 0.75rem; font-weight: 600; }
+    .chip-coral { background: rgba(242,116,116,0.18); color: var(--coral); }
+    .chip-amber { background: rgba(232,185,84,0.18); color: var(--amber); }
+    .chip-cyan { background: var(--primary-dim); color: var(--primary); }
+    .empty-state { color: var(--on-surface-variant); font-size: 0.85rem; padding: 18px; text-align: center; }
 
-    .status-chip {
-      display: inline-flex; align-items: center;
-      border-radius: var(--rounded); padding: 2px 7px;
-      font-family: var(--font-mono); font-size: 0.72rem; font-weight: 600;
-    }
-    .chip-coral { background: color-mix(in srgb, var(--data-4) 18%, transparent); color: var(--data-4); }
-    .chip-sage { background: color-mix(in srgb, var(--tertiary) 15%, transparent); color: var(--tertiary); }
-    .chip-amber { background: color-mix(in srgb, var(--data-3) 18%, transparent); color: var(--data-3); }
-    .chip-cyan { background: color-mix(in srgb, var(--primary) 15%, transparent); color: var(--primary); }
+    /* DSP */
+    .dsp-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    @media (max-width: 768px) { .dsp-grid { grid-template-columns: 1fr; } }
+    .dsp-control { background: var(--surface-2); padding: 10px 12px; border-radius: 8px; display: flex; flex-direction: column; gap: 6px; }
+    .dsp-top { display: flex; justify-content: space-between; font-size: 0.82rem; }
+    .dsp-num { width: 70px; background: var(--bg); color: var(--on-surface); border: 1px solid var(--border); border-radius: 6px; padding: 2px 6px; text-align: right; }
 
-    /* Table */
-    .table-wrap { width: 100%; overflow-x: auto; }
-    .data-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
-    .data-table th {
-      font-family: var(--font-mono); font-size: 0.75rem; color: var(--on-surface-variant);
-      text-align: left; padding: 0.55rem 0.75rem; border-bottom: var(--hairline-strong);
-    }
-    .data-table td { padding: 0.55rem 0.75rem; border-bottom: var(--hairline); }
-    .empty-state {
-      padding: 1.5rem; text-align: center; color: var(--on-surface-variant);
-      background: var(--background); border: var(--hairline); border-radius: var(--rounded);
-    }
-
-    @media (max-width: 900px) {
-      .dsp-events-grid { grid-template-columns: 1fr; }
-    }
+    /* テーブル */
+    table { width: 100%; border-collapse: collapse; font-size: 0.84rem; }
+    th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); }
+    th { color: var(--on-surface-variant); font-weight: 600; }
   </style>
 </head>
 <body>
-  <div class="page-grid">
-
-    <!-- 1. ヘッダー＆セッション読込 -->
+  <div class="app-shell">
+    <!-- ヘッダー -->
     <header class="app-header">
-      <div class="header-left">
-        <h1 class="app-title">
-          <span id="ui-app-title">ST-Oscillograph</span>
-          <span class="version-badge" id="ui-version-badge">v5.1.0</span>
-          <span class="session-meta-badge" id="ui-session-meta">セッション未読込</span>
-        </h1>
-        <div class="section-note" id="ui-github-status">最新ビルド確認中...</div>
+      <div class="brand-group">
+        <div class="brand-top">
+          <span class="brand-title" id="ui-app-title">ST-Oscillograph</span>
+          <span class="badge-ver">v5.1.1</span>
+          <span class="meta-text" id="ui-session-meta">セッション未読込</span>
+        </div>
+        <div class="github-bar">
+          <span id="ui-github-status">最新ビルド確認中...</span>
+          <button class="btn btn-sm" id="btn-apply-latest" style="display:none;">最新版を適用</button>
+        </div>
       </div>
-
       <div class="header-actions">
-        <input type="file" id="zip-input" accept=".zip,application/zip" hidden>
-        <input type="file" id="extra-log-input" accept=".json,.csv" hidden>
-        <button type="button" class="btn btn-primary" id="btn-load-zip">ZIPファイルを開く</button>
-        <select id="extra-log-type" class="control-select" style="width:auto; min-height:40px;" aria-label="追加ログ種別">
+        <input type="file" id="zip-input" accept=".zip" hidden>
+        <button class="btn btn-primary" id="btn-load-zip">ZIPファイルを開く</button>
+        <select class="select-input" id="extra-log-type">
           <option value="fitbit">Fitbit JSON (SpO₂/心拍)</option>
-          <option value="bruxism">食いしばり CSV (SJIS/UTF8)</option>
+          <option value="bruxism">食いしばり CSV</option>
         </select>
-        <button type="button" class="btn" id="btn-load-extra">追加ログ読込</button>
-        <button type="button" class="btn" id="btn-load-demo">デモデータ読込</button>
-        <button type="button" class="btn" id="btn-export-csv" disabled>CSV出力</button>
+        <input type="file" id="extra-log-input" accept=".json,.csv" hidden>
+        <button class="btn" id="btn-load-extra">追加ログ読込</button>
+        <button class="btn" id="btn-load-demo">デモデータ読込</button>
+        <button class="btn" id="btn-export-csv" disabled>CSV出力</button>
       </div>
     </header>
 
+    <!-- ドロップゾーン -->
     <section class="dropzone" id="dropzone">
       <div>
-        <strong id="ui-drop-title">計測ZIPファイル / 追加ログ（JSON・CSV）をここにドラッグ＆ドロップ</strong>
-        <div class="section-note" id="ui-drop-desc">
-          Web Share APIやスマホから受け取った .zip をそのまま読み込めます（完全ローカル処理・外部送信なし）
-        </div>
+        <div class="dropzone-title">計測ZIPファイル / 追加ログ（JSON・CSV）をここにドラッグ＆ドロップ</div>
+        <div class="dropzone-sub">Web Share APIやスマホから受け取った .zip をそのまま読み込めます（完全ローカル処理・外部送信なし）</div>
       </div>
-      <div class="inline-status" id="status-banner" style="margin-top:0;">
+      <div class="inline-status" id="status-banner">
         <span id="status-text">待機中：ZIPファイルまたはデモデータを読み込んでください。</span>
       </div>
     </section>
 
-    <!-- 2. サマリー指標（KPIカード） -->
-    <section class="kpi-grid" aria-label="サマリー指標">
-      <article class="kpi-card">
-        <span class="data-label" id="lbl-kpi-1">記録時間</span>
-        <div><span class="metric-value" id="kpi-duration">--</span><span class="metric-unit">分</span></div>
-        <div class="metric-delta" id="kpi-duration-sub">開始・終了時刻未取得</div>
-      </article>
-      <article class="kpi-card">
-        <span class="data-label" id="lbl-kpi-2">音圧変化イベント</span>
-        <div><span class="metric-value" id="kpi-events">--</span><span class="metric-unit">回</span></div>
-        <div class="metric-delta" id="kpi-events-sub">目安（解析者判断用）</div>
-      </article>
-      <article class="kpi-card">
-        <span class="data-label" id="lbl-kpi-3">いびき・体動の静穏率</span>
-        <div><span class="metric-value" id="kpi-quiet">--</span><span class="metric-unit">%</span></div>
-        <div class="metric-delta" id="kpi-quiet-sub">音圧・体動ともに少ない区間</div>
-      </article>
-      <article class="kpi-card">
-        <span class="data-label" id="lbl-kpi-4">生体・食いしばり連携</span>
-        <div><span class="metric-value" id="kpi-extra">--</span><span class="metric-unit">件</span></div>
-        <div class="metric-delta" id="kpi-extra-sub">SpO₂ / 心拍 / 食いしばり</div>
-      </article>
+    <!-- KPIカード -->
+    <section class="kpi-grid">
+      <div class="kpi-card">
+        <div class="kpi-label" id="lbl-kpi-1">計測時間</div>
+        <div class="kpi-value"><span id="kpi-duration">--</span><span class="kpi-unit">分</span></div>
+        <div class="kpi-sub" id="kpi-duration-sub">開始・終了時刻未取得</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label" id="lbl-kpi-2">音圧変化イベント</div>
+        <div class="kpi-value"><span id="kpi-events">--</span><span class="kpi-unit">回</span></div>
+        <div class="kpi-sub" id="kpi-events-sub">目安（解析者判断用）</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label" id="lbl-kpi-3">無音 / 低音圧比率</div>
+        <div class="kpi-value"><span id="kpi-quiet">--</span><span class="kpi-unit">%</span></div>
+        <div class="kpi-sub" id="kpi-quiet-sub">音圧・体動ともに少ない区間</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-label" id="lbl-kpi-4">生体・食いしばり連携</div>
+        <div class="kpi-value"><span id="kpi-extra">--</span><span class="kpi-unit">件</span></div>
+        <div class="kpi-sub" id="kpi-extra-sub">SpO₂ / 心拍 / 食いしばり</div>
+      </div>
     </section>
 
-    <!-- 3. タイムライン＆音声プレイヤー -->
+    <!-- 全体タイムライン -->
     <section class="panel">
-      <div class="section-head">
+      <div class="panel-header">
         <div>
-          <h2 class="section-title" id="ui-timeline-title">マルチモダリティ・タイムライン（上下対極描画）</h2>
-          <div class="section-note">下から上：音圧（中央50%＝基準音「あ〜」） ／ 上から下：体動G ／ 下段：同期レーン</div>
+          <div class="panel-title">マルチモダリティ・タイムライン（上下対極描画）</div>
+          <div class="panel-sub">下から上：音圧（中央50%＝基準音「あ〜」） / 上から下：体動G / 下段：同期レーン</div>
         </div>
-        <div class="player-transport">
-          <button type="button" class="btn btn-sm" id="btn-prev-event" disabled>◀ 前のイベント</button>
-          <button type="button" class="btn btn-sm" id="btn-next-event" disabled>次のイベント ▶</button>
-        </div>
-      </div>
-
-      <!-- メイン：音響（下から上）＆体動（上から下） -->
-      <div class="canvas-well">
-        <canvas id="timeline-canvas" class="timeline-canvas"></canvas>
-        <div class="legend-row">
-          <span class="legend-item"><span class="swatch" style="background:var(--data-1)"></span>音圧（下から上）</span>
-          <span class="legend-item"><span class="swatch" style="background:var(--data-2)"></span>体動G（上から下）</span>
-          <span class="legend-item"><span class="swatch" style="background:var(--data-3)"></span>基準音「あ〜」50%ライン / 再生位置</span>
-          <span class="legend-item"><span class="swatch" style="background:var(--data-4)"></span>検出イベント帯</span>
+        <div style="display:flex; gap:8px;">
+          <button class="btn btn-sm" id="btn-prev-event" disabled>◀ 前のイベント</button>
+          <button class="btn btn-sm" id="btn-next-event" disabled>次のイベント ▶</button>
         </div>
       </div>
 
-      <!-- サブレーン：SpO2 / 心拍 / 食いしばり（データ読込時に自動表示） -->
-      <div class="canvas-well" id="sub-lane-container" style="display:none;">
-        <canvas id="sub-lane-canvas" class="sub-lane-canvas"></canvas>
-        <div class="legend-row">
-          <span class="legend-item"><span class="swatch" style="background:var(--spo2-color)"></span>SpO₂ (90-100%)</span>
-          <span class="legend-item"><span class="swatch" style="background:var(--hr-color)"></span>心拍 (40-120bpm)</span>
-          <span class="legend-item"><span class="swatch" style="background:var(--phasic-color)"></span>Phasic</span>
-          <span class="legend-item"><span class="swatch" style="background:var(--tonic-color)"></span>Tonic</span>
-          <span class="legend-item"><span class="swatch" style="background:var(--mixed-color)"></span>Mixed</span>
-        </div>
+      <canvas id="timeline-canvas"></canvas>
+
+      <div id="sub-lane-container" style="display:none;">
+        <div class="panel-sub">同期サブレーン（緑線: SpO₂ 90-100% / 赤線: 心拍 40-120bpm / 帯: 食いしばり Phasic青・Tonic緑・Mixed橙）</div>
+        <canvas id="sub-lane-canvas"></canvas>
       </div>
 
-      <!-- 音声プレイヤー＆局所波形（±10秒拡大） -->
-      <div class="player-controls">
-        <div class="player-transport">
-          <button type="button" class="btn btn-primary" id="btn-play" disabled>▶ 再生</button>
-          <button type="button" class="btn" id="btn-play-ref" disabled>基準音「あ〜」再生</button>
-          <button type="button" class="btn" id="btn-filter-toggle" aria-pressed="true">フィルター: ON</button>
+      <div class="legend-row">
+        <span class="legend-item"><span class="dot" style="background:#63c7d6;"></span>音圧（下から上）</span>
+        <span class="legend-item"><span class="dot" style="background:#f27474;"></span>体動G（上から下）</span>
+        <span class="legend-item"><span class="dot" style="background:#e8b954;"></span>基準音「あ〜」50%ライン / 再生位置</span>
+        <span class="legend-item"><span class="dot" style="background:rgba(240,140,112,0.6);"></span>検出イベント帯</span>
+      </div>
+
+      <div class="controls-bar">
+        <div class="controls-left">
+          <button class="btn btn-primary" id="btn-play" disabled>▶ 再生</button>
+          <button class="btn" id="btn-play-ref" disabled>基準音「あ〜」再生</button>
+          <button class="btn" id="btn-filter-toggle" aria-pressed="true">フィルター: ON</button>
           <span class="time-readout" id="time-readout">00:00:00 / 00:00:00</span>
         </div>
-        <div class="player-transport">
-          <label class="section-note" for="volume-slider">音量</label>
-          <input type="range" id="volume-slider" min="0" max="2" step="0.05" value="1.0" style="width:110px;">
+        <div style="display:flex; align-items:center; gap:8px; font-size:0.82rem; color:var(--on-surface-variant);">
+          <span>音量</span>
+          <input type="range" id="volume-slider" min="0" max="2" step="0.05" value="1">
         </div>
-      </div>
-
-      <div class="canvas-well" style="margin-bottom:0;">
-        <canvas id="waveform-canvas" class="waveform-canvas"></canvas>
       </div>
     </section>
 
-    <!-- 4. ノイズ低減フィルター＆イベント一覧 -->
-    <section class="dsp-events-grid">
-      <article class="panel">
-        <div class="section-head">
-          <h2 class="section-title">リアルタイム音声フィルター（設定自動保存）</h2>
-          <button type="button" class="btn btn-sm" id="btn-reset-dsp">初期値に戻す</button>
+    <!-- 局所拡大 & イベント一覧 -->
+    <div class="two-col">
+      <section class="panel">
+        <div class="panel-header">
+          <div class="panel-title">局所拡大波形（再生位置の ±10秒）</div>
+          <div class="panel-sub">黄色線＝現在の再生位置</div>
         </div>
+        <canvas id="waveform-canvas"></canvas>
+      </section>
 
-        <div class="canvas-well">
-          <canvas id="dsp-canvas" class="dsp-canvas"></canvas>
-        </div>
-
-        <div style="display:grid; gap:0.85rem;">
-          <div class="filter-row">
-            <div>
-              <label class="data-label" for="dsp-hpf">ハイパスフィルター (HPF: 低域空調ノイズ除去)</label>
-              <input type="range" id="dsp-hpf" min="40" max="400" step="10" value="120">
-            </div>
-            <input type="number" class="control-input" id="dsp-hpf-val" value="120" min="40" max="400">
-          </div>
-          <div class="filter-row">
-            <div>
-              <label class="data-label" for="dsp-boost">呼吸・いびき帯域ブースト (Peaking Gain dB)</label>
-              <input type="range" id="dsp-boost" min="0" max="18" step="1" value="6">
-            </div>
-            <input type="number" class="control-input" id="dsp-boost-val" value="6" min="0" max="18">
-          </div>
-          <div class="filter-row">
-            <div>
-              <label class="data-label" for="dsp-lpf">ローパスフィルター (LPF: 高域サー音除去)</label>
-              <input type="range" id="dsp-lpf" min="800" max="6000" step="100" value="2800">
-            </div>
-            <input type="number" class="control-input" id="dsp-lpf-val" value="2800" min="800" max="6000">
-          </div>
-        </div>
-      </article>
-
-      <article class="panel">
-        <div class="section-head">
-          <h2 class="section-title">検出イベント一覧</h2>
-          <span class="section-note" id="event-count-note">0件</span>
+      <section class="panel">
+        <div class="panel-header">
+          <div class="panel-title">イベント一覧</div>
+          <div class="panel-sub" id="event-count-note">0件</div>
         </div>
         <div class="event-list" id="event-list">
-          <div class="empty-state">データを読み込むと、音圧変化や体動イベントがここに表示されます。</div>
+          <div class="empty-state">セッションを読み込むとイベントが表示されます。</div>
         </div>
-      </article>
+      </section>
+    </div>
+
+    <!-- DSPフィルター設定 -->
+    <section class="panel">
+      <div class="panel-header">
+        <div>
+          <div class="panel-title">再生DSPフィルター設定（自動保存）</div>
+          <div class="panel-sub">解析者の聞き取りやすい帯域に調整できます（元データは変更されません）</div>
+        </div>
+        <button class="btn btn-sm" id="btn-reset-dsp">初期値に戻す</button>
+      </div>
+      <div class="dsp-grid">
+        <div class="dsp-control">
+          <div class="dsp-top"><span>ハイパス (HPF Hz)</span><input type="number" class="dsp-num" id="dsp-hpf-val" value="120"></div>
+          <input type="range" id="dsp-hpf" min="40" max="400" value="120">
+        </div>
+        <div class="dsp-control">
+          <div class="dsp-top"><span>帯域ブースト (dB)</span><input type="number" class="dsp-num" id="dsp-boost-val" value="6"></div>
+          <input type="range" id="dsp-boost" min="0" max="18" value="6">
+        </div>
+        <div class="dsp-control">
+          <div class="dsp-top"><span>ローパス (LPF Hz)</span><input type="number" class="dsp-num" id="dsp-lpf-val" value="2800"></div>
+          <input type="range" id="dsp-lpf" min="800" max="6000" value="2800">
+        </div>
+      </div>
+      <canvas id="dsp-canvas"></canvas>
     </section>
 
-    <!-- 5. 解析履歴テーブル＆保存 -->
+    <!-- 解析履歴 -->
     <section class="panel">
-      <div class="section-head">
-        <div>
-          <h2 class="section-title">ブラウザ保存履歴（IndexedDB）</h2>
-          <div class="section-note">読み込んだセッションと調整したフィルター設定をローカルに保持します</div>
-        </div>
-        <button type="button" class="btn btn-danger btn-sm" id="btn-clear-history">履歴をすべて削除</button>
+      <div class="panel-header">
+        <div class="panel-title">解析履歴（ブラウザ内保存）</div>
+        <button class="btn btn-sm" id="btn-clear-history">履歴クリア</button>
       </div>
-      <div class="table-wrap">
-        <table class="data-table">
+      <div style="overflow-x:auto;">
+        <table>
           <thead>
-            <tr>
-              <th>日時</th>
-              <th>記録時間</th>
-              <th>イベント数</th>
-              <th>静穏率</th>
-              <th>ファイル名</th>
-            </tr>
+            <tr><th>日時</th><th>計測時間</th><th>イベント数</th><th>静穏率</th><th>ファイル名</th></tr>
           </thead>
           <tbody id="history-tbody">
             <tr><td colspan="5" style="text-align:center; color:var(--on-surface-variant);">保存された履歴はありません</td></tr>
@@ -532,122 +319,124 @@
         </table>
       </div>
     </section>
-
   </div>
+
 <script>
 (() => {
   'use strict';
 
-  /* =========================================================
-   * 1. 用語一括置換マップ（完成後の実務用語への差し替え用）
-   * ========================================================= */
+  const APP_VERSION = 'v5.1.1';
+  const GITHUB_REPO = 'matsuodentalassociation/ST-oscillo-scope';
+  const GITHUB_BRANCH = 'main';
+
   const LABELS = {
     appTitle: 'ST-Oscillograph',
     kpiDuration: '計測時間',
     kpiEvents: '音圧変化イベント',
     kpiQuiet: '無音 / 低音圧比率',
-    kpiSpo2: '基準音比ピーク / SpO₂最低',
-    unitEvent: '回',
-    eventAudioDrop: '音圧低下',
-    eventMotion: '体動',
-    eventBruxism: '食いしばり'
+    kpiExtra: '生体・食いしばり連携'
   };
 
-  /* =========================================================
-   * 2. アプリケーション状態
-   * ========================================================= */
   const state = {
-    session: null,      // { id, startMs, durationSec, refDb, refEnvDb, timeline: [{sec, db, motion}], events: [] }
-    extra: {
-      spo2: [],         // [{sec, val}]
-      hr: [],           // [{sec, val}]
-      bruxism: []       // [{sec, duration, type: 'Phasic'|'Tonic'|'Mixed', mvc}]
-    },
-    audioBuffer: null,
+    session: null,
+    extra: { spo2: [], hr: [], bruxism: [] },
     refAudioBuffer: null,
     isPlaying: false,
     playheadSec: 0,
-    playbackRate: 1.0,
-    dsp: { hpf: 80, lpf: 4000, gate: -40 },
-    history: []
+    filterOn: true,
+    volume: 1.0,
+    dsp: { hpf: 120, boost: 6, lpf: 2800 },
+    history: [],
+    latestCommitSha: null
   };
 
   let audioCtx = null;
-  let activeSource = null;
   let animFrameId = null;
   let lastTickTime = 0;
 
-  /* =========================================================
-   * 3. DOM要素参照
-   * ========================================================= */
   const $ = id => document.getElementById(id);
   const els = {
     meta: $('ui-session-meta'),
+    githubStatus: $('ui-github-status'),
+    btnApplyLatest: $('btn-apply-latest'),
     dropzone: $('dropzone'),
-    fileInput: $('file-input'),
-    logType: $('log-type-select'),
+    zipInput: $('zip-input'),
+    extraInput: $('extra-log-input'),
+    extraType: $('extra-log-type'),
     statusBanner: $('status-banner'),
+    statusText: $('status-text'),
     timelineCanvas: $('timeline-canvas'),
     subLaneContainer: $('sub-lane-container'),
     subLaneCanvas: $('sub-lane-canvas'),
     waveformCanvas: $('waveform-canvas'),
     dspCanvas: $('dsp-canvas'),
+    btnLoadZip: $('btn-load-zip'),
+    btnLoadExtra: $('btn-load-extra'),
+    btnLoadDemo: $('btn-load-demo'),
+    btnExportCsv: $('btn-export-csv'),
     btnPlay: $('btn-play'),
+    btnPlayRef: $('btn-play-ref'),
+    btnFilterToggle: $('btn-filter-toggle'),
     btnPrev: $('btn-prev-event'),
     btnNext: $('btn-next-event'),
-    btnPlayRef: $('btn-play-ref'),
-    btnSave: $('btn-save-session'),
-    btnExport: $('btn-export-csv'),
     timeReadout: $('time-readout'),
+    volumeSlider: $('volume-slider'),
     eventList: $('event-list'),
     eventCount: $('event-count-note'),
     historyTbody: $('history-tbody')
   };
 
-  /* =========================================================
-   * 4. 初期化 & イベント登録
-   * ========================================================= */
   function init() {
     $('ui-app-title').textContent = LABELS.appTitle;
     $('lbl-kpi-1').textContent = LABELS.kpiDuration;
     $('lbl-kpi-2').textContent = LABELS.kpiEvents;
     $('lbl-kpi-3').textContent = LABELS.kpiQuiet;
-    $('lbl-kpi-4').textContent = LABELS.kpiSpo2;
+    $('lbl-kpi-4').textContent = LABELS.kpiExtra;
 
     loadDspSettings();
     loadHistory();
     drawDspCurve();
+    fetchGitHubLatest();
 
-    // ファイル選択 & D&D
-    $('btn-select-file').addEventListener('click', () => els.fileInput.click());
-    els.fileInput.addEventListener('change', e => handleFiles(e.target.files));
+    els.btnApplyLatest.addEventListener('click', applyLatestFromGitHub);
+
+    // 画面全体での誤ダウンロード防止
+    window.addEventListener('dragover', e => e.preventDefault());
+    window.addEventListener('drop', e => {
+      e.preventDefault();
+      if (e.dataTransfer?.files?.length) handleFiles(e.dataTransfer.files);
+    });
 
     els.dropzone.addEventListener('dragover', e => { e.preventDefault(); els.dropzone.classList.add('is-dragover'); });
     els.dropzone.addEventListener('dragleave', () => els.dropzone.classList.remove('is-dragover'));
     els.dropzone.addEventListener('drop', e => {
       e.preventDefault();
+      e.stopPropagation();
       els.dropzone.classList.remove('is-dragover');
-      handleFiles(e.dataTransfer.files);
+      if (e.dataTransfer?.files?.length) handleFiles(e.dataTransfer.files);
     });
 
-    // ボタン類
-    $('btn-load-sample').addEventListener('click', loadSampleSession);
-    $('btn-github-fetch').addEventListener('click', fetchGitHubLatest);
-    els.btnSave.addEventListener('click', saveCurrentToHistory);
-    els.btnExport.addEventListener('click', exportCsv);
+    els.btnLoadZip.addEventListener('click', () => els.zipInput.click());
+    els.zipInput.addEventListener('change', e => { handleFiles(e.target.files); e.target.value = ''; });
+
+    els.btnLoadExtra.addEventListener('click', () => els.extraInput.click());
+    els.extraInput.addEventListener('change', e => { handleFiles(e.target.files, els.extraType.value); e.target.value = ''; });
+
+    els.btnLoadDemo.addEventListener('click', loadSampleSession);
+    els.btnExportCsv.addEventListener('click', exportCsv);
     $('btn-clear-history').addEventListener('click', clearHistory);
 
-    // 再生・ジャンプ
     els.btnPlay.addEventListener('click', togglePlay);
     els.btnPrev.addEventListener('click', () => jumpEvent(-1));
     els.btnNext.addEventListener('click', () => jumpEvent(1));
     els.btnPlayRef.addEventListener('click', playReferenceAudio);
-    $('playback-rate').addEventListener('change', e => {
-      state.playbackRate = parseFloat(e.target.value);
-      if (state.isPlaying) { stopAudio(); startAudio(); }
+    els.btnFilterToggle.addEventListener('click', () => {
+      state.filterOn = !state.filterOn;
+      els.btnFilterToggle.textContent = `フィルター: ${state.filterOn ? 'ON' : 'OFF'}`;
+      els.btnFilterToggle.setAttribute('aria-pressed', String(state.filterOn));
     });
+    els.volumeSlider.addEventListener('input', e => { state.volume = parseFloat(e.target.value); });
 
-    // キャンバスクリックでシーク
     [els.timelineCanvas, els.subLaneCanvas].forEach(cv => {
       cv.addEventListener('click', e => {
         if (!state.session) return;
@@ -657,12 +446,11 @@
       });
     });
 
-    // DSPスライダー連動
-    bindDspControl('hpf', 20, 500);
-    bindDspControl('lpf', 1000, 8000);
-    bindDspControl('gate', -60, -10);
+    bindDspControl('hpf', 40, 400);
+    bindDspControl('boost', 0, 18);
+    bindDspControl('lpf', 800, 6000);
     $('btn-reset-dsp').addEventListener('click', () => {
-      state.dsp = { hpf: 80, lpf: 4000, gate: -40 };
+      state.dsp = { hpf: 120, boost: 6, lpf: 2800 };
       syncDspInputs();
       saveDspSettings();
       drawDspCurve();
@@ -675,26 +463,61 @@
   }
 
   function showStatus(msg, type = 'active') {
-    els.statusBanner.style.display = 'flex';
     els.statusBanner.className = `inline-status ${type === 'error' ? 'is-error' : 'is-active'}`;
-    els.statusBanner.textContent = msg;
+    els.statusText.textContent = msg;
   }
 
   /* =========================================================
-   * 5. ファイル読込 (ZIP / Fitbit JSON / 食いしばりCSV)
+   * GitHub 最新コミット確認 & 動的フェッチ適用（キャッシュバスティング）
    * ========================================================= */
-  async function handleFiles(fileList) {
-    if (!fileList || !fileList.length) return;
-    const mode = els.logType.value;
+  async function fetchGitHubLatest() {
+    try {
+      const url = `https://api.github.com/repos/${GITHUB_REPO}/commits/${GITHUB_BRANCH}?t=${Date.now()}`;
+      const res = await fetch(url, { cache: 'no-store' });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      state.latestCommitSha = data.sha;
+      const shortSha = data.sha.slice(0, 7);
+      const dateStr = new Date(data.commit.author.date).toLocaleString('ja-JP');
+      els.githubStatus.textContent = `GitHub最新 (${GITHUB_BRANCH}): ${shortSha} (${dateStr})`;
+      els.btnApplyLatest.style.display = 'inline-block';
+    } catch {
+      els.githubStatus.textContent = `ローカル / オフライン実行 (${APP_VERSION})`;
+    }
+  }
 
+  async function applyLatestFromGitHub() {
+    if (!state.latestCommitSha) return;
+    els.btnApplyLatest.disabled = true;
+    els.btnApplyLatest.textContent = '取得中...';
+    try {
+      const rawUrl = `https://raw.githubusercontent.com/${GITHUB_REPO}/${state.latestCommitSha}/index.html?t=${Date.now()}`;
+      const res = await fetch(rawUrl, { cache: 'no-store' });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const html = await res.text();
+      document.open();
+      document.write(html);
+      document.close();
+    } catch (e) {
+      showStatus(`最新版取得エラー: ${e.message}`, 'error');
+      els.btnApplyLatest.disabled = false;
+      els.btnApplyLatest.textContent = '最新版を適用';
+    }
+  }
+
+  /* =========================================================
+   * ファイル読込 (ZIP / Fitbit JSON / 食いしばりCSV)
+   * ========================================================= */
+  async function handleFiles(fileList, forcedType = null) {
+    if (!fileList || !fileList.length) return;
     for (const file of fileList) {
       const name = file.name.toLowerCase();
       try {
-        if (mode === 'zip' || (mode === 'auto' && name.endsWith('.zip'))) {
+        if (name.endsWith('.zip')) {
           await parseZipFile(file);
-        } else if (mode === 'fitbit' || (mode === 'auto' && name.endsWith('.json'))) {
+        } else if (forcedType === 'fitbit' || name.endsWith('.json')) {
           await parseFitbitJson(file);
-        } else if (mode === 'bruxism' || (mode === 'auto' && name.endsWith('.csv'))) {
+        } else if (forcedType === 'bruxism' || name.endsWith('.csv')) {
           await parseBruxismCsv(file);
         } else {
           showStatus(`未対応のファイル形式です: ${file.name}`, 'error');
@@ -706,7 +529,6 @@
     }
   }
 
-  // 最小ZIPパーサー (Store=0, Deflate=8 対応)
   async function parseZipFile(file) {
     showStatus(`ZIP解析中: ${file.name}...`);
     const buf = await file.arrayBuffer();
@@ -721,8 +543,7 @@
       const compSize = view.getUint32(offset + 18, true);
       const nameLen = view.getUint16(offset + 26, true);
       const extraLen = view.getUint16(offset + 28, true);
-      const nameBytes = new Uint8Array(buf, offset + 30, nameLen);
-      const fileName = new TextDecoder().decode(nameBytes);
+      const fileName = new TextDecoder().decode(new Uint8Array(buf, offset + 30, nameLen));
       const dataStart = offset + 30 + nameLen + extraLen;
       const rawData = new Uint8Array(buf, dataStart, compSize);
 
@@ -753,6 +574,7 @@
     }
 
     onSessionLoaded();
+    saveCurrentToHistory();
     showStatus(`セッション読込完了: ${file.name}`);
   }
 
@@ -822,9 +644,7 @@
   async function parseBruxismCsv(file) {
     const buf = await file.arrayBuffer();
     let text = new TextDecoder('utf-8', { fatal: false }).decode(buf);
-    if (text.includes('\uFFFD')) {
-      text = new TextDecoder('shift-jis').decode(buf);
-    }
+    if (text.includes('\uFFFD')) text = new TextDecoder('shift-jis').decode(buf);
     const lines = text.split(/\r?\n/).filter(l => l.trim());
     let count = 0;
     for (let i = 1; i < lines.length; i++) {
@@ -847,11 +667,8 @@
     }
   }
 
-  /* =========================================================
-   * 6. サンプルデータ生成
-   * ========================================================= */
   function loadSampleSession() {
-    const durationSec = 3600; // 1時間サンプル
+    const durationSec = 3600;
     const timeline = [];
     const events = [];
     for (let s = 0; s <= durationSec; s += 2) {
@@ -875,7 +692,6 @@
       events
     };
 
-    // SpO2 / 心拍 / 食いしばりサンプル
     state.extra.spo2 = Array.from({ length: 60 }, (_, i) => ({
       sec: i * 60,
       val: (i === 20 || i === 40) ? 91 + Math.random() * 2 : 96 + Math.random() * 2
@@ -892,6 +708,7 @@
 
     els.subLaneContainer.style.display = 'block';
     onSessionLoaded();
+    saveCurrentToHistory();
     showStatus('デモデータを読み込みました（上下対極描画・SpO₂・心拍・食いしばり同期表示中）');
   }
 
@@ -901,23 +718,17 @@
     els.btnPlay.disabled = false;
     els.btnPrev.disabled = false;
     els.btnNext.disabled = false;
-    els.btnSave.disabled = false;
-    els.btnExport.disabled = false;
+    els.btnExportCsv.disabled = false;
     updateKpis();
     renderEventList();
     renderAllCanvases();
     updateTimeReadout();
   }
 
-  /* =========================================================
-   * 7. KPI更新 & イベント一覧
-   * ========================================================= */
   function updateKpis() {
     if (!state.session) return;
     const s = state.session;
-    const mins = Math.floor(s.durationSec / 60);
-    const hrs = Math.floor(mins / 60);
-    $('kpi-duration').textContent = `${String(hrs).padStart(2, '0')}:${String(mins % 60).padStart(2, '0')}`;
+    $('kpi-duration').textContent = Math.round(s.durationSec / 60);
     $('kpi-duration-sub').textContent = `基準音レベル: ${s.refDb} dB`;
 
     $('kpi-events').textContent = s.events.length;
@@ -926,14 +737,13 @@
 
     const quietCount = s.timeline.filter(d => d.db < s.refDb - 10 && d.motion < 0.1).length;
     const quietPct = s.timeline.length ? Math.round((quietCount / s.timeline.length) * 100) : 0;
-    const maxDb = s.timeline.reduce((m, d) => Math.max(m, d.db), -99);
     $('kpi-quiet').textContent = quietPct;
-    $('kpi-quiet-sub').textContent = `最大音圧: ${maxDb.toFixed(1)} dB`;
+    $('kpi-quiet-sub').textContent = `音圧・体動ともに少ない区間`;
 
+    const extraCount = state.extra.spo2.length + state.extra.hr.length + state.extra.bruxism.length;
+    $('kpi-extra').textContent = extraCount;
     const minSpo2 = state.extra.spo2.length ? Math.min(...state.extra.spo2.map(d => d.val)).toFixed(1) : '--';
-    const avgHr = state.extra.hr.length ? Math.round(state.extra.hr.reduce((a, b) => a + b.val, 0) / state.extra.hr.length) : '--';
-    $('kpi-spo2').textContent = minSpo2;
-    $('kpi-hr-sub').textContent = `平均心拍: ${avgHr} bpm / 食いしばり: ${state.extra.bruxism.length} 回`;
+    $('kpi-extra-sub').textContent = `最低SpO₂: ${minSpo2}% / 食いしばり: ${state.extra.bruxism.length}回`;
   }
 
   function renderEventList() {
@@ -943,7 +753,7 @@
       ...state.extra.bruxism.map(b => ({ sec: b.sec, type: 'bruxism', label: `食いしばり(${b.type})`, val: `${b.duration}s`, badge: 'chip-cyan' }))
     ].sort((a, b) => a.sec - b.sec);
 
-    els.eventCount.textContent = `${combined.length} 件`;
+    els.eventCount.textContent = `${combined.length}件`;
     if (!combined.length) {
       els.eventList.innerHTML = '<div class="empty-state">イベントは検出されませんでした。</div>';
       return;
@@ -958,9 +768,6 @@
   }
   window.__seekTo = sec => seekTo(sec);
 
-  /* =========================================================
-   * 8. Canvas描画 (上下対極タイムライン / サブレーン / 局所波形)
-   * ========================================================= */
   function renderAllCanvases() {
     drawTimeline();
     if (els.subLaneContainer.style.display !== 'none') drawSubLane();
@@ -986,34 +793,26 @@
     const padT = 10, padB = 18;
     const plotH = h - padT - padB;
 
-    // 中央50%ライン (基準音「あ〜」)
     const midY = padT + plotH * 0.5;
     ctx.strokeStyle = 'rgba(232, 185, 84, 0.45)';
     ctx.setLineDash([4, 4]);
-    ctx.beginPath();
-    ctx.moveTo(0, midY);
-    ctx.lineTo(w, midY);
-    ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(0, midY); ctx.lineTo(w, midY); ctx.stroke();
     ctx.setLineDash([]);
 
-    // イベント帯
     ctx.fillStyle = 'rgba(240, 140, 112, 0.16)';
     events.forEach(ev => {
       const x = (ev.sec / durationSec) * w;
       ctx.fillRect(x - 2, padT, 4, plotH);
     });
 
-    // 上下対極描画：音圧(下→上) & 体動(上→下)
     const barW = Math.max(1.5, w / Math.max(1, timeline.length));
     timeline.forEach(pt => {
       const x = (pt.sec / durationSec) * w;
-      // 音圧: refEnvDb(下端) 〜 refDb(50%) 〜 0dB(上端)
       const normDb = Math.max(0, Math.min(1, (pt.db - refEnvDb) / Math.max(1, (refDb - refEnvDb) * 2)));
       const dbH = normDb * plotH;
       ctx.fillStyle = '#63c7d6';
       ctx.fillRect(x, (padT + plotH) - dbH, barW, dbH);
 
-      // 体動G: 上端(0G)から下向きに描画
       const normMot = Math.max(0, Math.min(1, pt.motion / 1.0));
       const motH = normMot * plotH * 0.65;
       if (motH > 1) {
@@ -1022,14 +821,10 @@
       }
     });
 
-    // 黄色い再生カーソル
     const px = (state.playheadSec / durationSec) * w;
     ctx.strokeStyle = '#e8b954';
     ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(px, 0);
-    ctx.lineTo(px, h);
-    ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(px, 0); ctx.lineTo(px, h); ctx.stroke();
   }
 
   function drawSubLane() {
@@ -1038,7 +833,6 @@
     if (!state.session) return;
     const dur = state.session.durationSec;
 
-    // SpO2 (90-100%)
     if (state.extra.spo2.length) {
       ctx.strokeStyle = '#34d399';
       ctx.lineWidth = 1.8;
@@ -1051,7 +845,6 @@
       ctx.stroke();
     }
 
-    // 心拍 (40-120 bpm)
     if (state.extra.hr.length) {
       ctx.strokeStyle = '#f87171';
       ctx.lineWidth = 1.5;
@@ -1064,7 +857,6 @@
       ctx.stroke();
     }
 
-    // 食いしばりマーカー
     const colorMap = { Phasic: '#60a5fa', Tonic: '#4ade80', Mixed: '#fb923c' };
     state.extra.bruxism.forEach(b => {
       const x = (b.sec / dur) * w;
@@ -1073,14 +865,10 @@
       ctx.fillRect(x, 4, bw, h - 8);
     });
 
-    // 同期再生カーソル
     const px = (state.playheadSec / dur) * w;
     ctx.strokeStyle = '#e8b954';
     ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(px, 0);
-    ctx.lineTo(px, h);
-    ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(px, 0); ctx.lineTo(px, h); ctx.stroke();
   }
 
   function drawLocalWaveform() {
@@ -1089,7 +877,7 @@
     if (!state.session) return;
 
     const center = state.playheadSec;
-    const win = 10; // ±10秒
+    const win = 10;
     const pts = state.session.timeline.filter(p => p.sec >= center - win && p.sec <= center + win);
     const midY = h / 2;
 
@@ -1107,14 +895,10 @@
     });
     ctx.stroke();
 
-    // 中央線
     ctx.strokeStyle = '#e8b954';
     ctx.beginPath(); ctx.moveTo(w / 2, 0); ctx.lineTo(w / 2, h); ctx.stroke();
   }
 
-  /* =========================================================
-   * 9. 再生・ジャンプ・DSP
-   * ========================================================= */
   function togglePlay() {
     if (!state.session) return;
     state.isPlaying ? stopAudio() : startAudio();
@@ -1122,29 +906,25 @@
 
   function startAudio() {
     state.isPlaying = true;
-    els.btnPlay.textContent = '一時停止';
+    els.btnPlay.textContent = '⏸ 一時停止';
     lastTickTime = performance.now();
     const tick = now => {
       if (!state.isPlaying) return;
-      const dt = ((now - lastTickTime) / 1000) * state.playbackRate;
+      const dt = (now - lastTickTime) / 1000;
       lastTickTime = now;
       state.playheadSec = Math.min(state.session.durationSec, state.playheadSec + dt);
       updateTimeReadout();
       renderAllCanvases();
-      if (state.playheadSec >= state.session.durationSec) {
-        stopAudio();
-      } else {
-        animFrameId = requestAnimationFrame(tick);
-      }
+      if (state.playheadSec >= state.session.durationSec) stopAudio();
+      else animFrameId = requestAnimationFrame(tick);
     };
     animFrameId = requestAnimationFrame(tick);
   }
 
   function stopAudio() {
     state.isPlaying = false;
-    els.btnPlay.textContent = '再生';
+    els.btnPlay.textContent = '▶ 再生';
     if (animFrameId) cancelAnimationFrame(animFrameId);
-    if (activeSource) { try { activeSource.stop(); } catch {} activeSource = null; }
   }
 
   function seekTo(sec) {
@@ -1190,12 +970,9 @@
     return `${h}:${m}:${r}`;
   }
 
-  /* =========================================================
-   * 10. DSPフィルター設定 & 曲線描画
-   * ========================================================= */
   function bindDspControl(key, min, max) {
     const range = $(`dsp-${key}`);
-    const num = $(`dsp-${key}-num`);
+    const num = $(`dsp-${key}-val`);
     const update = v => {
       const val = Math.max(min, Math.min(max, Number(v)));
       state.dsp[key] = val;
@@ -1209,9 +986,9 @@
   }
 
   function syncDspInputs() {
-    ['hpf', 'lpf', 'gate'].forEach(k => {
+    ['hpf', 'boost', 'lpf'].forEach(k => {
       $(`dsp-${k}`).value = state.dsp[k];
-      $(`dsp-${k}-num`).value = state.dsp[k];
+      $(`dsp-${k}-val`).value = state.dsp[k];
     });
   }
 
@@ -1240,23 +1017,18 @@
     } catch {}
   }
 
-  /* =========================================================
-   * 11. 履歴保存 / CSV出力 / GitHub更新確認
-   * ========================================================= */
   function saveCurrentToHistory() {
     if (!state.session) return;
     const item = {
-      id: state.session.id,
       date: new Date(state.session.startMs).toLocaleString('ja-JP'),
       duration: formatTime(state.session.durationSec),
       events: state.session.events.length,
       quiet: $('kpi-quiet').textContent + '%',
-      spo2: $('kpi-spo2').textContent + '%'
+      fileName: state.session.fileName
     };
     state.history.unshift(item);
     localStorage.setItem('st_history_v5', JSON.stringify(state.history.slice(0, 20)));
     renderHistory();
-    showStatus('現在の解析結果をブラウザ履歴に保存しました');
   }
 
   function loadHistory() {
@@ -1268,26 +1040,19 @@
 
   function renderHistory() {
     if (!state.history.length) {
-      els.historyTbody.innerHTML = '<tr><td colspan="6" style="text-align:center; color:var(--on-surface-variant);">保存された履歴はありません</td></tr>';
+      els.historyTbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--on-surface-variant);">保存された履歴はありません</td></tr>';
       return;
     }
-    els.historyTbody.innerHTML = state.history.map((h, idx) => `
+    els.historyTbody.innerHTML = state.history.map(h => `
       <tr>
         <td>${h.date}</td>
         <td>${h.duration}</td>
         <td>${h.events} 回</td>
         <td>${h.quiet}</td>
-        <td>${h.spo2}</td>
-        <td><button class="btn btn-sm btn-danger" onclick="window.__delHist(${idx})">削除</button></td>
+        <td>${h.fileName}</td>
       </tr>
     `).join('');
   }
-
-  window.__delHist = idx => {
-    state.history.splice(idx, 1);
-    localStorage.setItem('st_history_v5', JSON.stringify(state.history));
-    renderHistory();
-  };
 
   function clearHistory() {
     state.history = [];
@@ -1304,19 +1069,6 @@
     a.href = URL.createObjectURL(blob);
     a.download = `ST_export_${Date.now()}.csv`;
     a.click();
-  }
-
-  async function fetchGitHubLatest() {
-    showStatus('GitHub最新コミットを確認中...');
-    try {
-      const res = await fetch(`https://api.github.com/repos/matsuodentalassociation/ST-SCOPE/commits?per_page=1&t=${Date.now()}`, { cache: 'no-store' });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      const data = await res.json();
-      const latest = data[0];
-      showStatus(`GitHub最新: ${latest.sha.slice(0, 7)} (${new Date(latest.commit.author.date).toLocaleDateString('ja-JP')})`);
-    } catch (e) {
-      showStatus(`GitHub確認スキップ（オフラインまたは非公開）: ${e.message}`, 'error');
-    }
   }
 
   init();
