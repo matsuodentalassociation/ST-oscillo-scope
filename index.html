@@ -6,7 +6,8 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <title>ST-Oscillograph v5.1.3</title>
+  <title>ST-Oscillograph v5.1.4</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <style>
     :root {
       --bg: #0c1317; --surface: #131d23; --surface-2: #19262e; --border: #243640;
@@ -63,8 +64,8 @@
     .two-col { display: grid; grid-template-columns: 1.4fr 1fr; gap: 14px; }
     @media (max-width: 960px) { .two-col { grid-template-columns: 1fr; } }
     .event-list { max-height: 220px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
-    .event-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; background: var(--surface-2); padding: 8px 12px; border-radius: 8px; font-size: 0.84rem; cursor: pointer; }
-    .event-row:hover { border: 1px solid var(--primary); }
+    .event-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; background: var(--surface-2); padding: 8px 12px; border-radius: 8px; font-size: 0.84rem; cursor: pointer; border: 1px solid transparent; }
+    .event-row:hover { border-color: var(--primary); }
     .event-time { font-family: monospace; color: var(--amber); }
     .status-chip { padding: 2px 8px; border-radius: 999px; font-size: 0.75rem; font-weight: 600; }
     .chip-coral { background: rgba(242,116,116,0.18); color: var(--coral); }
@@ -87,7 +88,7 @@
       <div class="brand-group">
         <div class="brand-top">
           <span class="brand-title" id="ui-app-title">ST-Oscillograph</span>
-          <span class="badge-ver">v5.1.3</span>
+          <span class="badge-ver">v5.1.4</span>
           <span class="meta-text" id="ui-session-meta">セッション未読込</span>
         </div>
         <div class="github-bar">
@@ -112,7 +113,7 @@
     <section class="dropzone" id="dropzone">
       <div>
         <div class="dropzone-title">計測ZIPファイル / 追加ログ（JSON・CSV）をここにドラッグ＆ドロップ</div>
-        <div class="dropzone-sub">Web Share APIやスマホから受け取った .zip をそのまま読み込めます（完全ローカル処理・外部送信なし）</div>
+        <div class="dropzone-sub">過去バージョンのZIP・最新ZIPのどちらも自動吸収して読み込みます（完全ローカル処理・外部送信なし）</div>
       </div>
       <div class="inline-status" id="status-banner">
         <span id="status-text">待機中：ZIPファイルまたはデモデータを読み込んでください。</span>
@@ -121,22 +122,22 @@
 
     <section class="kpi-grid">
       <div class="kpi-card">
-        <div class="kpi-label" id="lbl-kpi-1">計測時間</div>
+        <div class="kpi-label">計測時間</div>
         <div class="kpi-value"><span id="kpi-duration">--</span><span class="kpi-unit">分</span></div>
         <div class="kpi-sub" id="kpi-duration-sub">開始・終了時刻未取得</div>
       </div>
       <div class="kpi-card">
-        <div class="kpi-label" id="lbl-kpi-2">音圧変化イベント</div>
+        <div class="kpi-label">音圧変化イベント</div>
         <div class="kpi-value"><span id="kpi-events">--</span><span class="kpi-unit">回</span></div>
         <div class="kpi-sub" id="kpi-events-sub">目安（解析者判断用）</div>
       </div>
       <div class="kpi-card">
-        <div class="kpi-label" id="lbl-kpi-3">無音 / 低音圧比率</div>
+        <div class="kpi-label">無音 / 低音圧比率</div>
         <div class="kpi-value"><span id="kpi-quiet">--</span><span class="kpi-unit">%</span></div>
         <div class="kpi-sub" id="kpi-quiet-sub">音圧・体動ともに少ない区間</div>
       </div>
       <div class="kpi-card">
-        <div class="kpi-label" id="lbl-kpi-4">生体・食いしばり連携</div>
+        <div class="kpi-label">生体・食いしばり連携</div>
         <div class="kpi-value"><span id="kpi-extra">--</span><span class="kpi-unit">件</span></div>
         <div class="kpi-sub" id="kpi-extra-sub">SpO₂ / 心拍 / 食いしばり</div>
       </div>
@@ -162,7 +163,7 @@
         <span class="legend-item"><span class="dot" style="background:#63c7d6;"></span>音圧（下から上）</span>
         <span class="legend-item"><span class="dot" style="background:#f27474;"></span>体動G（上から下）</span>
         <span class="legend-item"><span class="dot" style="background:#e8b954;"></span>基準音「あ〜」50%ライン / 再生位置</span>
-        <span class="legend-item"><span class="dot" style="background:rgba(240,140,112,0.6);"></span>検出イベント帯</span>
+        <span class="legend-item"><span class="dot" style="background:rgba(240,140,112,0.6);\"></span>検出イベント帯</span>
       </div>
       <div class="controls-bar">
         <div class="controls-left">
@@ -224,11 +225,10 @@
       </div>
     </section>
   </div>
-
 <script>
 (() => {
   'use strict';
-  const APP_VERSION = 'v5.1.3';
+  const APP_VERSION = 'v5.1.4';
   const GITHUB_REPO = 'matsuodentalassociation/ST-oscillo-scope';
   const GITHUB_BRANCH = 'main';
 
@@ -331,323 +331,408 @@
     }
   }
 
-  /* 標準ZIPパーサー (Central Directory対応) */
+  /* =========================================================================
+     標準JSZip展開 ＋ 過去ログ吸収アダプター (Schema v35 / V62 / V63 / CSV互換)
+     ========================================================================= */
   async function parseZipFile(file) {
-    showStatus(`ZIP解析中: ${file.name}...`);
-    const buf = await file.arrayBuffer();
-    const view = new DataView(buf);
-    const bytes = new Uint8Array(buf);
-    const files = {};
+    if (typeof JSZip === 'undefined') throw new Error('JSZipライブラリが読み込まれていません');
+    showStatus(`ZIP展開中: ${file.name}...`);
+    const zip = await JSZip.loadAsync(file);
+    const fileKeys = Object.keys(zip.files).filter(k => !zip.files[k].dir);
 
-    // End of Central Directory (0x06054b50) を後ろから検索
-    let eocdOffset = -1;
-    for (let i = view.byteLength - 22; i >= Math.max(0, view.byteLength - 65557); i--) {
-      if (view.getUint32(i, true) === 0x06054b50) { eocdOffset = i; break; }
-    }
-    if (eocdOffset === -1) throw new Error('有効なZIPファイルではありません');
+    // 1. JSONファイルの探索（session.json / manifest.json / session_metadata.json / log.json 等）
+    const jsonKeys = fileKeys.filter(k => k.toLowerCase().endsWith('.json'));
+    let rawSessionObj = null, rawLogs = [], rawClips = [];
 
-    const cdCount = view.getUint16(eocdOffset + 10, true);
-    let cdOffset = view.getUint32(eocdOffset + 16, true);
-
-    for (let i = 0; i < cdCount; i++) {
-      if (view.getUint32(cdOffset, true) !== 0x02014b50) break;
-      const method = view.getUint16(cdOffset + 10, true);
-      const compSize = view.getUint32(cdOffset + 20, true);
-      const nameLen = view.getUint16(cdOffset + 28, true);
-      const extraLen = view.getUint16(cdOffset + 30, true);
-      const commentLen = view.getUint16(cdOffset + 32, true);
-      const localHeaderOffset = view.getUint32(cdOffset + 42, true);
-      const fileName = new TextDecoder().decode(bytes.subarray(cdOffset + 46, cdOffset + 46 + nameLen));
-
-      const lfhNameLen = view.getUint16(localHeaderOffset + 26, true);
-      const lfhExtraLen = view.getUint16(localHeaderOffset + 28, true);
-      const dataStart = localHeaderOffset + 30 + lfhNameLen + lfhExtraLen;
-      const rawData = bytes.subarray(dataStart, dataStart + compSize);
-
-      if (!fileName.endsWith('/')) {
-        if (method === 0) files[fileName] = rawData;
-        else if (method === 8 && typeof DecompressionStream !== 'undefined') {
-          const ds = new DecompressionStream('deflate-raw');
-          const writer = ds.writable.getWriter();
-          writer.write(rawData); writer.close();
-          files[fileName] = new Uint8Array(await new Response(ds.readable).arrayBuffer());
-        }
-      }
-      cdOffset += 46 + nameLen + extraLen + commentLen;
-    }
-
-    const jsonKeys = Object.keys(files).filter(k => k.toLowerCase().endsWith('.json'));
-    if (!jsonKeys.length) throw new Error(`ZIP内にJSONが見つかりません (内包: ${Object.keys(files).slice(0,5).join(', ')})`);
-
-    let logData = null;
-    for (const k of jsonKeys) {
+    for (const key of jsonKeys) {
       try {
-        const parsed = JSON.parse(new TextDecoder().decode(files[k]));
-        if (parsed.timeline || parsed.data || parsed.samples || Array.isArray(parsed)) { logData = parsed; break; }
-        if (!logData) logData = parsed;
-      } catch {}
+        const text = await zip.files[key].async('string');
+        const parsed = JSON.parse(text);
+        if (parsed.session || parsed.patient || parsed.refDb !== undefined || parsed.baselineDbApplied !== undefined) {
+          rawSessionObj = parsed;
+        }
+        const candidateLogs = parsed.timeSeriesLogs || parsed.sensing_timeline || parsed.logs || parsed.session?.timeSeriesLogs || parsed.session?.logs;
+        if (Array.isArray(candidateLogs) && candidateLogs.length > 0) {
+          rawLogs = candidateLogs;
+        }
+        const candidateClips = parsed.clips || parsed.events || parsed.event_markers || parsed.session?.clips;
+        if (Array.isArray(candidateClips) && candidateClips.length > 0) {
+          rawClips = candidateClips;
+        }
+      } catch (e) { console.warn(`JSON parse skip: ${key}`, e); }
     }
-    if (!logData) throw new Error('ZIP内のJSONを解析できませんでした');
 
-    state.session = normalizeSessionData(logData, file.name);
-    const refKey = Object.keys(files).find(k => k.toLowerCase().includes('reference') && k.toLowerCase().endsWith('.wav'));
+    // 2. JSONに時系列ログが無い場合、seconds.csv をフォールバック読込
+    if (rawLogs.length === 0) {
+      const csvKey = fileKeys.find(k => k.toLowerCase().endsWith('seconds.csv') || k.toLowerCase().endsWith('log.csv'));
+      if (csvKey) {
+        const csvText = await zip.files[csvKey].async('string');
+        rawLogs = parseSecondsCsv(csvText);
+      }
+    }
+
+    if (!rawSessionObj && rawLogs.length === 0) {
+      throw new Error('有効なセッションJSONまたは時系列ログが見つかりませんでした');
+    }
+
+    // 3. 音圧スケール自動正規化（dBFS負値 vs +72dBシフト正値）
+    const sessMeta = rawSessionObj?.session || rawSessionObj || {};
+    let refDb = sessMeta.refDb ?? rawSessionObj?.refDb ?? -22;
+    let baseDb = sessMeta.baselineDbApplied ?? sessMeta.base ?? rawSessionObj?.baselineDbApplied ?? -52;
+
+    const normalizedLogs = rawLogs.map((row, idx) => {
+      let dbVal = Number(row.db ?? row.dbApplied ?? row.dbSource ?? -50);
+      // +72dBシフトされた正の値が来たらdBFS(-120〜0)に統一
+      if (dbVal > 0) dbVal = dbVal - 72;
+      const secVal = Number(row.sec ?? row.t ?? idx);
+      const gVal = row.motionG !== undefined && row.motionG !== null ? Number(row.motionG) : (row.g !== undefined ? Number(row.g) : 0);
+      return { sec: secVal, db: dbVal, g: gVal };
+    });
+
+    if (refDb > 0) refDb -= 72;
+    if (baseDb > 0) baseDb -= 72;
+
+    const durationSec = Number(sessMeta.durationSec || (normalizedLogs.length ? normalizedLogs[normalizedLogs.length - 1].sec + 1 : 60));
+    const startedAt = sessMeta.startedAt || new Date().toISOString();
+    const patientName = rawSessionObj?.patient?.name || rawSessionObj?.user?.name || '計測者';
+
+    // 4. 音声ファイル（reference.wav および clips）のデコード
+    state.refAudioBuffer = null;
+    const refKey = fileKeys.find(k => k.toLowerCase().endsWith('reference.wav'));
     if (refKey) {
-      ensureAudioCtx();
-      state.refAudioBuffer = await audioCtx.decodeAudioData(files[refKey].buffer.slice(0));
-      els.btnPlayRef.disabled = false;
+      try {
+        const arrBuf = await zip.files[refKey].async('arraybuffer');
+        const ctx = getAudioCtx();
+        state.refAudioBuffer = await ctx.decodeAudioData(arrBuf.slice(0));
+      } catch (e) { console.warn('reference.wav decode skipped', e); }
     }
 
-    onSessionLoaded(); saveCurrentToHistory();
-    showStatus(`セッション読込完了: ${file.name}`);
-  }
-
-  function normalizeSessionData(raw, fileName) {
-    const arr = Array.isArray(raw) ? raw : (raw.timeline || raw.data || raw.samples || []);
-    const timeline = arr.map((d, i) => ({
-      sec: d.sec ?? d.t ?? i * 0.1,
-      db: d.sourceDbFS ?? d.db ?? d.dB ?? -55,
-      motion: d.motionG ?? d.motion ?? 0
+    const normalizedEvents = rawClips.map((c, i) => ({
+      id: c.id || `ev-${i + 1}`,
+      sec: Number(c.startSec ?? c.sec ?? 0),
+      duration: Number(c.durationSec ?? c.duration ?? 5),
+      type: c.category || c.type || 'snore',
+      label: c.label || `${c.category || 'イベント'} (${Number(c.startSec ?? c.sec ?? 0).toFixed(1)}秒)`
     }));
-    const durationSec = timeline.length ? timeline[timeline.length - 1].sec : (raw.durationSec || 600);
-    const events = raw.events || detectEventsFromTimeline(timeline);
-    return { id: raw.id || `SES-${Date.now()}`, fileName, startMs: raw.startMs || Date.now() - durationSec * 1000, durationSec, refDb: raw.refDb ?? -25, refEnvDb: raw.refEnvDb ?? -55, timeline, events };
+
+    state.session = {
+      fileName: file.name,
+      patientName,
+      startedAt,
+      durationSec,
+      refDb,
+      baseDb,
+      logs: normalizedLogs,
+      events: normalizedEvents
+    };
+
+    state.playheadSec = 0;
+    state.isPlaying = false;
+    updateUiAfterSessionLoad();
+    saveHistory();
+    showStatus(`読込完了: ${file.name}（${normalizedLogs.length}点 / イベント${normalizedEvents.length}件）`, 'active');
   }
 
-  function detectEventsFromTimeline(timeline) {
-    const events = [];
-    for (let i = 10; i < timeline.length; i += 50) {
-      if (timeline[i].db > -22) events.push({ sec: timeline[i].sec, type: 'audio', label: '音圧上昇', val: `${timeline[i].db.toFixed(1)} dB` });
-      else if (timeline[i].motion > 0.35) events.push({ sec: timeline[i].sec, type: 'motion', label: '体動検知', val: `${timeline[i].motion.toFixed(2)} G` });
-    }
-    return events;
+  function parseSecondsCsv(text) {
+    const lines = text.trim().split(/\r?\n/);
+    if (lines.length < 2) return [];
+    const headers = lines[0].split(',').map(h => h.trim().toLowerCase());
+    const idxSec = headers.indexOf('sec');
+    const idxDb = headers.findIndex(h => h === 'dbapplied' || h === 'dbsource' || h === 'db');
+    const idxG = headers.indexOf('motiong');
+    return lines.slice(1).map((line, i) => {
+      const cols = line.split(',');
+      return {
+        sec: idxSec >= 0 ? Number(cols[idxSec]) : i,
+        db: idxDb >= 0 ? Number(cols[idxDb]) : -50,
+        g: idxG >= 0 ? Number(cols[idxG]) : 0
+      };
+    }).filter(r => !Number.isNaN(r.sec));
   }
 
   async function parseFitbitJson(file) {
-    const json = JSON.parse(await file.text());
-    const baseMs = state.session ? state.session.startMs : Date.now();
-    let count = 0;
-    const arr = Array.isArray(json) ? json : (json.data || json.spo2 || json.heartRate || []);
-    arr.forEach(item => {
-      const tMs = item.dateTime ? new Date(item.dateTime).getTime() : (item.timestamp || baseMs);
-      const sec = Math.max(0, (tMs - baseMs) / 1000);
-      if (item.value !== undefined) {
-        if (item.value <= 100 && item.value >= 70 && (file.name.toLowerCase().includes('spo2') || item.spo2)) { state.extra.spo2.push({ sec, val: Number(item.value) }); count++; }
-        else { state.extra.hr.push({ sec, val: Number(item.value?.bpm ?? item.value) }); count++; }
-      }
+    const text = await file.text();
+    const data = JSON.parse(text);
+    const startMs = state.session ? new Date(state.session.startedAt).getTime() : 0;
+    const spo2 = [], hr = [];
+    const arr = Array.isArray(data) ? data : (data.spo2 || data['activities-heart-intraday']?.dataset || []);
+    arr.forEach((item, i) => {
+      const sec = item.sec ?? (startMs && item.dateTime ? (new Date(item.dateTime).getTime() - startMs) / 1000 : i * 60);
+      if (item.value !== undefined && item.value >= 70 && item.value <= 100) spo2.push({ sec, val: Number(item.value) });
+      else if (item.bpm !== undefined || (item.value !== undefined && item.value < 220)) hr.push({ sec, val: Number(item.bpm ?? item.value) });
     });
-    if (count > 0) {
-      els.subLaneContainer.style.display = 'block';
-      updateKpis(); renderAllCanvases(); updateTimeReadout();
-      showStatus(`Fitbit JSON読込完了: ${count}点`);
-    } else showStatus('Fitbit JSONから有効な時系列データが見つかりませんでした', 'error');
+    if (spo2.length) state.extra.spo2 = spo2;
+    if (hr.length) state.extra.hr = hr;
+    els.subLaneContainer.style.display = 'block';
+    renderAllCanvases();
+    $('kpi-extra').textContent = state.extra.spo2.length + state.extra.hr.length + state.extra.bruxism.length;
+    showStatus(`追加ログ読込完了: ${file.name}`, 'active');
   }
 
   async function parseBruxismCsv(file) {
     const buf = await file.arrayBuffer();
-    let text = new TextDecoder('utf-8', { fatal: false }).decode(buf);
-    if (text.includes('\uFFFD')) text = new TextDecoder('shift-jis').decode(buf);
-    const lines = text.split(/\r?\n/).filter(l => l.trim());
-    let count = 0;
-    for (let i = 1; i < lines.length; i++) {
-      const cols = lines[i].split(',');
-      if (cols.length < 2) continue;
-      const sec = parseFloat(cols[0]) || (i * 120);
-      const duration = parseFloat(cols[1]) || 4.5;
-      const rawType = (cols[2] || 'Phasic').trim();
-      const type = /tonic/i.test(rawType) ? 'Tonic' : (/mixed/i.test(rawType) ? 'Mixed' : 'Phasic');
-      const mvc = parseFloat(cols[3]) || 25;
-      state.extra.bruxism.push({ sec, duration, type, mvc });
-      count++;
-    }
-    if (count > 0) {
-      els.subLaneContainer.style.display = 'block';
-      els.btnPlay.disabled = false;
-      updateKpis(); renderEventList(); renderAllCanvases(); updateTimeReadout();
-      showStatus(`食いしばりCSV読込完了: ${count}件`);
-    }
+    let text = new TextDecoder('utf-8').decode(buf);
+    if (text.includes('')) text = new TextDecoder('shift-jis').decode(buf);
+    const lines = text.trim().split(/\r?\n/).slice(1);
+    state.extra.bruxism = lines.map(l => {
+      const [sec, dur, type] = l.split(',').map(s => s.trim());
+      return { sec: Number(sec) || 0, duration: Number(dur) || 3, type: (type || 'phasic').toLowerCase() };
+    });
+    els.subLaneContainer.style.display = 'block';
+    renderAllCanvases();
+    $('kpi-extra').textContent = state.extra.spo2.length + state.extra.hr.length + state.extra.bruxism.length;
+    showStatus(`食いしばりCSV読込完了: ${state.extra.bruxism.length}件`, 'active');
   }
 
   function loadSampleSession() {
-    const durationSec = 3600, timeline = [], events = [];
-    for (let s = 0; s <= durationSec; s += 2) {
-      const isEvent = (s > 400 && s < 440) || (s > 1200 && s < 1260) || (s > 2400 && s < 2450);
-      const db = isEvent ? -18 + (Math.random() - 0.5) * 6 : -48 + Math.sin(s * 0.05) * 4 + (Math.random() - 0.5) * 6;
-      const motion = (s % 600 < 8) ? 0.45 + Math.random() * 0.3 : Math.random() * 0.05;
-      timeline.push({ sec: s, db, motion });
-      if (isEvent && s % 20 === 0) events.push({ sec: s, type: 'audio', label: '音圧変化', val: `${db.toFixed(1)} dB` });
-      if (motion > 0.4 && s % 8 === 0) events.push({ sec: s, type: 'motion', label: '体動', val: `${motion.toFixed(2)} G` });
+    const logs = [], events = [];
+    const dur = 3600;
+    for (let s = 0; s < dur; s += 2) {
+      let db = -55 + Math.sin(s * 0.05) * 4 + (Math.random() - 0.5) * 3;
+      let g = 0.01 + Math.random() * 0.02;
+      if (s % 420 > 300 && s % 420 < 340) { db = -24 + Math.random() * 6; }
+      if (s % 600 === 340) { g = 0.25; events.push({ id: `demo-${events.length+1}`, sec: s, duration: 8, type: 'snore', label: `高音圧イベント (${Math.floor(s/60)}分)` }); }
+      logs.push({ sec: s, db, g });
     }
-    state.session = { id: `DEMO-${Date.now()}`, fileName: 'demo_session.zip', startMs: Date.now() - durationSec * 1000, durationSec, refDb: -25, refEnvDb: -55, timeline, events };
-    state.extra.spo2 = Array.from({ length: 60 }, (_, i) => ({ sec: i * 60, val: (i === 20 || i === 40) ? 91 + Math.random() * 2 : 96 + Math.random() * 2 }));
-    state.extra.hr = Array.from({ length: 60 }, (_, i) => ({ sec: i * 60, val: 62 + Math.sin(i * 0.3) * 8 + (i === 20 ? 18 : 0) }));
-    state.extra.bruxism = [{ sec: 430, duration: 6, type: 'Phasic', mvc: 32 }, { sec: 1245, duration: 10, type: 'Mixed', mvc: 48 }, { sec: 2430, duration: 8, type: 'Tonic', mvc: 28 }];
-    els.subLaneContainer.style.display = 'block';
-    onSessionLoaded(); saveCurrentToHistory();
-    showStatus('デモデータを読み込みました（上下対極描画・SpO₂・心拍・食いしばり同期表示中）');
+    state.session = { fileName: 'demo_session_60m.zip', patientName: 'デモ計測者', startedAt: new Date().toISOString(), durationSec: dur, refDb: -22, baseDb: -55, logs, events };
+    state.playheadSec = 0; state.isPlaying = false;
+    updateUiAfterSessionLoad();
+    showStatus('デモデータを読み込みました（60分セッション）', 'active');
   }
 
-  function onSessionLoaded() {
-    state.playheadSec = 0;
-    els.meta.textContent = `${state.session.fileName} — 計測時間 ${formatTime(state.session.durationSec)}`;
-    els.btnPlay.disabled = false; els.btnPrev.disabled = false; els.btnNext.disabled = false; els.btnExportCsv.disabled = false;
-    updateKpis(); renderEventList(); renderAllCanvases(); updateTimeReadout();
-  }
+  function updateUiAfterSessionLoad() {
+    const s = state.session;
+    els.meta.textContent = `${s.patientName} | ${new Date(s.startedAt).toLocaleString('ja-JP')}`;
+    $('kpi-duration').textContent = Math.round(s.durationSec / 60);
+    $('kpi-duration-sub').textContent = `${s.logs.length}サンプル`;
+    $('kpi-events').textContent = s.events.length;
+    const quietCount = s.logs.filter(l => l.db <= s.baseDb + 5 && l.g < 0.08).length;
+    $('kpi-quiet').textContent = s.logs.length ? Math.round((quietCount / s.logs.length) * 100) : '--';
+    $('kpi-extra').textContent = state.extra.spo2.length + state.extra.hr.length + state.extra.bruxism.length;
 
-  function updateKpis() {
-    const dur = getEffectiveDuration();
-    $('kpi-duration').textContent = dur ? Math.round(dur / 60) : '--';
-    if (state.session) {
-      const s = state.session;
-      $('kpi-duration-sub').textContent = `基準音レベル: ${s.refDb} dB`;
-      $('kpi-events').textContent = s.events.length;
-      $('kpi-events-sub').textContent = `1時間あたり: ${s.durationSec > 0 ? (s.events.length / (s.durationSec / 3600)).toFixed(1) : '0.0'} 回/h`;
-      const quietCount = s.timeline.filter(d => d.db < s.refDb - 10 && d.motion < 0.1).length;
-      $('kpi-quiet').textContent = s.timeline.length ? Math.round((quietCount / s.timeline.length) * 100) : 0;
-    }
-    const extraCount = state.extra.spo2.length + state.extra.hr.length + state.extra.bruxism.length;
-    $('kpi-extra').textContent = extraCount;
-    const minSpo2 = state.extra.spo2.length ? Math.min(...state.extra.spo2.map(d => d.val)).toFixed(1) : '--';
-    $('kpi-extra-sub').textContent = `最低SpO₂: ${minSpo2}% / 食いしばり: ${state.extra.bruxism.length}回`;
+    els.btnPlay.disabled = false;
+    els.btnExportCsv.disabled = false;
+    els.btnPlayRef.disabled = !state.refAudioBuffer;
+    els.btnPrev.disabled = s.events.length === 0;
+    els.btnNext.disabled = s.events.length === 0;
+
+    renderEventList();
+    renderAllCanvases();
+    updateTimeReadout();
   }
 
   function renderEventList() {
-    const baseEvents = state.session ? state.session.events.map(e => ({ ...e, badge: e.type === 'motion' ? 'chip-amber' : 'chip-coral' })) : [];
-    const combined = [...baseEvents, ...state.extra.bruxism.map(b => ({ sec: b.sec, type: 'bruxism', label: `食いしばり(${b.type})`, val: `${b.duration}s`, badge: 'chip-cyan' }))].sort((a, b) => a.sec - b.sec);
-    els.eventCount.textContent = `${combined.length}件`;
-    if (!combined.length) { els.eventList.innerHTML = '<div class="empty-state">イベントは検出されませんでした。</div>'; return; }
-    els.eventList.innerHTML = combined.slice(0, 200).map(ev => `<div class="event-row" onclick="window.__seekTo(${ev.sec})"><span class="event-time">${formatTime(ev.sec)}</span><span><span class="status-chip ${ev.badge}">${ev.label}</span></span><span class="section-note">${ev.val}</span></div>`).join('');
+    const evs = state.session?.events || [];
+    els.eventCount.textContent = `${evs.length}件`;
+    if (!evs.length) {
+      els.eventList.innerHTML = '<div class="empty-state">検出されたイベントはありません。</div>';
+      return;
+    }
+    els.eventList.innerHTML = evs.map(ev => `
+      <div class="event-row" onclick="window._seekEvent(${ev.sec})">
+        <span class="event-time">${formatTime(ev.sec)}</span>
+        <span>${ev.label}</span>
+        <span class="status-chip chip-cyan">${ev.type}</span>
+      </div>
+    `).join('');
   }
-  window.__seekTo = sec => seekTo(sec);
+  window._seekEvent = sec => seekTo(sec);
+
+  function jumpEvent(dir) {
+    const evs = state.session?.events || [];
+    if (!evs.length) return;
+    if (dir > 0) {
+      const next = evs.find(e => e.sec > state.playheadSec + 0.5) || evs[0];
+      seekTo(next.sec);
+    } else {
+      const prev = [...evs].reverse().find(e => e.sec < state.playheadSec - 0.5) || evs[evs.length - 1];
+      seekTo(prev.sec);
+    }
+  }
 
   function renderAllCanvases() {
     drawTimeline();
+    drawWaveform();
     if (els.subLaneContainer.style.display !== 'none') drawSubLane();
-    drawLocalWaveform();
-  }
-
-  function setupCanvas(cv) {
-    const dpr = window.devicePixelRatio || 1, rect = cv.getBoundingClientRect();
-    cv.width = rect.width * dpr; cv.height = rect.height * dpr;
-    const ctx = cv.getContext('2d'); ctx.scale(dpr, dpr);
-    return { ctx, w: rect.width, h: rect.height };
   }
 
   function drawTimeline() {
-    const { ctx, w, h } = setupCanvas(els.timelineCanvas);
+    const cv = els.timelineCanvas, ctx = cv.getContext('2d');
+    const w = cv.width = cv.clientWidth * devicePixelRatio, h = cv.height = cv.clientHeight * devicePixelRatio;
     ctx.clearRect(0, 0, w, h);
-    const dur = getEffectiveDuration(); if (!dur) return;
-    if (state.session) {
-      const { timeline, refDb, refEnvDb, events } = state.session;
-      const padT = 10, padB = 18, plotH = h - padT - padB, midY = padT + plotH * 0.5;
-      ctx.strokeStyle = 'rgba(232, 185, 84, 0.45)'; ctx.setLineDash([4, 4]);
-      ctx.beginPath(); ctx.moveTo(0, midY); ctx.lineTo(w, midY); ctx.stroke(); ctx.setLineDash([]);
-      ctx.fillStyle = 'rgba(240, 140, 112, 0.16)';
-      events.forEach(ev => ctx.fillRect((ev.sec / dur) * w - 2, padT, 4, plotH));
-      const barW = Math.max(1.5, w / Math.max(1, timeline.length));
-      timeline.forEach(pt => {
-        const x = (pt.sec / dur) * w;
-        const dbH = Math.max(0, Math.min(1, (pt.db - refEnvDb) / Math.max(1, (refDb - refEnvDb) * 2))) * plotH;
-        ctx.fillStyle = '#63c7d6'; ctx.fillRect(x, (padT + plotH) - dbH, barW, dbH);
-        const motH = Math.max(0, Math.min(1, pt.motion / 1.0)) * plotH * 0.65;
-        if (motH > 1) { ctx.fillStyle = 'rgba(242, 116, 116, 0.85)'; ctx.fillRect(x, padT, barW, motH); }
-      });
-    }
-    const px = (state.playheadSec / dur) * w;
-    ctx.strokeStyle = '#e8b954'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(px, 0); ctx.lineTo(px, h); ctx.stroke();
+    if (!state.session) return;
+
+    const { logs, durationSec, refDb, events } = state.session;
+    const midY = h * 0.5;
+
+    // 基準音「あ〜」50%ライン
+    ctx.strokeStyle = 'rgba(232, 185, 84, 0.45)'; ctx.setLineDash([4, 4]);
+    ctx.beginPath(); ctx.moveTo(0, midY); ctx.lineTo(w, midY); ctx.stroke(); ctx.setLineDash([]);
+
+    // イベント帯
+    ctx.fillStyle = 'rgba(240, 140, 112, 0.22)';
+    events.forEach(ev => {
+      const x1 = (ev.sec / durationSec) * w, x2 = ((ev.sec + ev.duration) / durationSec) * w;
+      ctx.fillRect(x1, 0, Math.max(2, x2 - x1), h);
+    });
+
+    // 音圧（下から上）
+    ctx.strokeStyle = '#63c7d6'; ctx.lineWidth = 1.5 * devicePixelRatio;
+    ctx.beginPath();
+    logs.forEach((l, i) => {
+      const x = (l.sec / durationSec) * w;
+      const norm = Math.max(0, Math.min(1, (l.db - (-70)) / (refDb - (-70)) * 0.5));
+      const y = h - norm * h;
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+
+    // 体動G（上から下）
+    ctx.strokeStyle = '#f27474';
+    ctx.beginPath();
+    logs.forEach((l, i) => {
+      const x = (l.sec / durationSec) * w;
+      const y = Math.min(h * 0.5, l.g * h * 1.2);
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+
+    // 再生ヘッド
+    const px = (state.playheadSec / durationSec) * w;
+    ctx.strokeStyle = '#e8b954'; ctx.lineWidth = 2 * devicePixelRatio;
+    ctx.beginPath(); ctx.moveTo(px, 0); ctx.lineTo(px, h); ctx.stroke();
   }
 
   function drawSubLane() {
-    const { ctx, w, h } = setupCanvas(els.subLaneCanvas);
+    const cv = els.subLaneCanvas, ctx = cv.getContext('2d');
+    const w = cv.width = cv.clientWidth * devicePixelRatio, h = cv.height = cv.clientHeight * devicePixelRatio;
     ctx.clearRect(0, 0, w, h);
     const dur = getEffectiveDuration(); if (!dur) return;
-    if (state.extra.spo2.length) {
-      ctx.strokeStyle = '#34d399'; ctx.lineWidth = 1.8; ctx.beginPath();
-      state.extra.spo2.forEach((pt, i) => { const x = (pt.sec / dur) * w, y = h - Math.max(0, Math.min(1, (pt.val - 90) / 10)) * (h - 12) - 6; i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y); });
-      ctx.stroke();
-    }
-    if (state.extra.hr.length) {
-      ctx.strokeStyle = '#f87171'; ctx.lineWidth = 1.5; ctx.beginPath();
-      state.extra.hr.forEach((pt, i) => { const x = (pt.sec / dur) * w, y = h - Math.max(0, Math.min(1, (pt.val - 40) / 80)) * (h - 12) - 6; i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y); });
-      ctx.stroke();
-    }
-    const colorMap = { Phasic: '#60a5fa', Tonic: '#4ade80', Mixed: '#fb923c' };
-    state.extra.bruxism.forEach(b => { ctx.fillStyle = colorMap[b.type] || '#60a5fa'; ctx.fillRect((b.sec / dur) * w, 4, Math.max(3, (b.duration / dur) * w), h - 8); });
-    const px = (state.playheadSec / dur) * w;
-    ctx.strokeStyle = '#e8b954'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(px, 0); ctx.lineTo(px, h); ctx.stroke();
+
+    state.extra.bruxism.forEach(b => {
+      ctx.fillStyle = b.type.includes('tonic') ? 'rgba(52,211,153,0.35)' : b.type.includes('mixed') ? 'rgba(232,185,84,0.35)' : 'rgba(99,199,214,0.35)';
+      ctx.fillRect((b.sec / dur) * w, 0, Math.max(3, (b.duration / dur) * w), h);
+    });
   }
 
-  function drawLocalWaveform() {
-    const { ctx, w, h } = setupCanvas(els.waveformCanvas);
+  function drawWaveform() {
+    const cv = els.waveformCanvas, ctx = cv.getContext('2d');
+    const w = cv.width = cv.clientWidth * devicePixelRatio, h = cv.height = cv.clientHeight * devicePixelRatio;
     ctx.clearRect(0, 0, w, h);
     if (!state.session) return;
-    const center = state.playheadSec, win = 10, pts = state.session.timeline.filter(p => p.sec >= center - win && p.sec <= center + win), midY = h / 2;
-    ctx.strokeStyle = '#213138'; ctx.beginPath(); ctx.moveTo(0, midY); ctx.lineTo(w, midY); ctx.stroke();
-    ctx.strokeStyle = '#63c7d6'; ctx.lineWidth = 1.5; ctx.beginPath();
-    pts.forEach((pt, i) => { const x = ((pt.sec - (center - win)) / (win * 2)) * w, y = midY + Math.sin(i * 1.7) * Math.max(0.02, (pt.db + 60) / 60) * (h * 0.45); i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y); });
+
+    const logs = state.session.logs, ph = state.playheadSec;
+    const win = 10, start = ph - win, end = ph + win;
+    ctx.strokeStyle = '#63c7d6'; ctx.lineWidth = 1.5 * devicePixelRatio;
+    ctx.beginPath();
+    let started = false;
+    logs.forEach(l => {
+      if (l.sec < start || l.sec > end) return;
+      const x = ((l.sec - start) / (win * 2)) * w;
+      const amp = Math.max(0.02, Math.min(1, (l.db + 70) / 70));
+      const y = h / 2 - (Math.sin(l.sec * 12) * amp * h * 0.42);
+      if (!started) { ctx.moveTo(x, y); started = true; } else ctx.lineTo(x, y);
+    });
     ctx.stroke();
     ctx.strokeStyle = '#e8b954'; ctx.beginPath(); ctx.moveTo(w / 2, 0); ctx.lineTo(w / 2, h); ctx.stroke();
   }
 
-  function togglePlay() { if (getEffectiveDuration()) state.isPlaying ? stopAudio() : startAudio(); }
-  function startAudio() {
-    state.isPlaying = true; els.btnPlay.textContent = '⏸ 一時停止'; lastTickTime = performance.now();
-    const tick = now => {
-      if (!state.isPlaying) return;
-      const dt = (now - lastTickTime) / 1000; lastTickTime = now;
-      const dur = getEffectiveDuration();
-      state.playheadSec = Math.min(dur, state.playheadSec + dt);
-      updateTimeReadout(); renderAllCanvases();
-      if (state.playheadSec >= dur) stopAudio(); else animFrameId = requestAnimationFrame(tick);
-    };
-    animFrameId = requestAnimationFrame(tick);
+  function togglePlay() {
+    if (!state.session) return;
+    state.isPlaying = !state.isPlaying;
+    els.btnPlay.textContent = state.isPlaying ? '⏸ 一時停止' : '▶ 再生';
+    if (state.isPlaying) { lastTickTime = performance.now(); tickPlay(); }
+    else cancelAnimationFrame(animFrameId);
   }
-  function stopAudio() { state.isPlaying = false; els.btnPlay.textContent = '▶ 再生'; if (animFrameId) cancelAnimationFrame(animFrameId); }
-  function seekTo(sec) { const dur = getEffectiveDuration(); if (!dur) return; state.playheadSec = Math.max(0, Math.min(dur, sec)); updateTimeReadout(); renderAllCanvases(); }
-  function jumpEvent(dir) {
-    if (!state.session?.events?.length) return;
-    const evs = state.session.events;
-    const target = dir > 0 ? evs.find(e => e.sec > state.playheadSec + 1) || evs[0] : [...evs].reverse().find(e => e.sec < state.playheadSec - 1) || evs[evs.length - 1];
-    seekTo(target.sec);
+
+  function tickPlay(now = performance.now()) {
+    if (!state.isPlaying) return;
+    const dt = (now - lastTickTime) / 1000; lastTickTime = now;
+    state.playheadSec += dt;
+    if (state.playheadSec >= state.session.durationSec) { state.playheadSec = 0; togglePlay(); return; }
+    updateTimeReadout(); drawTimeline(); drawWaveform();
+    animFrameId = requestAnimationFrame(tickPlay);
   }
-  function ensureAudioCtx() { if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
-  function playReferenceAudio() { if (!state.refAudioBuffer) return; ensureAudioCtx(); const src = audioCtx.createBufferSource(); src.buffer = state.refAudioBuffer; src.connect(audioCtx.destination); src.start(); }
-  function updateTimeReadout() { els.timeReadout.textContent = `${formatTime(state.playheadSec)} / ${formatTime(getEffectiveDuration())}`; }
-  function formatTime(sec) { const s = Math.floor(sec); return `${String(Math.floor(s / 3600)).padStart(2, '0')}:${String(Math.floor((s % 3600) / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`; }
+
+  function seekTo(sec) {
+    state.playheadSec = Math.max(0, Math.min(getEffectiveDuration(), sec));
+    updateTimeReadout(); renderAllCanvases();
+  }
+
+  function updateTimeReadout() {
+    els.timeReadout.textContent = `${formatTime(state.playheadSec)} / ${formatTime(getEffectiveDuration())}`;
+  }
+
+  function formatTime(sec) {
+    const s = Math.max(0, Math.floor(sec));
+    return [Math.floor(s / 3600), Math.floor((s % 3600) / 60), s % 60].map(v => String(v).padStart(2, '0')).join(':');
+  }
+
+  function getAudioCtx() {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    return audioCtx;
+  }
+
+  function playReferenceAudio() {
+    if (!state.refAudioBuffer) return;
+    const ctx = getAudioCtx(), src = ctx.createBufferSource();
+    src.buffer = state.refAudioBuffer;
+    const gain = ctx.createGain(); gain.gain.value = state.volume;
+    src.connect(gain); gain.connect(ctx.destination);
+    src.start();
+  }
 
   function bindDspControl(key, min, max) {
-    const range = $(`dsp-${key}`), num = $(`dsp-${key}-val`);
-    const update = v => { const val = Math.max(min, Math.min(max, Number(v))); state.dsp[key] = val; range.value = val; num.value = val; saveDspSettings(); drawDspCurve(); };
-    range.addEventListener('input', e => update(e.target.value)); num.addEventListener('change', e => update(e.target.value));
+    const rng = $(`dsp-${key}`), num = $(`dsp-${key}-val`);
+    const update = v => { state.dsp[key] = Math.max(min, Math.min(max, Number(v) || min)); syncDspInputs(); saveDspSettings(); drawDspCurve(); };
+    rng.addEventListener('input', e => update(e.target.value));
+    num.addEventListener('change', e => update(e.target.value));
   }
-  function syncDspInputs() { ['hpf', 'boost', 'lpf'].forEach(k => { $(`dsp-${k}`).value = state.dsp[k]; $(`dsp-${k}-val`).value = state.dsp[k]; }); }
+  function syncDspInputs() {
+    ['hpf', 'boost', 'lpf'].forEach(k => { $(`dsp-${k}`).value = state.dsp[k]; $(`dsp-${k}-val`).value = state.dsp[k]; });
+  }
   function drawDspCurve() {
-    const { ctx, w, h } = setupCanvas(els.dspCanvas); ctx.clearRect(0, 0, w, h);
-    ctx.strokeStyle = '#63c7d6'; ctx.lineWidth = 2; ctx.beginPath();
-    for (let x = 0; x <= w; x += 4) {
-      const freq = 20 * Math.pow(500, x / w); let gain = 1.0;
-      if (freq < state.dsp.hpf) gain *= Math.pow(freq / state.dsp.hpf, 2);
-      if (freq > state.dsp.lpf) gain *= Math.pow(state.dsp.lpf / freq, 2);
-      const y = h - 16 - Math.min(1, gain) * (h - 32); x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    const cv = els.dspCanvas, ctx = cv.getContext('2d');
+    const w = cv.width = cv.clientWidth * devicePixelRatio, h = cv.height = cv.clientHeight * devicePixelRatio;
+    ctx.clearRect(0, 0, w, h);
+    ctx.strokeStyle = '#63c7d6'; ctx.lineWidth = 2 * devicePixelRatio; ctx.beginPath();
+    for (let i = 0; i <= 100; i++) {
+      const freq = 20 * Math.pow(400, i / 100);
+      let db = 0;
+      if (freq < state.dsp.hpf) db -= 18 * Math.log2(state.dsp.hpf / freq);
+      if (freq > state.dsp.lpf) db -= 18 * Math.log2(freq / state.dsp.lpf);
+      db += state.dsp.boost * Math.exp(-Math.pow(Math.log2(freq / 800), 2) * 2);
+      const x = (i / 100) * w, y = h * 0.5 - (db / 24) * (h * 0.4);
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
     }
     ctx.stroke();
   }
-  function saveDspSettings() { localStorage.setItem('st_dsp_v5', JSON.stringify(state.dsp)); }
-  function loadDspSettings() { try { const d = JSON.parse(localStorage.getItem('st_dsp_v5')); if (d) { state.dsp = d; syncDspInputs(); } } catch {} }
-  function saveCurrentToHistory() {
+
+  function loadDspSettings() { try { const s = JSON.parse(localStorage.getItem('st_dsp_v5')); if (s) { state.dsp = s; syncDspInputs(); } } catch {} }
+  function saveDspSettings() { try { localStorage.setItem('st_dsp_v5', JSON.stringify(state.dsp)); } catch {} }
+
+  function loadHistory() { try { state.history = JSON.parse(localStorage.getItem('st_hist_v5')) || []; renderHistory(); } catch {} }
+  function saveHistory() {
     if (!state.session) return;
-    state.history.unshift({ date: new Date(state.session.startMs).toLocaleString('ja-JP'), duration: formatTime(state.session.durationSec), events: state.session.events.length, quiet: $('kpi-quiet').textContent + '%', fileName: state.session.fileName });
-    localStorage.setItem('st_history_v5', JSON.stringify(state.history.slice(0, 20))); renderHistory();
+    const s = state.session;
+    const quiet = s.logs.length ? Math.round((s.logs.filter(l => l.db <= s.baseDb + 5).length / s.logs.length) * 100) : 0;
+    state.history.unshift({ date: new Date().toLocaleString('ja-JP'), dur: `${Math.round(s.durationSec / 60)}分`, events: s.events.length, quiet: `${quiet}%`, file: s.fileName });
+    state.history = state.history.slice(0, 20);
+    try { localStorage.setItem('st_hist_v5', JSON.stringify(state.history)); } catch {}
+    renderHistory();
   }
-  function loadHistory() { try { state.history = JSON.parse(localStorage.getItem('st_history_v5')) || []; renderHistory(); } catch {} }
   function renderHistory() {
-    els.historyTbody.innerHTML = state.history.length ? state.history.map(h => `<tr><td>${h.date}</td><td>${h.duration}</td><td>${h.events} 回</td><td>${h.quiet}</td><td>${h.fileName}</td></tr>`).join('') : '<tr><td colspan="5" style="text-align:center; color:var(--on-surface-variant);">保存された履歴はありません</td></tr>';
+    if (!state.history.length) { els.historyTbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--on-surface-variant);">保存された履歴はありません</td></tr>'; return; }
+    els.historyTbody.innerHTML = state.history.map(h => `<tr><td>${h.date}</td><td>${h.dur}</td><td>${h.events}</td><td>${h.quiet}</td><td>${h.file}</td></tr>`).join('');
   }
-  function clearHistory() { state.history = []; localStorage.removeItem('st_history_v5'); renderHistory(); }
+  function clearHistory() { state.history = []; localStorage.removeItem('st_hist_v5'); renderHistory(); }
+
   function exportCsv() {
     if (!state.session) return;
-    const rows = ['sec,db,motionG', ...state.session.timeline.map(p => `${p.sec},${p.db.toFixed(2)},${p.motion.toFixed(3)}`)];
-    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([rows.join('\n')], { type: 'text/csv;charset=utf-8;' }));
-    a.download = `ST_export_${Date.now()}.csv`; a.click();
+    const rows = ['sec,db,motionG', ...state.session.logs.map(l => `${l.sec},${l.db.toFixed(2)},${l.g.toFixed(3)}`)];
+    const blob = new Blob([rows.join('\n')], { type: 'text/csv;charset=utf-8;' });
+    const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `${state.session.fileName.replace('.zip', '')}_export.csv`; a.click();
   }
 
   init();
