@@ -6,129 +6,64 @@
   <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
   <meta http-equiv="Pragma" content="no-cache">
   <meta http-equiv="Expires" content="0">
-  <title>ST-Oscillograph v5.1.1</title>
+  <title>ST-Oscillograph v5.1.3</title>
   <style>
     :root {
-      --bg: #0c1317;
-      --surface: #131d23;
-      --surface-2: #19262e;
-      --border: #243640;
-      --on-surface: #e6eff3;
-      --on-surface-variant: #8fa6b2;
-      --primary: #63c7d6;
-      --primary-dim: rgba(99, 199, 214, 0.14);
-      --amber: #e8b954;
-      --coral: #f27474;
-      --emerald: #34d399;
-      --radius: 10px;
+      --bg: #0c1317; --surface: #131d23; --surface-2: #19262e; --border: #243640;
+      --on-surface: #e6eff3; --on-surface-variant: #8fa6b2; --primary: #63c7d6;
+      --primary-dim: rgba(99, 199, 214, 0.14); --amber: #e8b954; --coral: #f27474;
+      --emerald: #34d399; --radius: 10px;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Hiragino Kaku Gothic ProN", sans-serif;
-      background: var(--bg);
-      color: var(--on-surface);
-      line-height: 1.5;
-      padding: 16px;
-    }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; background: var(--bg); color: var(--on-surface); line-height: 1.5; padding: 16px; }
     .app-shell { max-width: 1360px; margin: 0 auto; display: flex; flex-direction: column; gap: 14px; }
-
-    /* ヘッダー */
-    .app-header {
-      display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between;
-      gap: 12px; background: var(--surface); border: 1px solid var(--border);
-      border-radius: var(--radius); padding: 14px 18px;
-    }
+    .app-header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 18px; }
     .brand-group { display: flex; flex-direction: column; gap: 4px; }
     .brand-top { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-    .brand-title { font-size: 1.25rem; font-weight: 700; letter-spacing: 0.02em; }
-    .badge-ver {
-      background: var(--primary-dim); color: var(--primary); border: 1px solid rgba(99,199,214,0.35);
-      font-size: 0.75rem; font-weight: 700; padding: 2px 8px; border-radius: 999px;
-    }
+    .brand-title { font-size: 1.25rem; font-weight: 700; }
+    .badge-ver { background: var(--primary-dim); color: var(--primary); border: 1px solid rgba(99,199,214,0.35); font-size: 0.75rem; font-weight: 700; padding: 2px 8px; border-radius: 999px; }
     .meta-text { font-size: 0.85rem; color: var(--on-surface-variant); }
     .github-bar { display: flex; align-items: center; gap: 8px; font-size: 0.78rem; color: var(--on-surface-variant); }
-
     .header-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
-    .btn {
-      background: var(--surface-2); color: var(--on-surface); border: 1px solid var(--border);
-      border-radius: 8px; padding: 8px 14px; font-size: 0.85rem; font-weight: 600;
-      cursor: pointer; transition: 0.15s;
-    }
+    .btn { background: var(--surface-2); color: var(--on-surface); border: 1px solid var(--border); border-radius: 8px; padding: 8px 14px; font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: 0.15s; }
     .btn:hover:not(:disabled) { border-color: var(--primary); color: var(--primary); }
     .btn:disabled { opacity: 0.45; cursor: not-allowed; }
     .btn-primary { background: var(--primary); color: #081216; border-color: var(--primary); }
-    .btn-primary:hover:not(:disabled) { opacity: 0.9; color: #081216; }
     .btn-sm { padding: 4px 10px; font-size: 0.78rem; }
-    .select-input {
-      background: var(--surface-2); color: var(--on-surface); border: 1px solid var(--border);
-      border-radius: 8px; padding: 8px 10px; font-size: 0.85rem;
-    }
-
-    /* ドロップゾーン */
-    .dropzone {
-      display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px;
-      background: var(--surface); border: 1.5px dashed var(--border); border-radius: var(--radius);
-      padding: 14px 18px; transition: 0.2s;
-    }
+    .select-input { background: var(--surface-2); color: var(--on-surface); border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; font-size: 0.85rem; }
+    .dropzone { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; background: var(--surface); border: 1.5px dashed var(--border); border-radius: var(--radius); padding: 14px 18px; transition: 0.2s; }
     .dropzone.is-dragover { border-color: var(--primary); background: var(--primary-dim); }
     .dropzone-title { font-weight: 600; font-size: 0.95rem; }
     .dropzone-sub { font-size: 0.8rem; color: var(--on-surface-variant); }
-    .inline-status {
-      padding: 6px 12px; border-radius: 8px; font-size: 0.82rem; background: var(--surface-2);
-      border: 1px solid var(--border); color: var(--on-surface-variant);
-    }
+    .inline-status { padding: 6px 12px; border-radius: 8px; font-size: 0.82rem; background: var(--surface-2); border: 1px solid var(--border); color: var(--on-surface-variant); }
     .inline-status.is-active { border-color: var(--primary); color: var(--primary); }
     .inline-status.is-error { border-color: var(--coral); color: var(--coral); }
-
-    /* KPI */
     .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
     @media (max-width: 900px) { .kpi-grid { grid-template-columns: repeat(2, 1fr); } }
-    .kpi-card {
-      background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px;
-    }
+    .kpi-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 14px 16px; }
     .kpi-label { font-size: 0.8rem; color: var(--on-surface-variant); margin-bottom: 6px; }
     .kpi-value { font-size: 1.6rem; font-weight: 700; display: flex; align-items: baseline; gap: 4px; }
     .kpi-unit { font-size: 0.85rem; color: var(--on-surface-variant); font-weight: 400; }
     .kpi-sub { font-size: 0.78rem; color: var(--on-surface-variant); margin-top: 4px; }
-
-    /* パネル共通 */
-    .panel {
-      background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px;
-      display: flex; flex-direction: column; gap: 12px;
-    }
+    .panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; display: flex; flex-direction: column; gap: 12px; }
     .panel-header { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; }
     .panel-title { font-size: 1rem; font-weight: 700; }
     .panel-sub { font-size: 0.8rem; color: var(--on-surface-variant); }
-
     canvas { width: 100%; display: block; background: #091014; border: 1px solid var(--border); border-radius: 8px; }
     #timeline-canvas { height: 190px; cursor: crosshair; }
     #sub-lane-canvas { height: 110px; cursor: crosshair; margin-top: 8px; }
     #waveform-canvas { height: 150px; }
     #dsp-canvas { height: 120px; }
-
     .legend-row { display: flex; flex-wrap: wrap; gap: 14px; font-size: 0.78rem; color: var(--on-surface-variant); }
     .legend-item { display: flex; align-items: center; gap: 6px; }
     .dot { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
-
-    .controls-bar {
-      display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px;
-      padding-top: 4px;
-    }
+    .controls-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 10px; padding-top: 4px; }
     .controls-left { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
-    .time-readout {
-      font-family: ui-monospace, SFMono-Regular, Menlo, monospace; font-size: 0.88rem;
-      background: var(--surface-2); padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border);
-    }
-
-    /* 2カラム */
+    .time-readout { font-family: monospace; font-size: 0.88rem; background: var(--surface-2); padding: 6px 12px; border-radius: 8px; border: 1px solid var(--border); }
     .two-col { display: grid; grid-template-columns: 1.4fr 1fr; gap: 14px; }
     @media (max-width: 960px) { .two-col { grid-template-columns: 1fr; } }
-
     .event-list { max-height: 220px; overflow-y: auto; display: flex; flex-direction: column; gap: 6px; }
-    .event-row {
-      display: flex; align-items: center; justify-content: space-between; gap: 8px;
-      background: var(--surface-2); padding: 8px 12px; border-radius: 8px; font-size: 0.84rem;
-    }
+    .event-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; background: var(--surface-2); padding: 8px 12px; border-radius: 8px; font-size: 0.84rem; cursor: pointer; }
     .event-row:hover { border: 1px solid var(--primary); }
     .event-time { font-family: monospace; color: var(--amber); }
     .status-chip { padding: 2px 8px; border-radius: 999px; font-size: 0.75rem; font-weight: 600; }
@@ -136,15 +71,11 @@
     .chip-amber { background: rgba(232,185,84,0.18); color: var(--amber); }
     .chip-cyan { background: var(--primary-dim); color: var(--primary); }
     .empty-state { color: var(--on-surface-variant); font-size: 0.85rem; padding: 18px; text-align: center; }
-
-    /* DSP */
     .dsp-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
     @media (max-width: 768px) { .dsp-grid { grid-template-columns: 1fr; } }
     .dsp-control { background: var(--surface-2); padding: 10px 12px; border-radius: 8px; display: flex; flex-direction: column; gap: 6px; }
     .dsp-top { display: flex; justify-content: space-between; font-size: 0.82rem; }
     .dsp-num { width: 70px; background: var(--bg); color: var(--on-surface); border: 1px solid var(--border); border-radius: 6px; padding: 2px 6px; text-align: right; }
-
-    /* テーブル */
     table { width: 100%; border-collapse: collapse; font-size: 0.84rem; }
     th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); }
     th { color: var(--on-surface-variant); font-weight: 600; }
@@ -152,12 +83,11 @@
 </head>
 <body>
   <div class="app-shell">
-    <!-- ヘッダー -->
     <header class="app-header">
       <div class="brand-group">
         <div class="brand-top">
           <span class="brand-title" id="ui-app-title">ST-Oscillograph</span>
-          <span class="badge-ver">v5.1.1</span>
+          <span class="badge-ver">v5.1.3</span>
           <span class="meta-text" id="ui-session-meta">セッション未読込</span>
         </div>
         <div class="github-bar">
@@ -179,7 +109,6 @@
       </div>
     </header>
 
-    <!-- ドロップゾーン -->
     <section class="dropzone" id="dropzone">
       <div>
         <div class="dropzone-title">計測ZIPファイル / 追加ログ（JSON・CSV）をここにドラッグ＆ドロップ</div>
@@ -190,7 +119,6 @@
       </div>
     </section>
 
-    <!-- KPIカード -->
     <section class="kpi-grid">
       <div class="kpi-card">
         <div class="kpi-label" id="lbl-kpi-1">計測時間</div>
@@ -214,7 +142,6 @@
       </div>
     </section>
 
-    <!-- 全体タイムライン -->
     <section class="panel">
       <div class="panel-header">
         <div>
@@ -226,21 +153,17 @@
           <button class="btn btn-sm" id="btn-next-event" disabled>次のイベント ▶</button>
         </div>
       </div>
-
       <canvas id="timeline-canvas"></canvas>
-
       <div id="sub-lane-container" style="display:none;">
         <div class="panel-sub">同期サブレーン（緑線: SpO₂ 90-100% / 赤線: 心拍 40-120bpm / 帯: 食いしばり Phasic青・Tonic緑・Mixed橙）</div>
         <canvas id="sub-lane-canvas"></canvas>
       </div>
-
       <div class="legend-row">
         <span class="legend-item"><span class="dot" style="background:#63c7d6;"></span>音圧（下から上）</span>
         <span class="legend-item"><span class="dot" style="background:#f27474;"></span>体動G（上から下）</span>
         <span class="legend-item"><span class="dot" style="background:#e8b954;"></span>基準音「あ〜」50%ライン / 再生位置</span>
         <span class="legend-item"><span class="dot" style="background:rgba(240,140,112,0.6);"></span>検出イベント帯</span>
       </div>
-
       <div class="controls-bar">
         <div class="controls-left">
           <button class="btn btn-primary" id="btn-play" disabled>▶ 再生</button>
@@ -255,7 +178,6 @@
       </div>
     </section>
 
-    <!-- 局所拡大 & イベント一覧 -->
     <div class="two-col">
       <section class="panel">
         <div class="panel-header">
@@ -264,19 +186,15 @@
         </div>
         <canvas id="waveform-canvas"></canvas>
       </section>
-
       <section class="panel">
         <div class="panel-header">
           <div class="panel-title">イベント一覧</div>
           <div class="panel-sub" id="event-count-note">0件</div>
         </div>
-        <div class="event-list" id="event-list">
-          <div class="empty-state">セッションを読み込むとイベントが表示されます。</div>
-        </div>
+        <div class="event-list" id="event-list"><div class="empty-state">セッションを読み込むとイベントが表示されます。</div></div>
       </section>
     </div>
 
-    <!-- DSPフィルター設定 -->
     <section class="panel">
       <div class="panel-header">
         <div>
@@ -286,23 +204,13 @@
         <button class="btn btn-sm" id="btn-reset-dsp">初期値に戻す</button>
       </div>
       <div class="dsp-grid">
-        <div class="dsp-control">
-          <div class="dsp-top"><span>ハイパス (HPF Hz)</span><input type="number" class="dsp-num" id="dsp-hpf-val" value="120"></div>
-          <input type="range" id="dsp-hpf" min="40" max="400" value="120">
-        </div>
-        <div class="dsp-control">
-          <div class="dsp-top"><span>帯域ブースト (dB)</span><input type="number" class="dsp-num" id="dsp-boost-val" value="6"></div>
-          <input type="range" id="dsp-boost" min="0" max="18" value="6">
-        </div>
-        <div class="dsp-control">
-          <div class="dsp-top"><span>ローパス (LPF Hz)</span><input type="number" class="dsp-num" id="dsp-lpf-val" value="2800"></div>
-          <input type="range" id="dsp-lpf" min="800" max="6000" value="2800">
-        </div>
+        <div class="dsp-control"><div class="dsp-top"><span>ハイパス (HPF Hz)</span><input type="number" class="dsp-num" id="dsp-hpf-val" value="120"></div><input type="range" id="dsp-hpf" min="40" max="400" value="120"></div>
+        <div class="dsp-control"><div class="dsp-top"><span>帯域ブースト (dB)</span><input type="number" class="dsp-num" id="dsp-boost-val" value="6"></div><input type="range" id="dsp-boost" min="0" max="18" value="6"></div>
+        <div class="dsp-control"><div class="dsp-top"><span>ローパス (LPF Hz)</span><input type="number" class="dsp-num" id="dsp-lpf-val" value="2800"></div><input type="range" id="dsp-lpf" min="800" max="6000" value="2800"></div>
       </div>
       <canvas id="dsp-canvas"></canvas>
     </section>
 
-    <!-- 解析履歴 -->
     <section class="panel">
       <div class="panel-header">
         <div class="panel-title">解析履歴（ブラウザ内保存）</div>
@@ -310,12 +218,8 @@
       </div>
       <div style="overflow-x:auto;">
         <table>
-          <thead>
-            <tr><th>日時</th><th>計測時間</th><th>イベント数</th><th>静穏率</th><th>ファイル名</th></tr>
-          </thead>
-          <tbody id="history-tbody">
-            <tr><td colspan="5" style="text-align:center; color:var(--on-surface-variant);">保存された履歴はありません</td></tr>
-          </tbody>
+          <thead><tr><th>日時</th><th>計測時間</th><th>イベント数</th><th>静穏率</th><th>ファイル名</th></tr></thead>
+          <tbody id="history-tbody"><tr><td colspan="5" style="text-align:center; color:var(--on-surface-variant);">保存された履歴はありません</td></tr></tbody>
         </table>
       </div>
     </section>
@@ -324,142 +228,67 @@
 <script>
 (() => {
   'use strict';
-
-  const APP_VERSION = 'v5.1.1';
+  const APP_VERSION = 'v5.1.3';
   const GITHUB_REPO = 'matsuodentalassociation/ST-oscillo-scope';
   const GITHUB_BRANCH = 'main';
 
-  const LABELS = {
-    appTitle: 'ST-Oscillograph',
-    kpiDuration: '計測時間',
-    kpiEvents: '音圧変化イベント',
-    kpiQuiet: '無音 / 低音圧比率',
-    kpiExtra: '生体・食いしばり連携'
-  };
-
   const state = {
-    session: null,
-    extra: { spo2: [], hr: [], bruxism: [] },
-    refAudioBuffer: null,
-    isPlaying: false,
-    playheadSec: 0,
-    filterOn: true,
-    volume: 1.0,
-    dsp: { hpf: 120, boost: 6, lpf: 2800 },
-    history: [],
-    latestCommitSha: null
+    session: null, extra: { spo2: [], hr: [], bruxism: [] },
+    refAudioBuffer: null, isPlaying: false, playheadSec: 0, filterOn: true, volume: 1.0,
+    dsp: { hpf: 120, boost: 6, lpf: 2800 }, history: [], latestCommitSha: null
   };
-
-  let audioCtx = null;
-  let animFrameId = null;
-  let lastTickTime = 0;
+  let audioCtx = null, animFrameId = null, lastTickTime = 0;
 
   const $ = id => document.getElementById(id);
   const els = {
-    meta: $('ui-session-meta'),
-    githubStatus: $('ui-github-status'),
-    btnApplyLatest: $('btn-apply-latest'),
-    dropzone: $('dropzone'),
-    zipInput: $('zip-input'),
-    extraInput: $('extra-log-input'),
-    extraType: $('extra-log-type'),
-    statusBanner: $('status-banner'),
-    statusText: $('status-text'),
-    timelineCanvas: $('timeline-canvas'),
-    subLaneContainer: $('sub-lane-container'),
-    subLaneCanvas: $('sub-lane-canvas'),
-    waveformCanvas: $('waveform-canvas'),
-    dspCanvas: $('dsp-canvas'),
-    btnLoadZip: $('btn-load-zip'),
-    btnLoadExtra: $('btn-load-extra'),
-    btnLoadDemo: $('btn-load-demo'),
-    btnExportCsv: $('btn-export-csv'),
-    btnPlay: $('btn-play'),
-    btnPlayRef: $('btn-play-ref'),
-    btnFilterToggle: $('btn-filter-toggle'),
-    btnPrev: $('btn-prev-event'),
-    btnNext: $('btn-next-event'),
-    timeReadout: $('time-readout'),
-    volumeSlider: $('volume-slider'),
-    eventList: $('event-list'),
-    eventCount: $('event-count-note'),
-    historyTbody: $('history-tbody')
+    meta: $('ui-session-meta'), githubStatus: $('ui-github-status'), btnApplyLatest: $('btn-apply-latest'),
+    dropzone: $('dropzone'), zipInput: $('zip-input'), extraInput: $('extra-log-input'), extraType: $('extra-log-type'),
+    statusBanner: $('status-banner'), statusText: $('status-text'),
+    timelineCanvas: $('timeline-canvas'), subLaneContainer: $('sub-lane-container'), subLaneCanvas: $('sub-lane-canvas'),
+    waveformCanvas: $('waveform-canvas'), dspCanvas: $('dsp-canvas'),
+    btnLoadZip: $('btn-load-zip'), btnLoadExtra: $('btn-load-extra'), btnLoadDemo: $('btn-load-demo'), btnExportCsv: $('btn-export-csv'),
+    btnPlay: $('btn-play'), btnPlayRef: $('btn-play-ref'), btnFilterToggle: $('btn-filter-toggle'),
+    btnPrev: $('btn-prev-event'), btnNext: $('btn-next-event'), timeReadout: $('time-readout'),
+    volumeSlider: $('volume-slider'), eventList: $('event-list'), eventCount: $('event-count-note'), historyTbody: $('history-tbody')
   };
 
   function init() {
-    $('ui-app-title').textContent = LABELS.appTitle;
-    $('lbl-kpi-1').textContent = LABELS.kpiDuration;
-    $('lbl-kpi-2').textContent = LABELS.kpiEvents;
-    $('lbl-kpi-3').textContent = LABELS.kpiQuiet;
-    $('lbl-kpi-4').textContent = LABELS.kpiExtra;
-
-    loadDspSettings();
-    loadHistory();
-    drawDspCurve();
-    fetchGitHubLatest();
-
+    loadDspSettings(); loadHistory(); drawDspCurve(); fetchGitHubLatest();
     els.btnApplyLatest.addEventListener('click', applyLatestFromGitHub);
-
-    // 画面全体での誤ダウンロード防止
     window.addEventListener('dragover', e => e.preventDefault());
-    window.addEventListener('drop', e => {
-      e.preventDefault();
-      if (e.dataTransfer?.files?.length) handleFiles(e.dataTransfer.files);
-    });
-
+    window.addEventListener('drop', e => { e.preventDefault(); if (e.dataTransfer?.files?.length) handleFiles(e.dataTransfer.files); });
     els.dropzone.addEventListener('dragover', e => { e.preventDefault(); els.dropzone.classList.add('is-dragover'); });
     els.dropzone.addEventListener('dragleave', () => els.dropzone.classList.remove('is-dragover'));
-    els.dropzone.addEventListener('drop', e => {
-      e.preventDefault();
-      e.stopPropagation();
-      els.dropzone.classList.remove('is-dragover');
-      if (e.dataTransfer?.files?.length) handleFiles(e.dataTransfer.files);
-    });
-
+    els.dropzone.addEventListener('drop', e => { e.preventDefault(); e.stopPropagation(); els.dropzone.classList.remove('is-dragover'); if (e.dataTransfer?.files?.length) handleFiles(e.dataTransfer.files); });
     els.btnLoadZip.addEventListener('click', () => els.zipInput.click());
     els.zipInput.addEventListener('change', e => { handleFiles(e.target.files); e.target.value = ''; });
-
     els.btnLoadExtra.addEventListener('click', () => els.extraInput.click());
     els.extraInput.addEventListener('change', e => { handleFiles(e.target.files, els.extraType.value); e.target.value = ''; });
-
     els.btnLoadDemo.addEventListener('click', loadSampleSession);
     els.btnExportCsv.addEventListener('click', exportCsv);
     $('btn-clear-history').addEventListener('click', clearHistory);
-
     els.btnPlay.addEventListener('click', togglePlay);
     els.btnPrev.addEventListener('click', () => jumpEvent(-1));
     els.btnNext.addEventListener('click', () => jumpEvent(1));
     els.btnPlayRef.addEventListener('click', playReferenceAudio);
-    els.btnFilterToggle.addEventListener('click', () => {
-      state.filterOn = !state.filterOn;
-      els.btnFilterToggle.textContent = `フィルター: ${state.filterOn ? 'ON' : 'OFF'}`;
-      els.btnFilterToggle.setAttribute('aria-pressed', String(state.filterOn));
-    });
+    els.btnFilterToggle.addEventListener('click', () => { state.filterOn = !state.filterOn; els.btnFilterToggle.textContent = `フィルター: ${state.filterOn ? 'ON' : 'OFF'}`; });
     els.volumeSlider.addEventListener('input', e => { state.volume = parseFloat(e.target.value); });
-
     [els.timelineCanvas, els.subLaneCanvas].forEach(cv => {
       cv.addEventListener('click', e => {
-        if (!state.session) return;
+        const dur = getEffectiveDuration(); if (!dur) return;
         const rect = cv.getBoundingClientRect();
-        const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
-        seekTo(ratio * state.session.durationSec);
+        seekTo(Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width)) * dur);
       });
     });
+    bindDspControl('hpf', 40, 400); bindDspControl('boost', 0, 18); bindDspControl('lpf', 800, 6000);
+    $('btn-reset-dsp').addEventListener('click', () => { state.dsp = { hpf: 120, boost: 6, lpf: 2800 }; syncDspInputs(); saveDspSettings(); drawDspCurve(); });
+    window.addEventListener('resize', () => { if (getEffectiveDuration() > 0) renderAllCanvases(); drawDspCurve(); });
+  }
 
-    bindDspControl('hpf', 40, 400);
-    bindDspControl('boost', 0, 18);
-    bindDspControl('lpf', 800, 6000);
-    $('btn-reset-dsp').addEventListener('click', () => {
-      state.dsp = { hpf: 120, boost: 6, lpf: 2800 };
-      syncDspInputs();
-      saveDspSettings();
-      drawDspCurve();
-    });
-
-    window.addEventListener('resize', () => {
-      if (state.session) renderAllCanvases();
-      drawDspCurve();
-    });
+  function getEffectiveDuration() {
+    if (state.session) return state.session.durationSec;
+    const secs = [...state.extra.spo2.map(d => d.sec), ...state.extra.hr.map(d => d.sec), ...state.extra.bruxism.map(b => b.sec + b.duration)];
+    return secs.length ? Math.max(60, ...secs) : 0;
   }
 
   function showStatus(msg, type = 'active') {
@@ -467,178 +296,150 @@
     els.statusText.textContent = msg;
   }
 
-  /* =========================================================
-   * GitHub 最新コミット確認 & 動的フェッチ適用（キャッシュバスティング）
-   * ========================================================= */
   async function fetchGitHubLatest() {
     try {
-      const url = `https://api.github.com/repos/${GITHUB_REPO}/commits/${GITHUB_BRANCH}?t=${Date.now()}`;
-      const res = await fetch(url, { cache: 'no-store' });
+      const res = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/commits/${GITHUB_BRANCH}?t=${Date.now()}`, { cache: 'no-store' });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const data = await res.json();
       state.latestCommitSha = data.sha;
-      const shortSha = data.sha.slice(0, 7);
-      const dateStr = new Date(data.commit.author.date).toLocaleString('ja-JP');
-      els.githubStatus.textContent = `GitHub最新 (${GITHUB_BRANCH}): ${shortSha} (${dateStr})`;
+      els.githubStatus.textContent = `GitHub最新 (${GITHUB_BRANCH}): ${data.sha.slice(0, 7)} (${new Date(data.commit.author.date).toLocaleString('ja-JP')})`;
       els.btnApplyLatest.style.display = 'inline-block';
-    } catch {
-      els.githubStatus.textContent = `ローカル / オフライン実行 (${APP_VERSION})`;
-    }
+    } catch { els.githubStatus.textContent = `ローカル / オフライン実行 (${APP_VERSION})`; }
   }
 
   async function applyLatestFromGitHub() {
     if (!state.latestCommitSha) return;
-    els.btnApplyLatest.disabled = true;
-    els.btnApplyLatest.textContent = '取得中...';
+    els.btnApplyLatest.disabled = true; els.btnApplyLatest.textContent = '取得中...';
     try {
-      const rawUrl = `https://raw.githubusercontent.com/${GITHUB_REPO}/${state.latestCommitSha}/index.html?t=${Date.now()}`;
-      const res = await fetch(rawUrl, { cache: 'no-store' });
+      const res = await fetch(`https://raw.githubusercontent.com/${GITHUB_REPO}/${state.latestCommitSha}/index.html?t=${Date.now()}`, { cache: 'no-store' });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       const html = await res.text();
-      document.open();
-      document.write(html);
-      document.close();
-    } catch (e) {
-      showStatus(`最新版取得エラー: ${e.message}`, 'error');
-      els.btnApplyLatest.disabled = false;
-      els.btnApplyLatest.textContent = '最新版を適用';
-    }
+      document.open(); document.write(html); document.close();
+    } catch (e) { showStatus(`最新版取得エラー: ${e.message}`, 'error'); els.btnApplyLatest.disabled = false; els.btnApplyLatest.textContent = '最新版を適用'; }
   }
 
-  /* =========================================================
-   * ファイル読込 (ZIP / Fitbit JSON / 食いしばりCSV)
-   * ========================================================= */
   async function handleFiles(fileList, forcedType = null) {
     if (!fileList || !fileList.length) return;
     for (const file of fileList) {
       const name = file.name.toLowerCase();
       try {
-        if (name.endsWith('.zip')) {
-          await parseZipFile(file);
-        } else if (forcedType === 'fitbit' || name.endsWith('.json')) {
-          await parseFitbitJson(file);
-        } else if (forcedType === 'bruxism' || name.endsWith('.csv')) {
-          await parseBruxismCsv(file);
-        } else {
-          showStatus(`未対応のファイル形式です: ${file.name}`, 'error');
-        }
-      } catch (err) {
-        console.error(err);
-        showStatus(`読込エラー (${file.name}): ${err.message}`, 'error');
-      }
+        if (name.endsWith('.zip')) await parseZipFile(file);
+        else if (forcedType === 'fitbit' || name.endsWith('.json')) await parseFitbitJson(file);
+        else if (forcedType === 'bruxism' || name.endsWith('.csv')) await parseBruxismCsv(file);
+        else showStatus(`未対応のファイル形式です: ${file.name}`, 'error');
+      } catch (err) { console.error(err); showStatus(`読込エラー (${file.name}): ${err.message}`, 'error'); }
     }
   }
 
+  /* 標準ZIPパーサー (Central Directory対応) */
   async function parseZipFile(file) {
     showStatus(`ZIP解析中: ${file.name}...`);
     const buf = await file.arrayBuffer();
     const view = new DataView(buf);
+    const bytes = new Uint8Array(buf);
     const files = {};
-    let offset = 0;
 
-    while (offset < view.byteLength - 4) {
-      const sig = view.getUint32(offset, true);
-      if (sig !== 0x04034b50) break;
-      const method = view.getUint16(offset + 8, true);
-      const compSize = view.getUint32(offset + 18, true);
-      const nameLen = view.getUint16(offset + 26, true);
-      const extraLen = view.getUint16(offset + 28, true);
-      const fileName = new TextDecoder().decode(new Uint8Array(buf, offset + 30, nameLen));
-      const dataStart = offset + 30 + nameLen + extraLen;
-      const rawData = new Uint8Array(buf, dataStart, compSize);
+    // End of Central Directory (0x06054b50) を後ろから検索
+    let eocdOffset = -1;
+    for (let i = view.byteLength - 22; i >= Math.max(0, view.byteLength - 65557); i--) {
+      if (view.getUint32(i, true) === 0x06054b50) { eocdOffset = i; break; }
+    }
+    if (eocdOffset === -1) throw new Error('有効なZIPファイルではありません');
 
-      if (method === 0) {
-        files[fileName] = rawData;
-      } else if (method === 8 && typeof DecompressionStream !== 'undefined') {
-        const ds = new DecompressionStream('deflate-raw');
-        const writer = ds.writable.getWriter();
-        writer.write(rawData);
-        writer.close();
-        const out = await new Response(ds.readable).arrayBuffer();
-        files[fileName] = new Uint8Array(out);
+    const cdCount = view.getUint16(eocdOffset + 10, true);
+    let cdOffset = view.getUint32(eocdOffset + 16, true);
+
+    for (let i = 0; i < cdCount; i++) {
+      if (view.getUint32(cdOffset, true) !== 0x02014b50) break;
+      const method = view.getUint16(cdOffset + 10, true);
+      const compSize = view.getUint32(cdOffset + 20, true);
+      const nameLen = view.getUint16(cdOffset + 28, true);
+      const extraLen = view.getUint16(cdOffset + 30, true);
+      const commentLen = view.getUint16(cdOffset + 32, true);
+      const localHeaderOffset = view.getUint32(cdOffset + 42, true);
+      const fileName = new TextDecoder().decode(bytes.subarray(cdOffset + 46, cdOffset + 46 + nameLen));
+
+      const lfhNameLen = view.getUint16(localHeaderOffset + 26, true);
+      const lfhExtraLen = view.getUint16(localHeaderOffset + 28, true);
+      const dataStart = localHeaderOffset + 30 + lfhNameLen + lfhExtraLen;
+      const rawData = bytes.subarray(dataStart, dataStart + compSize);
+
+      if (!fileName.endsWith('/')) {
+        if (method === 0) files[fileName] = rawData;
+        else if (method === 8 && typeof DecompressionStream !== 'undefined') {
+          const ds = new DecompressionStream('deflate-raw');
+          const writer = ds.writable.getWriter();
+          writer.write(rawData); writer.close();
+          files[fileName] = new Uint8Array(await new Response(ds.readable).arrayBuffer());
+        }
       }
-      offset = dataStart + compSize;
+      cdOffset += 46 + nameLen + extraLen + commentLen;
     }
 
-    const logKey = Object.keys(files).find(k => k.endsWith('log.json') || k.endsWith('session.json'));
-    if (!logKey) throw new Error('ZIP内に log.json が見つかりません');
+    const jsonKeys = Object.keys(files).filter(k => k.toLowerCase().endsWith('.json'));
+    if (!jsonKeys.length) throw new Error(`ZIP内にJSONが見つかりません (内包: ${Object.keys(files).slice(0,5).join(', ')})`);
 
-    const logData = JSON.parse(new TextDecoder().decode(files[logKey]));
+    let logData = null;
+    for (const k of jsonKeys) {
+      try {
+        const parsed = JSON.parse(new TextDecoder().decode(files[k]));
+        if (parsed.timeline || parsed.data || parsed.samples || Array.isArray(parsed)) { logData = parsed; break; }
+        if (!logData) logData = parsed;
+      } catch {}
+    }
+    if (!logData) throw new Error('ZIP内のJSONを解析できませんでした');
+
     state.session = normalizeSessionData(logData, file.name);
-
-    const refKey = Object.keys(files).find(k => k.includes('reference.wav'));
+    const refKey = Object.keys(files).find(k => k.toLowerCase().includes('reference') && k.toLowerCase().endsWith('.wav'));
     if (refKey) {
       ensureAudioCtx();
       state.refAudioBuffer = await audioCtx.decodeAudioData(files[refKey].buffer.slice(0));
       els.btnPlayRef.disabled = false;
     }
 
-    onSessionLoaded();
-    saveCurrentToHistory();
+    onSessionLoaded(); saveCurrentToHistory();
     showStatus(`セッション読込完了: ${file.name}`);
   }
 
   function normalizeSessionData(raw, fileName) {
-    const timeline = (raw.timeline || raw.data || []).map((d, i) => ({
-      sec: d.sec ?? i * 0.1,
-      db: d.sourceDbFS ?? d.db ?? -55,
+    const arr = Array.isArray(raw) ? raw : (raw.timeline || raw.data || raw.samples || []);
+    const timeline = arr.map((d, i) => ({
+      sec: d.sec ?? d.t ?? i * 0.1,
+      db: d.sourceDbFS ?? d.db ?? d.dB ?? -55,
       motion: d.motionG ?? d.motion ?? 0
     }));
     const durationSec = timeline.length ? timeline[timeline.length - 1].sec : (raw.durationSec || 600);
     const events = raw.events || detectEventsFromTimeline(timeline);
-    return {
-      id: raw.id || `SES-${Date.now()}`,
-      fileName,
-      startMs: raw.startMs || Date.now() - durationSec * 1000,
-      durationSec,
-      refDb: raw.refDb ?? -25,
-      refEnvDb: raw.refEnvDb ?? -55,
-      timeline,
-      events
-    };
+    return { id: raw.id || `SES-${Date.now()}`, fileName, startMs: raw.startMs || Date.now() - durationSec * 1000, durationSec, refDb: raw.refDb ?? -25, refEnvDb: raw.refEnvDb ?? -55, timeline, events };
   }
 
   function detectEventsFromTimeline(timeline) {
     const events = [];
     for (let i = 10; i < timeline.length; i += 50) {
-      if (timeline[i].db > -22) {
-        events.push({ sec: timeline[i].sec, type: 'audio', label: '音圧上昇', val: `${timeline[i].db.toFixed(1)} dB` });
-      } else if (timeline[i].motion > 0.35) {
-        events.push({ sec: timeline[i].sec, type: 'motion', label: '体動検知', val: `${timeline[i].motion.toFixed(2)} G` });
-      }
+      if (timeline[i].db > -22) events.push({ sec: timeline[i].sec, type: 'audio', label: '音圧上昇', val: `${timeline[i].db.toFixed(1)} dB` });
+      else if (timeline[i].motion > 0.35) events.push({ sec: timeline[i].sec, type: 'motion', label: '体動検知', val: `${timeline[i].motion.toFixed(2)} G` });
     }
     return events;
   }
 
   async function parseFitbitJson(file) {
-    const text = await file.text();
-    const json = JSON.parse(text);
+    const json = JSON.parse(await file.text());
     const baseMs = state.session ? state.session.startMs : Date.now();
     let count = 0;
-
     const arr = Array.isArray(json) ? json : (json.data || json.spo2 || json.heartRate || []);
     arr.forEach(item => {
       const tMs = item.dateTime ? new Date(item.dateTime).getTime() : (item.timestamp || baseMs);
-      const sec = (tMs - baseMs) / 1000;
+      const sec = Math.max(0, (tMs - baseMs) / 1000);
       if (item.value !== undefined) {
-        if (item.value <= 100 && item.value >= 70 && (file.name.toLowerCase().includes('spo2') || item.spo2)) {
-          state.extra.spo2.push({ sec, val: Number(item.value) });
-          count++;
-        } else {
-          state.extra.hr.push({ sec, val: Number(item.value?.bpm ?? item.value) });
-          count++;
-        }
+        if (item.value <= 100 && item.value >= 70 && (file.name.toLowerCase().includes('spo2') || item.spo2)) { state.extra.spo2.push({ sec, val: Number(item.value) }); count++; }
+        else { state.extra.hr.push({ sec, val: Number(item.value?.bpm ?? item.value) }); count++; }
       }
     });
-
     if (count > 0) {
       els.subLaneContainer.style.display = 'block';
-      updateKpis();
-      renderAllCanvases();
+      updateKpis(); renderAllCanvases(); updateTimeReadout();
       showStatus(`Fitbit JSON読込完了: ${count}点`);
-    } else {
-      showStatus('Fitbit JSONから有効な時系列データが見つかりませんでした', 'error');
-    }
+    } else showStatus('Fitbit JSONから有効な時系列データが見つかりませんでした', 'error');
   }
 
   async function parseBruxismCsv(file) {
@@ -649,7 +450,7 @@
     let count = 0;
     for (let i = 1; i < lines.length; i++) {
       const cols = lines[i].split(',');
-      if (cols.length < 3) continue;
+      if (cols.length < 2) continue;
       const sec = parseFloat(cols[0]) || (i * 120);
       const duration = parseFloat(cols[1]) || 4.5;
       const rawType = (cols[2] || 'Phasic').trim();
@@ -660,86 +461,49 @@
     }
     if (count > 0) {
       els.subLaneContainer.style.display = 'block';
-      updateKpis();
-      renderEventList();
-      renderAllCanvases();
+      els.btnPlay.disabled = false;
+      updateKpis(); renderEventList(); renderAllCanvases(); updateTimeReadout();
       showStatus(`食いしばりCSV読込完了: ${count}件`);
     }
   }
 
   function loadSampleSession() {
-    const durationSec = 3600;
-    const timeline = [];
-    const events = [];
+    const durationSec = 3600, timeline = [], events = [];
     for (let s = 0; s <= durationSec; s += 2) {
       const isEvent = (s > 400 && s < 440) || (s > 1200 && s < 1260) || (s > 2400 && s < 2450);
-      const noise = (Math.random() - 0.5) * 6;
-      const db = isEvent ? -18 + noise : -48 + Math.sin(s * 0.05) * 4 + noise;
+      const db = isEvent ? -18 + (Math.random() - 0.5) * 6 : -48 + Math.sin(s * 0.05) * 4 + (Math.random() - 0.5) * 6;
       const motion = (s % 600 < 8) ? 0.45 + Math.random() * 0.3 : Math.random() * 0.05;
       timeline.push({ sec: s, db, motion });
       if (isEvent && s % 20 === 0) events.push({ sec: s, type: 'audio', label: '音圧変化', val: `${db.toFixed(1)} dB` });
       if (motion > 0.4 && s % 8 === 0) events.push({ sec: s, type: 'motion', label: '体動', val: `${motion.toFixed(2)} G` });
     }
-
-    state.session = {
-      id: `DEMO-${Date.now()}`,
-      fileName: 'demo_session.zip',
-      startMs: Date.now() - durationSec * 1000,
-      durationSec,
-      refDb: -25,
-      refEnvDb: -55,
-      timeline,
-      events
-    };
-
-    state.extra.spo2 = Array.from({ length: 60 }, (_, i) => ({
-      sec: i * 60,
-      val: (i === 20 || i === 40) ? 91 + Math.random() * 2 : 96 + Math.random() * 2
-    }));
-    state.extra.hr = Array.from({ length: 60 }, (_, i) => ({
-      sec: i * 60,
-      val: 62 + Math.sin(i * 0.3) * 8 + (i === 20 ? 18 : 0)
-    }));
-    state.extra.bruxism = [
-      { sec: 430, duration: 6, type: 'Phasic', mvc: 32 },
-      { sec: 1245, duration: 10, type: 'Mixed', mvc: 48 },
-      { sec: 2430, duration: 8, type: 'Tonic', mvc: 28 }
-    ];
-
+    state.session = { id: `DEMO-${Date.now()}`, fileName: 'demo_session.zip', startMs: Date.now() - durationSec * 1000, durationSec, refDb: -25, refEnvDb: -55, timeline, events };
+    state.extra.spo2 = Array.from({ length: 60 }, (_, i) => ({ sec: i * 60, val: (i === 20 || i === 40) ? 91 + Math.random() * 2 : 96 + Math.random() * 2 }));
+    state.extra.hr = Array.from({ length: 60 }, (_, i) => ({ sec: i * 60, val: 62 + Math.sin(i * 0.3) * 8 + (i === 20 ? 18 : 0) }));
+    state.extra.bruxism = [{ sec: 430, duration: 6, type: 'Phasic', mvc: 32 }, { sec: 1245, duration: 10, type: 'Mixed', mvc: 48 }, { sec: 2430, duration: 8, type: 'Tonic', mvc: 28 }];
     els.subLaneContainer.style.display = 'block';
-    onSessionLoaded();
-    saveCurrentToHistory();
+    onSessionLoaded(); saveCurrentToHistory();
     showStatus('デモデータを読み込みました（上下対極描画・SpO₂・心拍・食いしばり同期表示中）');
   }
 
   function onSessionLoaded() {
     state.playheadSec = 0;
     els.meta.textContent = `${state.session.fileName} — 計測時間 ${formatTime(state.session.durationSec)}`;
-    els.btnPlay.disabled = false;
-    els.btnPrev.disabled = false;
-    els.btnNext.disabled = false;
-    els.btnExportCsv.disabled = false;
-    updateKpis();
-    renderEventList();
-    renderAllCanvases();
-    updateTimeReadout();
+    els.btnPlay.disabled = false; els.btnPrev.disabled = false; els.btnNext.disabled = false; els.btnExportCsv.disabled = false;
+    updateKpis(); renderEventList(); renderAllCanvases(); updateTimeReadout();
   }
 
   function updateKpis() {
-    if (!state.session) return;
-    const s = state.session;
-    $('kpi-duration').textContent = Math.round(s.durationSec / 60);
-    $('kpi-duration-sub').textContent = `基準音レベル: ${s.refDb} dB`;
-
-    $('kpi-events').textContent = s.events.length;
-    const perHour = s.durationSec > 0 ? (s.events.length / (s.durationSec / 3600)).toFixed(1) : '0.0';
-    $('kpi-events-sub').textContent = `1時間あたり: ${perHour} 回/h`;
-
-    const quietCount = s.timeline.filter(d => d.db < s.refDb - 10 && d.motion < 0.1).length;
-    const quietPct = s.timeline.length ? Math.round((quietCount / s.timeline.length) * 100) : 0;
-    $('kpi-quiet').textContent = quietPct;
-    $('kpi-quiet-sub').textContent = `音圧・体動ともに少ない区間`;
-
+    const dur = getEffectiveDuration();
+    $('kpi-duration').textContent = dur ? Math.round(dur / 60) : '--';
+    if (state.session) {
+      const s = state.session;
+      $('kpi-duration-sub').textContent = `基準音レベル: ${s.refDb} dB`;
+      $('kpi-events').textContent = s.events.length;
+      $('kpi-events-sub').textContent = `1時間あたり: ${s.durationSec > 0 ? (s.events.length / (s.durationSec / 3600)).toFixed(1) : '0.0'} 回/h`;
+      const quietCount = s.timeline.filter(d => d.db < s.refDb - 10 && d.motion < 0.1).length;
+      $('kpi-quiet').textContent = s.timeline.length ? Math.round((quietCount / s.timeline.length) * 100) : 0;
+    }
     const extraCount = state.extra.spo2.length + state.extra.hr.length + state.extra.bruxism.length;
     $('kpi-extra').textContent = extraCount;
     const minSpo2 = state.extra.spo2.length ? Math.min(...state.extra.spo2.map(d => d.val)).toFixed(1) : '--';
@@ -747,24 +511,11 @@
   }
 
   function renderEventList() {
-    if (!state.session) return;
-    const combined = [
-      ...state.session.events.map(e => ({ ...e, badge: e.type === 'motion' ? 'chip-amber' : 'chip-coral' })),
-      ...state.extra.bruxism.map(b => ({ sec: b.sec, type: 'bruxism', label: `食いしばり(${b.type})`, val: `${b.duration}s`, badge: 'chip-cyan' }))
-    ].sort((a, b) => a.sec - b.sec);
-
+    const baseEvents = state.session ? state.session.events.map(e => ({ ...e, badge: e.type === 'motion' ? 'chip-amber' : 'chip-coral' })) : [];
+    const combined = [...baseEvents, ...state.extra.bruxism.map(b => ({ sec: b.sec, type: 'bruxism', label: `食いしばり(${b.type})`, val: `${b.duration}s`, badge: 'chip-cyan' }))].sort((a, b) => a.sec - b.sec);
     els.eventCount.textContent = `${combined.length}件`;
-    if (!combined.length) {
-      els.eventList.innerHTML = '<div class="empty-state">イベントは検出されませんでした。</div>';
-      return;
-    }
-    els.eventList.innerHTML = combined.map(ev => `
-      <div class="event-row" onclick="window.__seekTo(${ev.sec})" style="cursor:pointer;">
-        <span class="event-time">${formatTime(ev.sec)}</span>
-        <span><span class="status-chip ${ev.badge}">${ev.label}</span></span>
-        <span class="section-note">${ev.val}</span>
-      </div>
-    `).join('');
+    if (!combined.length) { els.eventList.innerHTML = '<div class="empty-state">イベントは検出されませんでした。</div>'; return; }
+    els.eventList.innerHTML = combined.slice(0, 200).map(ev => `<div class="event-row" onclick="window.__seekTo(${ev.sec})"><span class="event-time">${formatTime(ev.sec)}</span><span><span class="status-chip ${ev.badge}">${ev.label}</span></span><span class="section-note">${ev.val}</span></div>`).join('');
   }
   window.__seekTo = sec => seekTo(sec);
 
@@ -775,300 +526,128 @@
   }
 
   function setupCanvas(cv) {
-    const dpr = window.devicePixelRatio || 1;
-    const rect = cv.getBoundingClientRect();
-    cv.width = rect.width * dpr;
-    cv.height = rect.height * dpr;
-    const ctx = cv.getContext('2d');
-    ctx.scale(dpr, dpr);
+    const dpr = window.devicePixelRatio || 1, rect = cv.getBoundingClientRect();
+    cv.width = rect.width * dpr; cv.height = rect.height * dpr;
+    const ctx = cv.getContext('2d'); ctx.scale(dpr, dpr);
     return { ctx, w: rect.width, h: rect.height };
   }
 
   function drawTimeline() {
     const { ctx, w, h } = setupCanvas(els.timelineCanvas);
     ctx.clearRect(0, 0, w, h);
-    if (!state.session) return;
-
-    const { durationSec, timeline, refDb, refEnvDb, events } = state.session;
-    const padT = 10, padB = 18;
-    const plotH = h - padT - padB;
-
-    const midY = padT + plotH * 0.5;
-    ctx.strokeStyle = 'rgba(232, 185, 84, 0.45)';
-    ctx.setLineDash([4, 4]);
-    ctx.beginPath(); ctx.moveTo(0, midY); ctx.lineTo(w, midY); ctx.stroke();
-    ctx.setLineDash([]);
-
-    ctx.fillStyle = 'rgba(240, 140, 112, 0.16)';
-    events.forEach(ev => {
-      const x = (ev.sec / durationSec) * w;
-      ctx.fillRect(x - 2, padT, 4, plotH);
-    });
-
-    const barW = Math.max(1.5, w / Math.max(1, timeline.length));
-    timeline.forEach(pt => {
-      const x = (pt.sec / durationSec) * w;
-      const normDb = Math.max(0, Math.min(1, (pt.db - refEnvDb) / Math.max(1, (refDb - refEnvDb) * 2)));
-      const dbH = normDb * plotH;
-      ctx.fillStyle = '#63c7d6';
-      ctx.fillRect(x, (padT + plotH) - dbH, barW, dbH);
-
-      const normMot = Math.max(0, Math.min(1, pt.motion / 1.0));
-      const motH = normMot * plotH * 0.65;
-      if (motH > 1) {
-        ctx.fillStyle = 'rgba(242, 116, 116, 0.85)';
-        ctx.fillRect(x, padT, barW, motH);
-      }
-    });
-
-    const px = (state.playheadSec / durationSec) * w;
-    ctx.strokeStyle = '#e8b954';
-    ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.moveTo(px, 0); ctx.lineTo(px, h); ctx.stroke();
+    const dur = getEffectiveDuration(); if (!dur) return;
+    if (state.session) {
+      const { timeline, refDb, refEnvDb, events } = state.session;
+      const padT = 10, padB = 18, plotH = h - padT - padB, midY = padT + plotH * 0.5;
+      ctx.strokeStyle = 'rgba(232, 185, 84, 0.45)'; ctx.setLineDash([4, 4]);
+      ctx.beginPath(); ctx.moveTo(0, midY); ctx.lineTo(w, midY); ctx.stroke(); ctx.setLineDash([]);
+      ctx.fillStyle = 'rgba(240, 140, 112, 0.16)';
+      events.forEach(ev => ctx.fillRect((ev.sec / dur) * w - 2, padT, 4, plotH));
+      const barW = Math.max(1.5, w / Math.max(1, timeline.length));
+      timeline.forEach(pt => {
+        const x = (pt.sec / dur) * w;
+        const dbH = Math.max(0, Math.min(1, (pt.db - refEnvDb) / Math.max(1, (refDb - refEnvDb) * 2))) * plotH;
+        ctx.fillStyle = '#63c7d6'; ctx.fillRect(x, (padT + plotH) - dbH, barW, dbH);
+        const motH = Math.max(0, Math.min(1, pt.motion / 1.0)) * plotH * 0.65;
+        if (motH > 1) { ctx.fillStyle = 'rgba(242, 116, 116, 0.85)'; ctx.fillRect(x, padT, barW, motH); }
+      });
+    }
+    const px = (state.playheadSec / dur) * w;
+    ctx.strokeStyle = '#e8b954'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(px, 0); ctx.lineTo(px, h); ctx.stroke();
   }
 
   function drawSubLane() {
     const { ctx, w, h } = setupCanvas(els.subLaneCanvas);
     ctx.clearRect(0, 0, w, h);
-    if (!state.session) return;
-    const dur = state.session.durationSec;
-
+    const dur = getEffectiveDuration(); if (!dur) return;
     if (state.extra.spo2.length) {
-      ctx.strokeStyle = '#34d399';
-      ctx.lineWidth = 1.8;
-      ctx.beginPath();
-      state.extra.spo2.forEach((pt, i) => {
-        const x = (pt.sec / dur) * w;
-        const y = h - Math.max(0, Math.min(1, (pt.val - 90) / 10)) * (h - 12) - 6;
-        i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-      });
+      ctx.strokeStyle = '#34d399'; ctx.lineWidth = 1.8; ctx.beginPath();
+      state.extra.spo2.forEach((pt, i) => { const x = (pt.sec / dur) * w, y = h - Math.max(0, Math.min(1, (pt.val - 90) / 10)) * (h - 12) - 6; i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y); });
       ctx.stroke();
     }
-
     if (state.extra.hr.length) {
-      ctx.strokeStyle = '#f87171';
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      state.extra.hr.forEach((pt, i) => {
-        const x = (pt.sec / dur) * w;
-        const y = h - Math.max(0, Math.min(1, (pt.val - 40) / 80)) * (h - 12) - 6;
-        i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-      });
+      ctx.strokeStyle = '#f87171'; ctx.lineWidth = 1.5; ctx.beginPath();
+      state.extra.hr.forEach((pt, i) => { const x = (pt.sec / dur) * w, y = h - Math.max(0, Math.min(1, (pt.val - 40) / 80)) * (h - 12) - 6; i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y); });
       ctx.stroke();
     }
-
     const colorMap = { Phasic: '#60a5fa', Tonic: '#4ade80', Mixed: '#fb923c' };
-    state.extra.bruxism.forEach(b => {
-      const x = (b.sec / dur) * w;
-      const bw = Math.max(4, (b.duration / dur) * w);
-      ctx.fillStyle = colorMap[b.type] || '#60a5fa';
-      ctx.fillRect(x, 4, bw, h - 8);
-    });
-
+    state.extra.bruxism.forEach(b => { ctx.fillStyle = colorMap[b.type] || '#60a5fa'; ctx.fillRect((b.sec / dur) * w, 4, Math.max(3, (b.duration / dur) * w), h - 8); });
     const px = (state.playheadSec / dur) * w;
-    ctx.strokeStyle = '#e8b954';
-    ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.moveTo(px, 0); ctx.lineTo(px, h); ctx.stroke();
+    ctx.strokeStyle = '#e8b954'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(px, 0); ctx.lineTo(px, h); ctx.stroke();
   }
 
   function drawLocalWaveform() {
     const { ctx, w, h } = setupCanvas(els.waveformCanvas);
     ctx.clearRect(0, 0, w, h);
     if (!state.session) return;
-
-    const center = state.playheadSec;
-    const win = 10;
-    const pts = state.session.timeline.filter(p => p.sec >= center - win && p.sec <= center + win);
-    const midY = h / 2;
-
-    ctx.strokeStyle = '#213138';
-    ctx.beginPath(); ctx.moveTo(0, midY); ctx.lineTo(w, midY); ctx.stroke();
-
-    ctx.strokeStyle = '#63c7d6';
-    ctx.lineWidth = 1.5;
-    ctx.beginPath();
-    pts.forEach((pt, i) => {
-      const x = ((pt.sec - (center - win)) / (win * 2)) * w;
-      const amp = Math.max(0.02, (pt.db + 60) / 60) * (h * 0.45);
-      const y = midY + Math.sin(i * 1.7) * amp;
-      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
-    });
+    const center = state.playheadSec, win = 10, pts = state.session.timeline.filter(p => p.sec >= center - win && p.sec <= center + win), midY = h / 2;
+    ctx.strokeStyle = '#213138'; ctx.beginPath(); ctx.moveTo(0, midY); ctx.lineTo(w, midY); ctx.stroke();
+    ctx.strokeStyle = '#63c7d6'; ctx.lineWidth = 1.5; ctx.beginPath();
+    pts.forEach((pt, i) => { const x = ((pt.sec - (center - win)) / (win * 2)) * w, y = midY + Math.sin(i * 1.7) * Math.max(0.02, (pt.db + 60) / 60) * (h * 0.45); i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y); });
     ctx.stroke();
-
-    ctx.strokeStyle = '#e8b954';
-    ctx.beginPath(); ctx.moveTo(w / 2, 0); ctx.lineTo(w / 2, h); ctx.stroke();
+    ctx.strokeStyle = '#e8b954'; ctx.beginPath(); ctx.moveTo(w / 2, 0); ctx.lineTo(w / 2, h); ctx.stroke();
   }
 
-  function togglePlay() {
-    if (!state.session) return;
-    state.isPlaying ? stopAudio() : startAudio();
-  }
-
+  function togglePlay() { if (getEffectiveDuration()) state.isPlaying ? stopAudio() : startAudio(); }
   function startAudio() {
-    state.isPlaying = true;
-    els.btnPlay.textContent = '⏸ 一時停止';
-    lastTickTime = performance.now();
+    state.isPlaying = true; els.btnPlay.textContent = '⏸ 一時停止'; lastTickTime = performance.now();
     const tick = now => {
       if (!state.isPlaying) return;
-      const dt = (now - lastTickTime) / 1000;
-      lastTickTime = now;
-      state.playheadSec = Math.min(state.session.durationSec, state.playheadSec + dt);
-      updateTimeReadout();
-      renderAllCanvases();
-      if (state.playheadSec >= state.session.durationSec) stopAudio();
-      else animFrameId = requestAnimationFrame(tick);
+      const dt = (now - lastTickTime) / 1000; lastTickTime = now;
+      const dur = getEffectiveDuration();
+      state.playheadSec = Math.min(dur, state.playheadSec + dt);
+      updateTimeReadout(); renderAllCanvases();
+      if (state.playheadSec >= dur) stopAudio(); else animFrameId = requestAnimationFrame(tick);
     };
     animFrameId = requestAnimationFrame(tick);
   }
-
-  function stopAudio() {
-    state.isPlaying = false;
-    els.btnPlay.textContent = '▶ 再生';
-    if (animFrameId) cancelAnimationFrame(animFrameId);
-  }
-
-  function seekTo(sec) {
-    if (!state.session) return;
-    state.playheadSec = Math.max(0, Math.min(state.session.durationSec, sec));
-    updateTimeReadout();
-    renderAllCanvases();
-  }
-
+  function stopAudio() { state.isPlaying = false; els.btnPlay.textContent = '▶ 再生'; if (animFrameId) cancelAnimationFrame(animFrameId); }
+  function seekTo(sec) { const dur = getEffectiveDuration(); if (!dur) return; state.playheadSec = Math.max(0, Math.min(dur, sec)); updateTimeReadout(); renderAllCanvases(); }
   function jumpEvent(dir) {
-    if (!state.session || !state.session.events.length) return;
+    if (!state.session?.events?.length) return;
     const evs = state.session.events;
-    const target = dir > 0
-      ? evs.find(e => e.sec > state.playheadSec + 1) || evs[0]
-      : [...evs].reverse().find(e => e.sec < state.playheadSec - 1) || evs[evs.length - 1];
+    const target = dir > 0 ? evs.find(e => e.sec > state.playheadSec + 1) || evs[0] : [...evs].reverse().find(e => e.sec < state.playheadSec - 1) || evs[evs.length - 1];
     seekTo(target.sec);
   }
-
-  function ensureAudioCtx() {
-    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  }
-
-  function playReferenceAudio() {
-    if (!state.refAudioBuffer) return;
-    ensureAudioCtx();
-    const src = audioCtx.createBufferSource();
-    src.buffer = state.refAudioBuffer;
-    src.connect(audioCtx.destination);
-    src.start();
-  }
-
-  function updateTimeReadout() {
-    const cur = formatTime(state.playheadSec);
-    const tot = state.session ? formatTime(state.session.durationSec) : '00:00:00';
-    els.timeReadout.textContent = `${cur} / ${tot}`;
-  }
-
-  function formatTime(sec) {
-    const s = Math.floor(sec);
-    const h = String(Math.floor(s / 3600)).padStart(2, '0');
-    const m = String(Math.floor((s % 3600) / 60)).padStart(2, '0');
-    const r = String(s % 60).padStart(2, '0');
-    return `${h}:${m}:${r}`;
-  }
+  function ensureAudioCtx() { if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)(); }
+  function playReferenceAudio() { if (!state.refAudioBuffer) return; ensureAudioCtx(); const src = audioCtx.createBufferSource(); src.buffer = state.refAudioBuffer; src.connect(audioCtx.destination); src.start(); }
+  function updateTimeReadout() { els.timeReadout.textContent = `${formatTime(state.playheadSec)} / ${formatTime(getEffectiveDuration())}`; }
+  function formatTime(sec) { const s = Math.floor(sec); return `${String(Math.floor(s / 3600)).padStart(2, '0')}:${String(Math.floor((s % 3600) / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`; }
 
   function bindDspControl(key, min, max) {
-    const range = $(`dsp-${key}`);
-    const num = $(`dsp-${key}-val`);
-    const update = v => {
-      const val = Math.max(min, Math.min(max, Number(v)));
-      state.dsp[key] = val;
-      range.value = val;
-      num.value = val;
-      saveDspSettings();
-      drawDspCurve();
-    };
-    range.addEventListener('input', e => update(e.target.value));
-    num.addEventListener('change', e => update(e.target.value));
+    const range = $(`dsp-${key}`), num = $(`dsp-${key}-val`);
+    const update = v => { const val = Math.max(min, Math.min(max, Number(v))); state.dsp[key] = val; range.value = val; num.value = val; saveDspSettings(); drawDspCurve(); };
+    range.addEventListener('input', e => update(e.target.value)); num.addEventListener('change', e => update(e.target.value));
   }
-
-  function syncDspInputs() {
-    ['hpf', 'boost', 'lpf'].forEach(k => {
-      $(`dsp-${k}`).value = state.dsp[k];
-      $(`dsp-${k}-val`).value = state.dsp[k];
-    });
-  }
-
+  function syncDspInputs() { ['hpf', 'boost', 'lpf'].forEach(k => { $(`dsp-${k}`).value = state.dsp[k]; $(`dsp-${k}-val`).value = state.dsp[k]; }); }
   function drawDspCurve() {
-    const { ctx, w, h } = setupCanvas(els.dspCanvas);
-    ctx.clearRect(0, 0, w, h);
-    ctx.strokeStyle = '#63c7d6';
-    ctx.lineWidth = 2;
-    ctx.beginPath();
+    const { ctx, w, h } = setupCanvas(els.dspCanvas); ctx.clearRect(0, 0, w, h);
+    ctx.strokeStyle = '#63c7d6'; ctx.lineWidth = 2; ctx.beginPath();
     for (let x = 0; x <= w; x += 4) {
-      const freq = 20 * Math.pow(500, x / w);
-      let gain = 1.0;
+      const freq = 20 * Math.pow(500, x / w); let gain = 1.0;
       if (freq < state.dsp.hpf) gain *= Math.pow(freq / state.dsp.hpf, 2);
       if (freq > state.dsp.lpf) gain *= Math.pow(state.dsp.lpf / freq, 2);
-      const y = h - 16 - Math.min(1, gain) * (h - 32);
-      x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+      const y = h - 16 - Math.min(1, gain) * (h - 32); x === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
     }
     ctx.stroke();
   }
-
   function saveDspSettings() { localStorage.setItem('st_dsp_v5', JSON.stringify(state.dsp)); }
-  function loadDspSettings() {
-    try {
-      const d = JSON.parse(localStorage.getItem('st_dsp_v5'));
-      if (d) { state.dsp = d; syncDspInputs(); }
-    } catch {}
-  }
-
+  function loadDspSettings() { try { const d = JSON.parse(localStorage.getItem('st_dsp_v5')); if (d) { state.dsp = d; syncDspInputs(); } } catch {} }
   function saveCurrentToHistory() {
     if (!state.session) return;
-    const item = {
-      date: new Date(state.session.startMs).toLocaleString('ja-JP'),
-      duration: formatTime(state.session.durationSec),
-      events: state.session.events.length,
-      quiet: $('kpi-quiet').textContent + '%',
-      fileName: state.session.fileName
-    };
-    state.history.unshift(item);
-    localStorage.setItem('st_history_v5', JSON.stringify(state.history.slice(0, 20)));
-    renderHistory();
+    state.history.unshift({ date: new Date(state.session.startMs).toLocaleString('ja-JP'), duration: formatTime(state.session.durationSec), events: state.session.events.length, quiet: $('kpi-quiet').textContent + '%', fileName: state.session.fileName });
+    localStorage.setItem('st_history_v5', JSON.stringify(state.history.slice(0, 20))); renderHistory();
   }
-
-  function loadHistory() {
-    try {
-      state.history = JSON.parse(localStorage.getItem('st_history_v5')) || [];
-      renderHistory();
-    } catch {}
-  }
-
+  function loadHistory() { try { state.history = JSON.parse(localStorage.getItem('st_history_v5')) || []; renderHistory(); } catch {} }
   function renderHistory() {
-    if (!state.history.length) {
-      els.historyTbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--on-surface-variant);">保存された履歴はありません</td></tr>';
-      return;
-    }
-    els.historyTbody.innerHTML = state.history.map(h => `
-      <tr>
-        <td>${h.date}</td>
-        <td>${h.duration}</td>
-        <td>${h.events} 回</td>
-        <td>${h.quiet}</td>
-        <td>${h.fileName}</td>
-      </tr>
-    `).join('');
+    els.historyTbody.innerHTML = state.history.length ? state.history.map(h => `<tr><td>${h.date}</td><td>${h.duration}</td><td>${h.events} 回</td><td>${h.quiet}</td><td>${h.fileName}</td></tr>`).join('') : '<tr><td colspan="5" style="text-align:center; color:var(--on-surface-variant);">保存された履歴はありません</td></tr>';
   }
-
-  function clearHistory() {
-    state.history = [];
-    localStorage.removeItem('st_history_v5');
-    renderHistory();
-  }
-
+  function clearHistory() { state.history = []; localStorage.removeItem('st_history_v5'); renderHistory(); }
   function exportCsv() {
     if (!state.session) return;
-    const rows = ['sec,db,motionG'];
-    state.session.timeline.forEach(p => rows.push(`${p.sec},${p.db.toFixed(2)},${p.motion.toFixed(3)}`));
-    const blob = new Blob([rows.join('\n')], { type: 'text/csv;charset=utf-8;' });
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = `ST_export_${Date.now()}.csv`;
-    a.click();
+    const rows = ['sec,db,motionG', ...state.session.timeline.map(p => `${p.sec},${p.db.toFixed(2)},${p.motion.toFixed(3)}`)];
+    const a = document.createElement('a'); a.href = URL.createObjectURL(new Blob([rows.join('\n')], { type: 'text/csv;charset=utf-8;' }));
+    a.download = `ST_export_${Date.now()}.csv`; a.click();
   }
 
   init();
