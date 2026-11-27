@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="st-scope-build" content="ST-Oscillograph-V56-20261121-01">
+<meta name="st-scope-build" content="ST-Oscillograph-V57-20261127-01">
 <meta name="st-scope-source-url" content="https://matsuodentalassociation.github.io/ST-oscillo-scope/">
 <meta name="st-scope-repository" content="matsuodentalassociation/ST-oscillo-scope">
 <meta name="st-scope-branch" content="main">
 <meta name="st-scope-path" content="index.html">
-<title>ST-Oscillograph-V56-20261121-01</title>
+<title>ST-Oscillograph-V57-20261127-01</title>
 <style>
 *{box-sizing:border-box}
 body{margin:0;height:100dvh;display:flex;flex-direction:column;overflow:hidden;background:#f8fafc;color:#1e293b;font:11px Consolas,"Noto Sans JP",monospace;user-select:none}
@@ -103,11 +103,11 @@ main{flex:1;min-height:0;padding:5px}
 <body>
 <header id="appHeader">
   <div class="topBar">
-    <div class="brand">ST-Oscillograph-V56</div>
+    <div class="brand">ST-Oscillograph-V57</div>
     <label>ログ種別
       <select id="logTypeSelect" aria-label="ログ種別">
         <option value="tracker">睡眠ログ</option>
-        <option value="fitbit">Fitbit JSON</option>
+        <option value="fitbit">Fitbit / バイタルJSON</option>
         <option value="bruxism">食いしばりCSV</option>
       </select>
     </label>
@@ -149,7 +149,7 @@ main{flex:1;min-height:0;padding:5px}
   <div id="scaleHeader">
     <div id="motionHeader"><span>0G</span><span id="motionMidLabel">0.1G</span><span id="motionMaxLabel">0.2G</span></div>
     <div id="soundHeader">青：音響波形 ／ 赤：再生区間 ／ 合成倍率 <span id="pcmScaleText">1.00</span>倍</div>
-    <div>時計時刻 ↓</div><div>SpO₂ 90–100%</div><div>心拍 bpm</div><div>睡眠段階</div><div>食いしばり</div>
+    <div>時計時刻 ↓</div><div id="spo2Header">SpO₂ 90–100%</div><div>心拍 bpm</div><div>睡眠段階</div><div>食いしばり</div>
   </div>
   <div id="screenViewport">
     <canvas id="waveCanvas"></canvas>
@@ -234,7 +234,7 @@ main{flex:1;min-height:0;padding:5px}
   function datetime(s){const d=new Date(startMs+s*1000);return`${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')} ${clock(s)}`}
   function save(k,v){try{localStorage.setItem(k,String(v))}catch(_){}}
   function stored(k,d){try{return localStorage.getItem(k)??d}catch(_){return d}}
-  function emptyFitbit(){return{stages:[],bpm:[],spo2:[],temperature:[],score:null,spo2Range:null,sourceCount:0}}
+  function emptyFitbit(){return{stages:[],bpm:[],spo2:[],temperature:[],score:null,spo2Range:null,spo2Min:90,sourceCount:0}}
   function audioContext(){if(!ac){const C=window.AudioContext||window.webkitAudioContext;if(!C)throw Error('Web Audio非対応');ac=new C()}return ac}
   window.STScope={busy:()=>trackerLoading||fitbitLoading||bruxismLoading||playing||preparing||!!gesture||!!refSource,dispose(){if(disposed)return;disposed=true;trackerGeneration++;fitbitGeneration++;stopPlayback();stopRef();lifetime.abort();observer?.disconnect();cancelAnimationFrame(drawFrame);ac?.close().catch(()=>{});logs=[];bins=[];clips=[];metadata=[];motionPoints=[];bruxism.episodes=[]}};
   function path(v){let s=String(v??'').replace(/\\/g,'/');try{s=decodeURIComponent(s)}catch(_){}return s.replace(/^\.\//,'').split(/[?#]/)[0].toLowerCase()}
@@ -408,10 +408,16 @@ main{flex:1;min-height:0;padding:5px}
     async function worker(){while(current()){const i=next++;if(i>=audio.length)return;const entry=audio[i];try{const meta=findMeta(entry.name),position=clipStart(meta,entry.name);if(position===null){unplaced++;continue}const data=await entry.data();if(!current())return;const buffer=await decodeClipAudio(context,data);if(!current())return;clips.push({start:position,length:buffer.duration,name:entry.name,category:categoryOf(meta),...features(buffer),loadBuffer:async()=>decodeClipAudio(context,await entry.data())})}catch(error){if(current()){failed++;console.warn(entry.name,error)}}finally{audioDone++;done++;if(current()){$('loadStatusBadge').textContent=`読込達成数 ${done}/${total} / 音声 ${audioDone}/${audio.length} / 失敗 ${failed} / 時刻不明 ${unplaced}`;if(audioDone%10===0||audioDone===audio.length){clips.sort((a,b)=>a.start-b.start);refresh()}await new Promise(resolve=>setTimeout(resolve,0))}}}}
     await Promise.all(Array.from({length:Math.min(2,audio.length)},worker));if(!current())return;clips.sort((a,b)=>a.start-b.start);refresh();$('loadStatusBadge').textContent=`読込完了 ${done}/${total} / ログ${logs.length}点 / 配置${clips.length}本 / 時刻不明${unplaced}本 / 失敗${failed}本`
   }
-  function stage(v){const s=String(v||'').toLowerCase();return['deep','light','rem'].includes(s)?s:/^(wake|awake)$/.test(s)?'wake':null}
+  function stage(v){const s=String(v||'').toLowerCase();return['deep','light','rem'].includes(s)?s:/^(wake|awake)$/.test(s)?'wake':/asleep|inbed/.test(s)?'light':null}
   function timeValue(target,t,v,low,high){const at=ms(t),value=num(v);if(at!==null&&value!==null&&value>=low&&value<=high)target.push({at,value})}
   function fitbitObject(target,object,name=''){
     if(Array.isArray(object)){for(const item of object)fitbitObject(target,item,name);return}if(!object||typeof object!=='object')return;
+    if(object.format==='somnolog-vitals-v1'){
+      if(Array.isArray(object.heartRate))for(const x of object.heartRate)timeValue(target.bpm,x.t??x.dateTime,x.bpm??x.value,25,240);
+      if(Array.isArray(object.spo2))for(const x of object.spo2)timeValue(target.spo2,x.t??x.dateTime,x.pct??x.value,50,100);
+      if(Array.isArray(object.sleep))for(const x of object.sleep){const a=ms(x.start),b=ms(x.end),lv=stage(x.state);if(a!==null&&b!==null&&b>a&&lv)target.stages.push({start:a,end:b,level:lv})}
+      return;
+    }
     for(const r of Array.isArray(object.sleep)?object.sleep:[object]){if(!r||typeof r!=='object')continue;const score=num(r.sleepScore?.overallScore??r.sleepScore?.score??r.sleepScore??r.score);if(score!==null&&score>=0&&score<=100&&(r.levels||r.sleepScore||/score/i.test(name)))target.score=score;for(const x of Array.isArray(r.levels?.data)?r.levels.data:[]){const at=ms(x.dateTime??x.datetime??x.startTime),length=num(x.seconds),level=stage(x.level);if(at!==null&&length>0&&level)target.stages.push({start:at,end:at+length*1000,level})}}
     for(const array of[object.bpm,object.heartRate,object['heart-rate']].filter(Array.isArray))for(const x of array)timeValue(target.bpm,x.dateTime??x.datetime??x.timestamp,x.value?.bpm??x.value?.heartRate??x.value,25,240);
     for(const array of[object.spo2,object.SpO2,object['Oxygen Saturation']].filter(Array.isArray))for(const x of array)timeValue(target.spo2,x.dateTime??x.datetime??x.timestamp,x.value?.spo2??x.value?.SpO2??x.value,50,100);
@@ -420,7 +426,27 @@ main{flex:1;min-height:0;padding:5px}
     if(/spo2|oxygen/i.test(name)||object.spo2||object.SpO2){const r=object.value&&typeof object.value==='object'&&!Array.isArray(object.value)?object.value:object,min=num(r.minimum??r.min),max=num(r.maximum??r.max);if(min!==null&&max!==null&&min>=50&&max<=100&&min<=max)target.spo2Range=target.spo2Range?{min:Math.min(min,target.spo2Range.min),max:Math.max(max,target.spo2Range.max)}:{min,max}}
     const temp=object.temperature??object['Relative Sleep Skin Temperature'];if(Array.isArray(temp))for(const x of temp)timeValue(target.temperature,x.dateTime??x.datetime,x.value?.nightlyRelative??x.value,-20,20)
   }
-  function normalizeFitbit(){for(const k of['bpm','spo2','temperature']){const unique=new Map(fitbit[k].map(x=>[x.at,x]));fitbit[k]=[...unique.values()].sort((a,b)=>a.at-b.at)}const unique=new Map(fitbit.stages.map(x=>[`${x.start}:${x.end}:${x.level}`,x]));fitbit.stages=[...unique.values()].sort((a,b)=>a.start-b.start);$('fitbitStatus').textContent=`段階${fitbit.stages.length} / 心拍${fitbit.bpm.length} / SpO₂${fitbit.spo2.length}`;requestDraw();report()}
+  function normalizeFitbit(){
+    for(const k of['bpm','spo2','temperature']){const unique=new Map(fitbit[k].map(x=>[x.at,x]));fitbit[k]=[...unique.values()].sort((a,b)=>a.at-b.at)}
+    const unique=new Map(fitbit.stages.map(x=>[`${x.start}:${x.end}:${x.level}`,x]));fitbit.stages=[...unique.values()].sort((a,b)=>a.start-b.start);
+    let minSpo2=90;
+    if(fitbit.spo2.length){
+      let dataMin=100;
+      for(const x of fitbit.spo2)if(x.value<dataMin)dataMin=x.value;
+      minSpo2=Math.min(90,Math.floor(dataMin));
+    }
+    fitbit.spo2Min=minSpo2;
+    const hdr=$('spo2Header');if(hdr)hdr.textContent=`SpO₂ ${minSpo2}–100%`;
+    if(!hasTracker){
+      const times=[...fitbit.bpm.map(x=>x.at),...fitbit.spo2.map(x=>x.at),...fitbit.stages.flatMap(s=>[s.start,s.end])];
+      if(times.length){
+        const tMin=Math.min(...times),tMax=Math.max(...times);
+        startMs=tMin;duration=Math.max(60,(tMax-tMin)/1000+60);center=duration/2;cursor=center;
+      }
+    }
+    $('fitbitStatus').textContent=`段階${fitbit.stages.length} / 心拍${fitbit.bpm.length} / SpO₂${fitbit.spo2.length}`;
+    refresh();
+  }
   async function loadFitbit(files,generation){const current=()=>generation===fitbitGeneration&&!disposed;$('fitbitStatus').textContent='解析中…';const target=emptyFitbit();for(const file of files){const result=await documentsFrom(file,current);if(!result||!current())return;for(const d of result.documents){fitbitObject(target,d.obj,d.name);target.sourceCount++}}if(!current())return;fitbit=target;normalizeFitbit()}
   let playMode='normal';
   function windowStart(){return center-span/2}
@@ -436,7 +462,7 @@ main{flex:1;min-height:0;padding:5px}
   function motionGraph(start,end,c,max){let previous=null;if(motionPoints.length){for(const item of motionPoints){const s=item.sec+motionOffset;if(s<start)continue;if(s>end)break;const y=secToY(s),x=motionX(item.motion,max,c);if(motionMode!=='bar'&&previous&&s-previous.s<=2)line(previous.x,previous.y,x,y,'#2563eb',1.3);if(motionMode!=='line')line(c.ml,y,x,y,'#f97316');previous={s,x,y}}}else for(const b of bins){if(b.start+motionOffset+b.length<start)continue;if(b.start+motionOffset>end)break;const s=b.start+motionOffset+b.length/2,y=secToY(s),x=motionX(b.avg,max,c);if(motionMode!=='bar'&&previous&&s-previous.s<=Math.max(b.length,previous.length)*1.6)line(previous.x,previous.y,x,y,'#2563eb',1.4);previous={s,x,y,length:b.length};if(motionMode!=='line'&&y>=0&&y<=canvas.height)line(c.ml,y,motionX(b.max,max,c),y,'#f97316',1.2)}}
   function soundGraph(start,end,c,color='#2563eb'){ctx.save();ctx.beginPath();ctx.rect(c.sl,0,c.sw,canvas.height);ctx.clip();const mid=c.sl+c.sw/2,amp=c.sw/2*waveGain;for(const clip of clips){if(clip.start>end)break;if(clip.start+clip.length<start)continue;const first=Math.max(0,Math.floor((start-clip.start)*PEAK_RATE)),last=Math.min(clip.minimum.length-1,Math.ceil((end-clip.start)*PEAK_RATE)),floor=clip.noiseFloor||0;let row=-1,low=0,high=0;const flush=()=>{if(row>=0&&(low!==0||high!==0))line(mid+clamp(low*amp,-c.sw/2,c.sw/2),row+.5,mid+clamp(high*amp,-c.sw/2,c.sw/2),row+.5,color,color==='#dc2626'?2:1)};for(let i=first;i<=last;i++){const y=Math.floor(secToY(clip.start+i/PEAK_RATE));if(y<0||y>=canvas.height)continue;const lo=clip.minimum[i],hi=clip.maximum[i],l=Math.sign(lo)*Math.max(0,Math.abs(lo)-floor),h=Math.sign(hi)*Math.max(0,Math.abs(hi)-floor);if(y!==row){flush();row=y;low=l;high=h}else{low=Math.min(low,l);high=Math.max(high,h)}}flush()}ctx.restore()}
   function intervalMark(c){if(!hasInterval())return;const y1=secToY(recStart),y2=secToY(recStop);if(y2<0||y1>canvas.height)return;const top=clamp(Math.min(y1,y2),0,canvas.height),bottom=clamp(Math.max(y1,y2),0,canvas.height);ctx.fillStyle='#dc2626';ctx.fillRect(c.ml,top,5,Math.max(3,bottom-top));ctx.fillRect(c.sl,top,c.sw,2);ctx.fillRect(c.sl,Math.max(0,bottom-2),c.sw,2)}
-  function fitbitGraph(start,end,c){for(const x of[c.spo,c.bpm,c.stage,c.brux])line(x,0,x,canvas.height);function graph(points,left,right,scale,color){let previous=null;for(const item of points){const s=(item.at-startMs)/1000;if(s<start)continue;if(s>end)break;const p={x:left+clamp(scale(item.value),0,1)*(right-left),y:secToY(s),s};if(previous&&p.s-previous.s<=600)line(previous.x,previous.y,p.x,p.y,color,1.5);ctx.fillStyle=color;ctx.fillRect(p.x-1,p.y-1,2,2);previous=p}}graph(fitbit.spo2,c.spo+3,c.bpm-4,v=>(v-90)/10,'#0f766e');graph(fitbit.bpm,c.bpm+3,c.stage-4,v=>(v-40)/80,'#dc2626');for(const item of fitbit.stages){const a=(item.start-startMs)/1000,b=(item.end-startMs)/1000;if(b<start)continue;if(a>end)break;const top=clamp(secToY(a),0,canvas.height),bottom=clamp(secToY(b),0,canvas.height);ctx.fillStyle=COLORS[item.level];ctx.fillRect(c.stage+3,top,Math.max(1,c.brux-c.stage-6),Math.max(1,bottom-top))}}
+  function fitbitGraph(start,end,c){for(const x of[c.spo,c.bpm,c.stage,c.brux])line(x,0,x,canvas.height);function graph(points,left,right,scale,color){let previous=null;for(const item of points){const s=(item.at-startMs)/1000;if(s<start)continue;if(s>end)break;const p={x:left+clamp(scale(item.value),0,1)*(right-left),y:secToY(s),s};if(previous&&p.s-previous.s<=600)line(previous.x,previous.y,p.x,p.y,color,1.5);ctx.fillStyle=color;ctx.fillRect(p.x-1,p.y-1,2,2);previous=p}}const sMin=fitbit.spo2Min??90,sSpan=Math.max(1,100-sMin);graph(fitbit.spo2,c.spo+3,c.bpm-4,v=>(v-sMin)/sSpan,'#0f766e');graph(fitbit.bpm,c.bpm+3,c.stage-4,v=>(v-40)/80,'#dc2626');for(const item of fitbit.stages){const a=(item.start-startMs)/1000,b=(item.end-startMs)/1000;if(b<start)continue;if(a>end)break;const top=clamp(secToY(a),0,canvas.height),bottom=clamp(secToY(b),0,canvas.height);ctx.fillStyle=COLORS[item.level];ctx.fillRect(c.stage+3,top,Math.max(1,c.brux-c.stage-6),Math.max(1,bottom-top))}}
   function bruxismGraph(start,end,c){
     if(!bruxism.episodes.length)return;
     const offset=bruxismOffsetSec(),colW=Math.max(10,canvas.width-c.brux-6),maxInt=Math.max(100,bruxism.maxIntegral);
@@ -485,7 +511,7 @@ main{flex:1;min-height:0;padding:5px}
   function seekBy(delta){if(preparing||gesture||trackerLoading)return;const resume=playing,next=clamp(currentCursor()+delta,0,duration);if(resume){if(next>=keepEnd(next)-.01){stopPlayback('再生終了');cursor=next;showHead()}else schedule(next,keepEnd(next),playMode)}else{cursor=next;showHead()}}
   function candidates(){if(!hasTracker)return{movement:0,low:0};const points=bins.length?bins.map(b=>({sec:b.start+b.length/2,value:b.max})):motionPoints.map(x=>({sec:x.sec,value:x.motion}));let movement=0,last=-Infinity;for(const p of points)if(p.value!==null&&p.value>=.025&&p.sec-last>=60){movement++;last=p.sec}let low=0,begin=null,previous=null;function finishLow(){if(begin!==null&&previous!==null&&previous-begin>=9)low++;begin=null}for(const x of logs){if(previous!==null&&x.sec-previous>2)finishLow();if(x.db!==null&&x.db<22){if(begin===null)begin=x.sec}else finishLow();previous=x.sec}finishLow();return{movement,low}}
   function stageChart(){const chart=$('stageChart');chart.width=Math.max(1,Math.round(chart.getBoundingClientRect().width));chart.height=110;const c=chart.getContext('2d');c.fillStyle='#fff';c.fillRect(0,0,chart.width,chart.height);c.font='11px monospace';if(!fitbit.stages.length){c.fillStyle='#64748b';c.fillText('睡眠ステージなし',10,25);return}let first=Infinity,last=-Infinity;for(const s of fitbit.stages){first=Math.min(first,s.start);last=Math.max(last,s.end)}const total=Math.max(1,last-first),width=Math.max(1,chart.width-68),rows={wake:0,rem:1,light:2,deep:3};for(const s of fitbit.stages){const x=60+(s.start-first)/total*width,right=60+(s.end-first)/total*width;c.fillStyle=COLORS[s.level];c.fillRect(x,rows[s.level]*25+5,Math.max(1,right-x),18)}c.fillStyle='#334155';for(const[label,row]of[['覚醒',0],['REM',1],['浅い',2],['深い',3]])c.fillText(label,7,row*25+19)}
-  function report(){if(disposed)return;$('reportPeriod').textContent=hasTracker?`${datetime(0)} ～ ${datetime(duration)}`:'セッション未読込';$('reportMode').textContent=!hasTracker?'SleepTrackerセッション未読込':!fitbit.sourceCount?'SleepTracker単独モード。Fitbit未読込。':'実データ表示。ただしイベント候補の抽出は臨床的に未検証。';$('fitbitScoreText').textContent=fitbit.score===null?'未取得':`${fitbit.score} / 100`;const event=candidates();$('eventCountText').textContent=hasTracker?`体動 ${event.movement} / 音量低下 ${event.low}`:'未解析';$('eventSummary').textContent=hasTracker?`体動候補 ${event.movement}件、連続音量低下候補 ${event.low}件。${bruxism.episodes.length?`食いしばりEpisode ${bruxism.episodes.length}件。`:''}いずれも診断イベントではありません。`:'SleepTrackerログ未読込';const totals={deep:0,light:0,rem:0,wake:0};for(const s of fitbit.stages)totals[s.level]+=Math.max(0,(s.end-s.start)/60000);$('stageSummary').textContent=fitbit.stages.length?`深い ${Math.round(totals.deep)}分 / 浅い ${Math.round(totals.light)}分 / REM ${Math.round(totals.rem)}分 / 覚醒 ${Math.round(totals.wake)}分`:'ステージデータなし';$('fitbitSummary').textContent=fitbit.sourceCount?`心拍 ${fitbit.bpm.length}点 / 時系列SpO₂ ${fitbit.spo2.length}点${fitbit.spo2Range?` / SpO₂範囲 ${fitbit.spo2Range.min}–${fitbit.spo2Range.max}%`:''}。範囲値だけでは時系列波形は描きません。`:'Fitbitデータ未読込';if(!$('reportPage').hidden)stageChart()}
+  function report(){if(disposed)return;$('reportPeriod').textContent=hasTracker?`${datetime(0)} ～ ${datetime(duration)}`:'セッション未読込';$('reportMode').textContent=!hasTracker?'SleepTrackerセッション未読込':!fitbit.sourceCount?'SleepTracker単独モード。Fitbit未読込。':'実データ表示。ただしイベント候補の抽出は臨床的に未検証。';$('fitbitScoreText').textContent=fitbit.score===null?'未取得':`${fitbit.score} / 100`;const event=candidates();$('eventCountText').textContent=hasTracker?`体動 ${event.movement} / 音量低下 ${event.low}`:'未解析';$('eventSummary').textContent=hasTracker?`体動候補 ${event.movement}件、連続音量低下候補 ${event.low}件。${bruxism.episodes.length?`食いしばりEpisode ${bruxism.episodes.length}件。`:''}いずれも診断イベントではありません。`:'SleepTrackerログ未読込';const totals={deep:0,light:0,rem:0,wake:0};for(const s of fitbit.stages)totals[s.level]+=Math.max(0,(s.end-s.start)/60000);$('stageSummary').textContent=fitbit.stages.length?`深い ${Math.round(totals.deep)}分 / 浅い ${Math.round(totals.light)}分 / REM ${Math.round(totals.rem)}分 / 覚醒 ${Math.round(totals.wake)}分`:'ステージデータなし';$('fitbitSummary').textContent=fitbit.sourceCount?`心拍 ${fitbit.bpm.length}点 / 時系列SpO₂ ${fitbit.spo2.length}点${fitbit.spo2Range?` / SpO₂範囲 ${fitbit.spo2Range.min}–${fitbit.spo2Range.max}%`:''}。`:'Fitbitデータ未読込';if(!$('reportPage').hidden)stageChart()}
   function refresh(){for(const c of clips)duration=Math.max(duration,c.start+c.length);if($('windowScaleSelect').value==='all'){span=Math.max(1,duration);center=duration/2}else center=clamp(center,0,duration);$('timeSlider').max=duration;$('timeSlider').value=center;requestDraw();updateLines();report()}
   function offset(v){motionOffset=clamp(num(v,0),-3600,3600);$('motionOffsetSlider').value=clamp(motionOffset,-300,300);$('motionOffsetInput').value=motionOffset.toFixed(1);$('motionOffsetDirection').textContent=Math.abs(motionOffset)<.001?'補正なし':`体動を${Math.abs(motionOffset).toFixed(1)}秒${motionOffset>0?'後':'前'}へ`;save('sleepScopeMotionOffsetSec',motionOffset);requestDraw()}
   function scale(v){if(v==='auto'||v===null||v===undefined)motionSetting='auto';else{const n=num(v,null);motionSetting=n===null?'auto':String(clamp(n,.01,.30))}const eff=motionMax();$('motionScaleSlider').value=clamp(eff,.01,.30);$('motionScaleValue').textContent=motionSetting==='auto'?'自動 '+motionLabel(eff):motionLabel(Number(motionSetting));save('sleepScopeMotionScale',motionSetting);requestDraw()}
@@ -505,7 +531,7 @@ main{flex:1;min-height:0;padding:5px}
   on($('bruxismInput'),'change',e=>{pendingBruxismFile=e.target.files?.[0]||null;if(pendingBruxismFile)$('loadStatusBadge').textContent='選択済み: '+pendingBruxismFile.name});
   on($('logReadBtn'),'click',async()=>{
     const t=$('logTypeSelect').value;
-    if(t==='fitbit'){if(!pendingFitbitFiles.length){$('loadStatusBadge').textContent='先にログを選択してください';return}const generation=++fitbitGeneration;fitbitLoading=true;try{await loadFitbit(pendingFitbitFiles,generation);$('loadStatusBadge').textContent='Fitbitログ読込み完了'}catch(error){$('loadStatusBadge').textContent='読込失敗: '+error.message;console.error(error)}finally{if(generation===fitbitGeneration)fitbitLoading=false}return}
+    if(t==='fitbit'){if(!pendingFitbitFiles.length){$('loadStatusBadge').textContent='先にログを選択してください';return}const generation=++fitbitGeneration;fitbitLoading=true;try{await loadFitbit(pendingFitbitFiles,generation);$('loadStatusBadge').textContent='Fitbit / バイタルJSON読込み完了'}catch(error){$('loadStatusBadge').textContent='読込失敗: '+error.message;console.error(error)}finally{if(generation===fitbitGeneration)fitbitLoading=false}return}
     if(t==='bruxism'){if(!pendingBruxismFile){$('loadStatusBadge').textContent='先にCSVを選択してください';return}bruxismLoading=true;try{await loadBruxism(pendingBruxismFile);$('loadStatusBadge').textContent='食いしばりCSV読込み完了'}catch(error){$('loadStatusBadge').textContent='読込失敗: '+error.message;console.error(error)}finally{bruxismLoading=false;updateLines()}return}
     if(!pendingTrackerFile){$('loadStatusBadge').textContent='先にログを選択してください';return}const generation=++trackerGeneration;trackerLoading=true;gesture=null;try{await loadTracker(pendingTrackerFile,generation)}catch(error){if(generation===trackerGeneration&&!disposed){$('loadStatusBadge').textContent='読込失敗: '+error.message;console.error(error)}}finally{if(generation===trackerGeneration){trackerLoading=false;updateLines()}}
   });
