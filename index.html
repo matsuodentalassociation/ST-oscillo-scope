@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="st-scope-build" content="ST-Oscillograph-V60-20261127-01">
+<meta name="st-scope-build" content="ST-Oscillograph-V61-20261127-01">
 <meta name="st-scope-source-url" content="https://matsuodentalassociation.github.io/ST-oscillo-scope/">
 <meta name="st-scope-repository" content="matsuodentalassociation/ST-oscillo-scope">
 <meta name="st-scope-branch" content="main">
 <meta name="st-scope-path" content="index.html">
-<title>ST-Oscillograph-V60-20261127-01</title>
+<title>ST-Oscillograph-V61-20261127-01</title>
 <style>
 *{box-sizing:border-box}
 body{margin:0;height:100dvh;display:flex;flex-direction:column;overflow:hidden;background:#f8fafc;color:#1e293b;font:11px Consolas,"Noto Sans JP",monospace;user-select:none}
@@ -51,14 +51,16 @@ main{flex:1;min-height:0;padding:5px}
 #waveCanvas{display:block;width:100%;height:100%}
 #playheadLine{position:absolute;left:0;width:100%;height:24px;margin-top:-12px;z-index:7;cursor:row-resize;touch-action:none}
 #playheadLine:before{content:"";position:absolute;top:11px;width:100%;height:3px;background:#fbbf24;box-shadow:0 1px 3px #0006}
-#intervalHud{position:absolute;left:52.2%;width:10.6%;min-width:104px;max-width:130px;z-index:8;padding:4px;background:rgba(255,255,255,0.95);border:1px solid #3b82f6;border-radius:4px;display:flex;flex-direction:column;gap:3px;text-align:center;box-shadow:0 2px 6px rgba(0,0,0,0.12)}
+#intervalHud{position:absolute;left:52.2%;width:10.6%;min-width:110px;max-width:140px;z-index:8;padding:4px;background:rgba(255,255,255,0.95);border:1px solid #3b82f6;border-radius:4px;display:flex;flex-direction:column;gap:3px;text-align:center;box-shadow:0 2px 6px rgba(0,0,0,0.12)}
 #hudHeader{display:flex;align-items:center;justify-content:space-between;gap:2px;font-size:10px}
 #hudToggleBtn{padding:0 5px;font-size:10px;line-height:16px;border-color:#cbd5e1;color:#475569}
 #hudBody{display:flex;flex-direction:column;gap:3px}
 #intervalHud.minimized #hudBody{display:none}
 #replayTime{color:#1d4ed8;font-weight:bold}
-#recordedRange{color:#1d4ed8;font-size:9px}
-#seekButtons{display:grid;grid-template-columns:1fr 1fr;gap:2px;font-size:10px}
+.hudVitals{font-size:10px;color:#334155;line-height:1.35;background:#f8fafc;border:1px solid #e2e8f0;border-radius:3px;padding:2px 3px}
+#replaySpo2{color:#0f766e;font-weight:bold}
+#replayBpm{color:#dc2626;font-weight:bold}
+#replayBrux{color:#b45309;font-size:9px}
 #playButtons{display:grid;grid-template-columns:1fr 1fr;gap:2px;font-size:10px}
 #audioStatusText{color:#64748b;font-size:9px}
 #controls{flex:none;max-height:34%;overflow:auto;display:flex;flex-direction:column;gap:4px;padding:5px 6px;background:#f8fafc;border-top:2px solid #cbd5e1}
@@ -103,7 +105,7 @@ main{flex:1;min-height:0;padding:5px}
 <body>
 <header id="appHeader">
   <div class="topBar">
-    <div class="brand">ST-Oscillograph-V60</div>
+    <div class="brand">ST-Oscillograph-V61</div>
     <label>ログ種別
       <select id="logTypeSelect" aria-label="ログ種別">
         <option value="tracker">睡眠ログ</option>
@@ -161,12 +163,13 @@ main{flex:1;min-height:0;padding:5px}
       </div>
       <div id="hudBody">
         <div><span id="replayDb">-- dB</span> / <span id="replayHz">-- Hz</span></div>
-        <div id="recordedRange">開始 <span id="recStartTime">未設定</span><br>停止 <span id="recStopTime">未設定</span></div>
-        <div id="seekButtons"><button id="recStartBtn" type="button">再生開始</button><button id="recStopBtn" type="button">再生停止</button></div>
+        <div class="hudVitals">
+          <div>SpO₂ <span id="replaySpo2">-- %</span></div>
+          <div>心拍 <span id="replayBpm">-- bpm</span></div>
+          <div id="replayBrux">咬筋 --</div>
+        </div>
         <div id="playButtons"><button id="playFromCursorBtn" class="primary" type="button">▶ 再生</button><button id="stopBtn" type="button" disabled>■ 停止</button></div>
-        <button id="playIntervalBtn" type="button" disabled>▶ 区間再生</button>
-        <button id="deleteIntervalBtn" type="button" disabled>区間削除</button>
-        <button id="refPlayBtn" type="button" disabled>基準音を再生</button>
+        <button id="refPlayBtn" type="button" hidden disabled>基準音を再生</button>
         <div id="audioStatusText" role="status">待機中</div>
       </div>
     </div>
@@ -234,7 +237,7 @@ main{flex:1;min-height:0;padding:5px}
   function datetime(s){const d=new Date(startMs+s*1000);return`${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')} ${clock(s)}`}
   function save(k,v){try{localStorage.setItem(k,String(v))}catch(_){}}
   function stored(k,d){try{return localStorage.getItem(k)??d}catch(_){return d}}
-  function emptyFitbit(){return{stages:[],bpm:[],spo2:[],temperature:[],score:null,spo2Range:null,spo2Min:90,sourceCount:0}}
+  function emptyFitbit(){return{stages:[],bpm:[],spo2:[],temperature:[],score:null,spo2Range:null,spo2Min:90,hasBelow90:false,sourceCount:0}}
   function audioContext(){if(!ac){const C=window.AudioContext||window.webkitAudioContext;if(!C)throw Error('Web Audio非対応');ac=new C()}return ac}
   window.STScope={busy:()=>trackerLoading||fitbitLoading||bruxismLoading||playing||preparing||!!gesture||!!refSource,dispose(){if(disposed)return;disposed=true;trackerGeneration++;fitbitGeneration++;stopPlayback();stopRef();lifetime.abort();observer?.disconnect();cancelAnimationFrame(drawFrame);ac?.close().catch(()=>{});logs=[];bins=[];clips=[];metadata=[];motionPoints=[];bruxism.episodes=[]}};
   function path(v){let s=String(v??'').replace(/\\/g,'/');try{s=decodeURIComponent(s)}catch(_){}return s.replace(/^\.\//,'').split(/[?#]/)[0].toLowerCase()}
@@ -472,13 +475,17 @@ main{flex:1;min-height:0;padding:5px}
   function normalizeFitbit(){
     for(const k of['bpm','spo2','temperature']){const unique=new Map(fitbit[k].map(x=>[x.at,x]));fitbit[k]=[...unique.values()].sort((a,b)=>a.at-b.at)}
     const unique=new Map(fitbit.stages.map(x=>[`${x.start}:${x.end}:${x.level}`,x]));fitbit.stages=[...unique.values()].sort((a,b)=>a.start-b.start);
-    let minSpo2=90;
+    let minSpo2=90,hasBelow90=false;
     if(fitbit.spo2.length){
       let dataMin=100;
-      for(const x of fitbit.spo2)if(x.value<dataMin)dataMin=x.value;
+      for(const x of fitbit.spo2){
+        if(x.value<dataMin)dataMin=x.value;
+        if(x.value<=90)hasBelow90=true;
+      }
       minSpo2=Math.min(90,Math.floor(dataMin));
     }
     fitbit.spo2Min=minSpo2;
+    fitbit.hasBelow90=hasBelow90;
     const hdr=$('spo2Header');if(hdr)hdr.textContent=`SpO₂ ${minSpo2}–100%`;
     if(!hasTracker){
       const times=[...fitbit.bpm.map(x=>x.at),...fitbit.spo2.map(x=>x.at),...fitbit.stages.flatMap(s=>[s.start,s.end])];
@@ -531,12 +538,20 @@ main{flex:1;min-height:0;padding:5px}
   function fitbitGraph(start,end,c){
     for(const x of[c.spo,c.bpm,c.stage,c.brux])line(x,0,x,canvas.height);
     const sMin=fitbit.spo2Min??90,sSpan=Math.max(1,100-sMin),sLeft=c.spo+3,sRight=c.bpm-4;
+    if(fitbit.hasBelow90&&90>sMin){
+      const x90=sLeft+(90-sMin)/sSpan*(sRight-sLeft);
+      ctx.fillStyle='rgba(220,38,38,0.10)';
+      ctx.fillRect(c.spo,0,Math.max(0,x90-c.spo),canvas.height);
+    }
+    ctx.save();
+    ctx.setLineDash([3,3]);
     for(const[pct,col]of[[96,'#2563eb'],[93,'#f97316'],[90,'#dc2626']]){
       if(pct>=sMin&&pct<=100){
         const x=sLeft+(pct-sMin)/sSpan*(sRight-sLeft);
         line(x,0,x,canvas.height,col,1);
       }
     }
+    ctx.restore();
     function graph(points,left,right,scale,color){
       let previous=null;
       for(const item of points){
@@ -570,20 +585,43 @@ main{flex:1;min-height:0;padding:5px}
   function draw(){if(disposed||$('scopePage').hidden||!canvas.width||!canvas.height)return;ctx.fillStyle='#fff';ctx.fillRect(0,0,canvas.width,canvas.height);const start=windowStart(),end=start+span,c=columns(),max=motionMax();$('motionMidLabel').textContent=motionLabel(max/2);$('motionMaxLabel').textContent=motionLabel(max);if(motionSetting==='auto'){$('motionScaleValue').textContent='自動 '+motionLabel(max);$('motionScaleSlider').value=clamp(max,.01,.30)}for(const v of[max/2,max])line(motionX(v,max,c),0,motionX(v,max,c),canvas.height,'#e2e8f0');for(let i=-5;i<=5;i++){const x=c.sl+c.sw/2+i/5*c.sw/2;line(x,0,x,canvas.height,i===0?'#64748b':'#eef2f7')}ticks(start,end,c);motionGraph(start,end,c,max);if(hasInterval()&&recStop>=start&&recStart<=end){const top=clamp(secToY(recStart),0,canvas.height),bottom=clamp(secToY(recStop),0,canvas.height);ctx.save();ctx.fillStyle='rgba(220,38,38,0.12)';ctx.fillRect(c.sl,top,c.sw,Math.max(2,bottom-top));ctx.fillStyle='#dc2626';ctx.fillRect(c.sl,top,4,Math.max(3,bottom-top));ctx.restore()}soundGraph(start,end,c);if(hasInterval()){const a=Math.max(start,recStart),b=Math.min(end,recStop);if(b>a)soundGraph(a,b,c,'#dc2626')}intervalMark(c);fitbitGraph(start,end,c);bruxismGraph(start,end,c);$('currentCenterTime').textContent=clock(center)}
   function resize(){if(disposed||$('scopePage').hidden)return;const rect=viewport.getBoundingClientRect(),w=Math.max(1,Math.round(rect.width)),h=Math.max(1,Math.round(rect.height));if(initialized&&w===canvas.width&&h===canvas.height)return;canvas.width=w;canvas.height=h;if(!initialized){initialized=true;cursor=center}requestDraw();updateLines()}
   function nearest(s){if(!logs.length)return null;let lo=0,hi=logs.length-1;while(lo<hi){const m=(lo+hi)>>1;if(logs[m].sec<s)lo=m+1;else hi=m}const r=logs[lo],l=lo?logs[lo-1]:null;return l&&Math.abs(l.sec-s)<=Math.abs(r.sec-s)?l:r}
+  function nearestVital(arr,atMs,maxDiffMs=120000){
+    if(!arr.length)return null;
+    let lo=0,hi=arr.length-1;
+    while(lo<hi){const m=(lo+hi)>>1;if(arr[m].at<atMs)lo=m+1;else hi=m}
+    const r=arr[lo],l=lo?arr[lo-1]:null;
+    const best=l&&Math.abs(l.at-atMs)<=Math.abs(r.at-atMs)?l:r;
+    return Math.abs(best.at-atMs)<=maxDiffMs?best.value:null;
+  }
+  function bruxismAt(s){
+    if(!bruxism.episodes.length)return null;
+    const offset=bruxismOffsetSec();
+    for(const ep of bruxism.episodes){
+      const a=ep.elapsed+offset,b=a+ep.duration;
+      if(s>=a&&s<=b)return ep;
+    }
+    return null;
+  }
   function measure(s){const near=nearest(s),close=near&&Math.abs(near.sec-s)<=1.5;let db=close?near.db:null,hz=close&&near.hz>0?near.hz:null;if(db===null||hz===null){const clip=clips.find(c=>s>=c.start&&s<c.start+c.length);if(clip&&clip.envelope.length){const i=clamp(Math.round((s-clip.start)*RATE),0,clip.envelope.length-1);if(db===null)db=clip.envelope[i];if(hz===null&&clip.frequency[i]>0)hz=clip.frequency[i]}}return{db,hz}}
-  function metrics(s,t,d,h){const m=measure(s);$(t).textContent=clock(s);$(d).textContent=Number.isFinite(m.db)?m.db.toFixed(1)+' dB':'-- dB';$(h).textContent=Number.isFinite(m.hz)&&m.hz>0?Math.round(m.hz)+' Hz':'-- Hz'}
+  function metrics(s,t,d,h){
+    const m=measure(s);
+    $(t).textContent=clock(s);
+    $(d).textContent=Number.isFinite(m.db)?m.db.toFixed(1)+' dB':'-- dB';
+    $(h).textContent=Number.isFinite(m.hz)&&m.hz>0?Math.round(m.hz)+' Hz':'-- Hz';
+    const atMs=startMs+s*1000;
+    const spo2=nearestVital(fitbit.spo2,atMs,180000);
+    const bpm=nearestVital(fitbit.bpm,atMs,180000);
+    const ep=bruxismAt(s);
+    $('replaySpo2').textContent=spo2!==null?Math.round(spo2)+' %':'-- %';
+    $('replayBpm').textContent=bpm!==null?Math.round(bpm)+' bpm':'-- bpm';
+    $('replayBrux').textContent=ep?`${ep.kind} ${Math.round(ep.integral)}`:'咬筋 --';
+  }
   function showHead(){const head=$('playheadLine');head.style.top=secToY(cursor)+'px';head.setAttribute('aria-valuemin',0);head.setAttribute('aria-valuemax',Math.max(1,duration));head.setAttribute('aria-valuenow',cursor);head.setAttribute('aria-valuetext',clock(cursor));metrics(cursor,'replayTime','replayDb','replayHz')}
   function updateLines(){
     const active=playing||preparing,busy=!!gesture||trackerLoading||bruxismLoading;
     intervalStart=0;intervalEnd=Math.max(1,duration);cursor=clamp(cursor,0,duration);
-    $('recStartTime').textContent=recStart===null?'未設定':clock(recStart);
-    $('recStopTime').textContent=recStop===null?'未設定':clock(recStop);
-    $('recStartBtn').disabled=active||busy;
-    $('recStopBtn').disabled=busy||recStart===null;
     $('playFromCursorBtn').disabled=active||busy;
     $('stopBtn').disabled=!active;
-    $('playIntervalBtn').disabled=active||busy||!hasInterval();
-    $('deleteIntervalBtn').disabled=active||busy||!inInterval(cursor);
     const hud=$('intervalHud'),height=hud.offsetHeight||40;hud.style.top=clamp(secToY(cursor)-height/2,0,Math.max(0,canvas.height-height))+'px';
     const fullView=$('windowScaleSelect').value==='all';
     for(const id of['timeSlider','timePrevBtn','timeNextBtn'])$(id).disabled=active||fullView;
@@ -637,10 +675,6 @@ main{flex:1;min-height:0;padding:5px}
   on($('playheadLine'),'keydown',e=>{if(!['ArrowUp','ArrowDown','Home','End'].includes(e.key))return;e.preventDefault();if(e.key==='ArrowUp')seekBy(e.shiftKey?-5:-1);else if(e.key==='ArrowDown')seekBy(e.shiftKey?5:1);else seekBy((e.key==='Home'?0:duration)-currentCursor());updateLines()});
   on($('playFromCursorBtn'),'click',()=>{if(playing||preparing||gesture||trackerLoading)return;if(inInterval(cursor)){schedule(recStart,recStop,'interval');return}schedule(cursor,playEndFor(cursor),'normal')});
   on($('stopBtn'),'click',()=>{if(playing||preparing)stopPlayback('停止')});
-  on($('playIntervalBtn'),'click',()=>{if(playing||preparing||gesture||trackerLoading||!hasInterval())return;schedule(recStart,recStop,'interval')});
-  on($('deleteIntervalBtn'),'click',()=>{if(playing||preparing||gesture||trackerLoading||!inInterval(cursor))return;recStart=null;recStop=null;playEnd=null;$('audioStatusText').textContent='区間を削除しました';updateLines();requestDraw()});
-  on($('recStartBtn'),'click',()=>{if(playing||preparing||gesture||trackerLoading)return;recStart=cursor;if(recStop!==null&&recStop<=recStart+.05){recStop=null;$('audioStatusText').textContent='開始時刻を記録しました（停止時刻は再設定してください）'}else $('audioStatusText').textContent='開始時刻を記録しました';updateLines();requestDraw()});
-  on($('recStopBtn'),'click',()=>{if(preparing||gesture||trackerLoading)return;if(recStart===null){$('audioStatusText').textContent='先に再生開始時刻を記録してください';return}const t=currentCursor();if(t<=recStart+.05){$('audioStatusText').textContent='停止時刻は開始時刻より後にしてください';return}recStop=t;$('audioStatusText').textContent=playing?'停止時刻を記録しました（再生は継続・次回再生から反映）':'停止時刻を記録しました';updateLines();requestDraw()});
   on($('refPlayBtn'),'click',()=>{playRef()});
   on(window,'resize',()=>{resize();if(!$('reportPage').hidden)stageChart()});if(typeof ResizeObserver==='function'){observer=new ResizeObserver(resize);observer.observe(viewport)}
   motionMode=['both','bar','line'].includes(stored('sleepScopeMotionMode','both'))?stored('sleepScopeMotionMode','both'):'both';$('motionModeSelect').value=motionMode;scale(stored('sleepScopeMotionScale','auto'));offset(num(stored('sleepScopeMotionOffsetSec','0'),0));updateGain();resize();refresh();requestAnimationFrame(()=>{resize();requestDraw()});
