@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="st-scope-build" content="ST-Oscillograph-V61-20261127-01">
+<meta name="st-scope-build" content="ST-Oscillograph-V62-20261127-01">
 <meta name="st-scope-source-url" content="https://matsuodentalassociation.github.io/ST-oscillo-scope/">
 <meta name="st-scope-repository" content="matsuodentalassociation/ST-oscillo-scope">
 <meta name="st-scope-branch" content="main">
 <meta name="st-scope-path" content="index.html">
-<title>ST-Oscillograph-V61-20261127-01</title>
+<title>ST-Oscillograph-V62-20261127-01</title>
 <style>
 *{box-sizing:border-box}
 body{margin:0;height:100dvh;display:flex;flex-direction:column;overflow:hidden;background:#f8fafc;color:#1e293b;font:11px Consolas,"Noto Sans JP",monospace;user-select:none}
@@ -18,6 +18,8 @@ button:hover{background:#eff6ff}
 button:disabled{opacity:.5;cursor:default}
 button.primary{background:#2563eb;color:#fff}
 button.stopping{background:#dc2626;color:#fff}
+button.danger{color:#dc2626;border-color:#fca5a5}
+button.danger:hover{background:#fef2f2}
 input[type=range]{accent-color:#2563eb;min-width:50px}
 select,input[type=number],input[type=text]{border:1px solid #94a3b8;border-radius:4px;padding:3px;color:#1d4ed8;background:#fff}
 header#appHeader{display:block;flex:none;width:min(1120px,calc(100% - 10px));margin:0 auto;padding:4px 7px;background:#fff;border-bottom:1px solid #94a3b8}
@@ -35,7 +37,7 @@ header#appHeader{display:block;flex:none;width:min(1120px,calc(100% - 10px));mar
 #updatePanel{display:flex;align-items:center;gap:4px}
 #updateStatus{display:block;max-width:260px;white-space:normal;overflow-wrap:anywhere;color:#1d4ed8;font-size:10px}
 #applyUpdateBtn[hidden]{display:none}
-.subBar>label{flex:1 1 190px;min-width:190px}
+.subBar>label{flex:1 1 170px;min-width:170px}
 .patientField{height:25px;width:100%;min-width:0;flex:1;border:1px solid #cbd5e1;border-radius:4px;padding:3px 6px;color:#64748b;background:#fff}
 .tabs{flex:0 0 auto}
 main{flex:1;min-height:0;padding:5px}
@@ -105,16 +107,17 @@ main{flex:1;min-height:0;padding:5px}
 <body>
 <header id="appHeader">
   <div class="topBar">
-    <div class="brand">ST-Oscillograph-V61</div>
+    <div class="brand">ST-Oscillograph-V62</div>
     <label>ログ種別
       <select id="logTypeSelect" aria-label="ログ種別">
-        <option value="tracker">睡眠ログ</option>
+        <option value="tracker">睡眠ログ / 共有症例</option>
         <option value="fitbit">Fitbit / バイタル (JSON/ZIP/FIT)</option>
         <option value="bruxism">食いしばりCSV</option>
       </select>
     </label>
-    <button id="logSelectBtn" type="button">ログ選択</button>
-    <button id="logReadBtn" type="button">ログ読込み</button>
+    <button id="logSelectBtn" type="button" class="primary">ログ選択・読込</button>
+    <button id="exportCaseBtn" type="button" title="現在の全データを1つの共有ファイルに保存">症例保存</button>
+    <button id="clearDataBtn" type="button" class="danger" title="保存済みデータを消去して初期化">データ消去</button>
     <span id="loadStatusBadge" class="status" role="status">ログ未読込み</span>
     <span id="fitbitStatus" class="status" role="status">Fitbit未</span>
     <span id="bruxismStatus" class="status" role="status">咬筋未</span>
@@ -227,7 +230,6 @@ main{flex:1;min-height:0;padding:5px}
   let cursor=0,intervalStart=0,intervalEnd=1,initialized=false,hasTracker=false,recStart=null,recStop=null,playEnd=null;
   let trackerLoading=false,fitbitLoading=false,bruxismLoading=false,trackerGeneration=0,fitbitGeneration=0,playGeneration=0;
   let ac=null,sources=[],playing=false,preparing=false,anchorSec=0,anchorTime=0,playFrame=0,drawFrame=0,gesture=null,observer=null,disposed=false;
-  let pendingTrackerFile=null,pendingFitbitFiles=[],pendingBruxismFile=null;
   let refEntry=null,refSource=null;
   const on=(t,e,f,o={})=>t.addEventListener(e,f,{...o,signal:lifetime.signal});
   const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
@@ -240,6 +242,128 @@ main{flex:1;min-height:0;padding:5px}
   function emptyFitbit(){return{stages:[],bpm:[],spo2:[],temperature:[],score:null,spo2Range:null,spo2Min:90,hasBelow90:false,sourceCount:0}}
   function audioContext(){if(!ac){const C=window.AudioContext||window.webkitAudioContext;if(!C)throw Error('Web Audio非対応');ac=new C()}return ac}
   window.STScope={busy:()=>trackerLoading||fitbitLoading||bruxismLoading||playing||preparing||!!gesture||!!refSource,dispose(){if(disposed)return;disposed=true;trackerGeneration++;fitbitGeneration++;stopPlayback();stopRef();lifetime.abort();observer?.disconnect();cancelAnimationFrame(drawFrame);ac?.close().catch(()=>{});logs=[];bins=[];clips=[];metadata=[];motionPoints=[];bruxism.episodes=[]}};
+
+  const DB_NAME='st_oscillo_db_v1',STORE_NAME='case_store';
+  function openDB(){
+    return new Promise((resolve,reject)=>{
+      if(!window.indexedDB)return reject(Error('IndexedDB非対応'));
+      const req=indexedDB.open(DB_NAME,1);
+      req.onupgradeneeded=()=>{const db=req.result;if(!db.objectStoreNames.contains(STORE_NAME))db.createObjectStore(STORE_NAME)};
+      req.onsuccess=()=>resolve(req.result);
+      req.onerror=()=>reject(req.error);
+    });
+  }
+  async function saveStateToDB(){
+    try{
+      const db=await openDB();
+      const payload=await serializeCase(false);
+      await new Promise((res,rej)=>{
+        const tx=db.transaction(STORE_NAME,'readwrite');
+        tx.objectStore(STORE_NAME).put(payload,'current');
+        tx.oncomplete=res;tx.onerror=()=>rej(tx.error);
+      });
+    }catch(e){console.warn('自動保存スキップ:',e)}
+  }
+  async function loadStateFromDB(){
+    try{
+      const db=await openDB();
+      const data=await new Promise((res,rej)=>{
+        const tx=db.transaction(STORE_NAME,'readonly');
+        const req=tx.objectStore(STORE_NAME).get('current');
+        req.onsuccess=()=>res(req.result);req.onerror=()=>rej(req.error);
+      });
+      if(data&&data.format==='st-oscillo-case-v1')await restoreCase(data,true);
+    }catch(e){console.warn('自動復元スキップ:',e)}
+  }
+  async function clearDB(){
+    try{
+      const db=await openDB();
+      await new Promise((res,rej)=>{
+        const tx=db.transaction(STORE_NAME,'readwrite');
+        tx.objectStore(STORE_NAME).delete('current');
+        tx.oncomplete=res;tx.onerror=()=>rej(tx.error);
+      });
+    }catch(_){}
+  }
+  function bufToB64(buf){
+    const u8=new Uint8Array(buf);let bin='';
+    for(let i=0;i<u8.length;i+=8192)bin+=String.fromCharCode(...u8.subarray(i,i+8192));
+    return btoa(bin);
+  }
+  function b64ToBuf(b64){
+    const bin=atob(b64),u8=new Uint8Array(bin.length);
+    for(let i=0;i<bin.length;i++)u8[i]=bin.charCodeAt(i);
+    return u8.buffer;
+  }
+  async function serializeCase(forExport=false){
+    const clipData=[];
+    for(const c of clips){
+      let audioB64=null;
+      if(c.rawBuffer)audioB64=bufToB64(c.rawBuffer);
+      else if(c.rawData)audioB64=bufToB64(await c.rawData());
+      clipData.push({
+        start:c.start,length:c.length,name:c.name,category:c.category,noiseFloor:c.noiseFloor,
+        envelope:Array.from(c.envelope),minimum:Array.from(c.minimum),maximum:Array.from(c.maximum),frequency:Array.from(c.frequency),
+        audioB64
+      });
+    }
+    return{
+      format:'st-oscillo-case-v1',savedAt:Date.now(),
+      patient:{clinic:$('clinicField').value,chartNo:$('chartNoField').value,name:$('patientNameField').value},
+      hasTracker,startMs,duration,center,span,motionOffset,motionSetting,waveGain,motionMode,
+      logs,bins,metadata,clips:clipData,fitbit,bruxism,
+      doctorNotes:$('doctorNotes').value
+    };
+  }
+  async function restoreCase(data,fromDB=false){
+    stopPlayback();stopRef();
+    hasTracker=!!data.hasTracker;startMs=data.startMs||Date.now();duration=Math.max(1,data.duration||1);
+    center=num(data.center,duration/2);cursor=center;
+    logs=Array.isArray(data.logs)?data.logs:[];
+    bins=Array.isArray(data.bins)?data.bins:[];
+    metadata=Array.isArray(data.metadata)?data.metadata:[];
+    indexMotion();
+    const context=clips.length||data.clips?.some(c=>c.audioB64)?audioContext():null;
+    clips=(data.clips||[]).map(c=>{
+      const rawBuf=c.audioB64?b64ToBuf(c.audioB64):null;
+      return{
+        start:c.start,length:c.length,name:c.name,category:c.category,noiseFloor:c.noiseFloor||0,
+        envelope:new Float32Array(c.envelope||[]),minimum:new Float32Array(c.minimum||[]),
+        maximum:new Float32Array(c.maximum||[]),frequency:new Float32Array(c.frequency||[]),
+        rawBuffer:rawBuf,
+        loadBuffer:async()=>{if(!rawBuf)throw Error('音声データなし');return decodeClipAudio(context||audioContext(),rawBuf.slice(0))}
+      };
+    });
+    fitbit=data.fitbit||emptyFitbit();
+    bruxism=data.bruxism||{episodes:[],startClockSec:null,totalSec:0,maxIntegral:800};
+    $('clinicField').value=data.patient?.clinic||'ログから取得';
+    $('chartNoField').value=data.patient?.chartNo||'ログから取得';
+    $('patientNameField').value=data.patient?.name||'ログから取得';
+    $('doctorNotes').value=data.doctorNotes||'';
+    if(fitbit.sourceCount){
+      const hdr=$('spo2Header');if(hdr)hdr.textContent=`SpO₂ ${fitbit.spo2Min??90}–100%`;
+      $('fitbitStatus').textContent=`段階${fitbit.stages.length} / 心拍${fitbit.bpm.length} / SpO₂${fitbit.spo2.length}`;
+    }else $('fitbitStatus').textContent='Fitbit未';
+    $('bruxismStatus').textContent=bruxism.episodes.length?`咬筋 ${bruxism.episodes.length}件`:'咬筋未';
+    $('loadStatusBadge').textContent=fromDB?'前回データを復元しました':'共有症例を読み込みました';
+    refresh();
+  }
+  async function clearAllData(){
+    if(!confirm('現在読み込んでいるデータと自動保存されたデータをすべて消去しますか？'))return;
+    stopPlayback();stopRef();
+    logs=[];bins=[];clips=[];metadata=[];motionPoints=[];motionPeak=0;
+    fitbit=emptyFitbit();bruxism={episodes:[],startClockSec:null,totalSec:0,maxIntegral:800};
+    hasTracker=false;startMs=Date.now();duration=1;center=0;cursor=0;recStart=null;recStop=null;playEnd=null;
+    $('clinicField').value='ログから取得';$('chartNoField').value='ログから取得';$('patientNameField').value='ログから取得';
+    $('doctorNotes').value='';
+    $('loadStatusBadge').textContent='データ消去済み';
+    $('fitbitStatus').textContent='Fitbit未';
+    $('bruxismStatus').textContent='咬筋未';
+    const hdr=$('spo2Header');if(hdr)hdr.textContent='SpO₂ 90–100%';
+    await clearDB();
+    refresh();
+  }
+
   function path(v){let s=String(v??'').replace(/\\/g,'/');try{s=decodeURIComponent(s)}catch(_){}return s.replace(/^\.\//,'').split(/[?#]/)[0].toLowerCase()}
   const base=v=>path(v).split('/').pop();
   function rawLogs(d){return[d?.session?.timeSeriesLogs,d?.timeSeriesLogs,d?.session?.logs,d?.logs,d?.session?.measurements,d?.measurements,d?.session?.samples,d?.samples].find(Array.isArray)||[]}
@@ -320,6 +444,7 @@ main{flex:1;min-height:0;padding:5px}
     }
     $('bruxismStatus').textContent=`咬筋 ${episodes.length}件`;
     refresh();
+    await saveStateToDB();
   }
   function bruxismOffsetSec(){
     if(!hasTracker||bruxism.startClockSec===null)return 0;
@@ -398,6 +523,11 @@ main{flex:1;min-height:0;padding:5px}
   }
   async function loadTracker(file,generation){
     const current=()=>generation===trackerGeneration&&!disposed;stopPlayback();stopRef();refEntry=null;$('refPlayBtn').disabled=true;$('refPlayBtn').textContent='基準音を再生';$('loadStatusBadge').textContent='JSONを解析中…';const result=await documentsFrom(file,current);if(!result||!current())return;const{entries,documents}=result;
+    if(documents.length===1&&documents[0].obj?.format==='st-oscillo-case-v1'){
+      await restoreCase(documents[0].obj,false);
+      await saveStateToDB();
+      return;
+    }
     const candidates=documents.filter(d=>d.obj&&typeof d.obj==='object'&&!Array.isArray(d.obj)&&base(d.name)!=='clips.json'),rank=d=>(base(d.name)==='session.json'?1000000:0)+rawLogs(d.obj).length*2+rawBins(d.obj).length+(d.obj.session||d.obj.startedAt||d.obj.startTime?1000:0);candidates.sort((a,b)=>rank(b)-rank(a));if(!candidates.length)throw Error('セッションJSONがありません');parseTracker(candidates[0].obj);
     const merged=new Map(),anonymous=[];documents.sort((a,b)=>(base(a.name)==='clips.json')-(base(b.name)==='clips.json'));
     for(const m of[...metadata,...documents.flatMap(d=>clipList(d.obj))]){const names=clipFiles(m),key=names.length?base(names[0]):m.id!==undefined?'id:'+m.id:null;if(!key){anonymous.push(m);continue}const clean=Object.fromEntries(Object.entries(m).filter(([,v])=>v!==null&&v!==undefined&&v!==''));merged.set(key,{...merged.get(key),...clean})}metadata=[...merged.values(),...anonymous];
@@ -405,11 +535,12 @@ main{flex:1;min-height:0;padding:5px}
     const refFound=entries.find(e=>base(e.name)==='reference.wav');if(refFound){refEntry=refFound;$('refPlayBtn').disabled=false}const audio=entries.filter(e=>/\.(wav|webm|mp3|ogg|m4a|mp4|aac)$/i.test(e.name)&&base(e.name)!=='reference.wav');
     const jsonTotal=entries.length?entries.filter(e=>/\.json$/i.test(e.name)).length:documents.length;
     const total=jsonTotal+audio.length;let done=jsonTotal;
-    if(!audio.length){$('loadStatusBadge').textContent=`読込完了 ${done}/${Math.max(1,total)} / ログ${logs.length}点 / 音声なし`;return}
+    if(!audio.length){$('loadStatusBadge').textContent=`読込完了 ${done}/${Math.max(1,total)} / ログ${logs.length}点 / 音声なし`;await saveStateToDB();return}
     const context=audioContext();let next=0,audioDone=0,failed=0,unplaced=0;
     $('loadStatusBadge').textContent=`読込達成数 ${done}/${total} / 音声 0/${audio.length}`;
-    async function worker(){while(current()){const i=next++;if(i>=audio.length)return;const entry=audio[i];try{const meta=findMeta(entry.name),position=clipStart(meta,entry.name);if(position===null){unplaced++;continue}const data=await entry.data();if(!current())return;const buffer=await decodeClipAudio(context,data);if(!current())return;clips.push({start:position,length:buffer.duration,name:entry.name,category:categoryOf(meta),...features(buffer),loadBuffer:async()=>decodeClipAudio(context,await entry.data())})}catch(error){if(current()){failed++;console.warn(entry.name,error)}}finally{audioDone++;done++;if(current()){$('loadStatusBadge').textContent=`読込達成数 ${done}/${total} / 音声 ${audioDone}/${audio.length} / 失敗 ${failed} / 時刻不明 ${unplaced}`;if(audioDone%10===0||audioDone===audio.length){clips.sort((a,b)=>a.start-b.start);refresh()}await new Promise(resolve=>setTimeout(resolve,0))}}}}
-    await Promise.all(Array.from({length:Math.min(2,audio.length)},worker));if(!current())return;clips.sort((a,b)=>a.start-b.start);refresh();$('loadStatusBadge').textContent=`読込完了 ${done}/${total} / ログ${logs.length}点 / 配置${clips.length}本 / 時刻不明${unplaced}本 / 失敗${failed}本`
+    async function worker(){while(current()){const i=next++;if(i>=audio.length)return;const entry=audio[i];try{const meta=findMeta(entry.name),position=clipStart(meta,entry.name);if(position===null){unplaced++;continue}const data=await entry.data();if(!current())return;const rawCopy=data.slice(0);const buffer=await decodeClipAudio(context,data);if(!current())return;clips.push({start:position,length:buffer.duration,name:entry.name,category:categoryOf(meta),...features(buffer),rawBuffer:rawCopy,loadBuffer:async()=>decodeClipAudio(context,rawCopy.slice(0))})}catch(error){if(current()){failed++;console.warn(entry.name,error)}}finally{audioDone++;done++;if(current()){$('loadStatusBadge').textContent=`読込達成数 ${done}/${total} / 音声 ${audioDone}/${audio.length} / 失敗 ${failed} / 時刻不明 ${unplaced}`;if(audioDone%10===0||audioDone===audio.length){clips.sort((a,b)=>a.start-b.start);refresh()}await new Promise(resolve=>setTimeout(resolve,0))}}}}
+    await Promise.all(Array.from({length:Math.min(2,audio.length)},worker));if(!current())return;clips.sort((a,b)=>a.start-b.start);refresh();$('loadStatusBadge').textContent=`読込完了 ${done}/${total} / ログ${logs.length}点 / 配置${clips.length}本 / 時刻不明${unplaced}本 / 失敗${failed}本`;
+    await saveStateToDB();
   }
   function stage(v){const s=String(v||'').toLowerCase();return['deep','light','rem'].includes(s)?s:/^(wake|awake)$/.test(s)?'wake':/asleep|inbed/.test(s)?'light':null}
   function timeValue(target,t,v,low,high){const at=ms(t),value=num(v);if(at!==null&&value!==null&&value>=low&&value<=high)target.push({at,value})}
@@ -520,6 +651,7 @@ main{flex:1;min-height:0;padding:5px}
     }
     if(!current())return;
     fitbit=target;normalizeFitbit();
+    await saveStateToDB();
   }
   let playMode='normal';
   function windowStart(){return center-span/2}
@@ -654,15 +786,41 @@ main{flex:1;min-height:0;padding:5px}
     updateLines();
   });
   on($('logSelectBtn'),'click',()=>{const t=$('logTypeSelect').value;if(t==='fitbit')$('fitbitInput').click();else if(t==='bruxism')$('bruxismInput').click();else $('masterInput').click()});
-  on($('masterInput'),'change',e=>{pendingTrackerFile=e.target.files?.[0]||null;if(pendingTrackerFile)$('loadStatusBadge').textContent='選択済み: '+pendingTrackerFile.name});
-  on($('fitbitInput'),'change',e=>{pendingFitbitFiles=Array.from(e.target.files||[]);if(pendingFitbitFiles.length)$('loadStatusBadge').textContent=`選択済み: ${pendingFitbitFiles.length}ファイル`});
-  on($('bruxismInput'),'change',e=>{pendingBruxismFile=e.target.files?.[0]||null;if(pendingBruxismFile)$('loadStatusBadge').textContent='選択済み: '+pendingBruxismFile.name});
-  on($('logReadBtn'),'click',async()=>{
-    const t=$('logTypeSelect').value;
-    if(t==='fitbit'){if(!pendingFitbitFiles.length){$('loadStatusBadge').textContent='先にログを選択してください';return}const generation=++fitbitGeneration;fitbitLoading=true;try{await loadFitbit(pendingFitbitFiles,generation);$('loadStatusBadge').textContent='Fitbit / バイタル読込み完了'}catch(error){$('loadStatusBadge').textContent='読込失敗: '+error.message;console.error(error)}finally{if(generation===fitbitGeneration)fitbitLoading=false}return}
-    if(t==='bruxism'){if(!pendingBruxismFile){$('loadStatusBadge').textContent='先にCSVを選択してください';return}bruxismLoading=true;try{await loadBruxism(pendingBruxismFile);$('loadStatusBadge').textContent='食いしばりCSV読込み完了'}catch(error){$('loadStatusBadge').textContent='読込失敗: '+error.message;console.error(error)}finally{bruxismLoading=false;updateLines()}return}
-    if(!pendingTrackerFile){$('loadStatusBadge').textContent='先にログを選択してください';return}const generation=++trackerGeneration;trackerLoading=true;gesture=null;try{await loadTracker(pendingTrackerFile,generation)}catch(error){if(generation===trackerGeneration&&!disposed){$('loadStatusBadge').textContent='読込失敗: '+error.message;console.error(error)}}finally{if(generation===trackerGeneration){trackerLoading=false;updateLines()}}
+  on($('masterInput'),'change',async e=>{
+    const file=e.target.files?.[0]||null;e.target.value='';if(!file)return;
+    const generation=++trackerGeneration;trackerLoading=true;gesture=null;
+    try{await loadTracker(file,generation)}
+    catch(error){if(generation===trackerGeneration&&!disposed){$('loadStatusBadge').textContent='読込失敗: '+error.message;console.error(error)}}
+    finally{if(generation===trackerGeneration){trackerLoading=false;updateLines()}}
   });
+  on($('fitbitInput'),'change',async e=>{
+    const files=Array.from(e.target.files||[]);e.target.value='';if(!files.length)return;
+    const generation=++fitbitGeneration;fitbitLoading=true;
+    try{await loadFitbit(files,generation);$('loadStatusBadge').textContent='Fitbit / バイタル読込み完了'}
+    catch(error){$('loadStatusBadge').textContent='読込失敗: '+error.message;console.error(error)}
+    finally{if(generation===fitbitGeneration)fitbitLoading=false}
+  });
+  on($('bruxismInput'),'change',async e=>{
+    const file=e.target.files?.[0]||null;e.target.value='';if(!file)return;
+    bruxismLoading=true;
+    try{await loadBruxism(file);$('loadStatusBadge').textContent='食いしばりCSV読込み完了'}
+    catch(error){$('loadStatusBadge').textContent='読込失敗: '+error.message;console.error(error)}
+    finally{bruxismLoading=false;updateLines()}
+  });
+  on($('exportCaseBtn'),'click',async()=>{
+    try{
+      $('loadStatusBadge').textContent='共有ファイル作成中…';
+      const data=await serializeCase(true);
+      const name=($('patientNameField').value||'case').replace(/[\\/:*?"<>|]/g,'_');
+      const blob=new Blob([JSON.stringify(data)],{type:'application/json'});
+      const url=URL.createObjectURL(blob);
+      const a=document.createElement('a');a.href=url;a.download=`${name}_症例共有.json`;a.click();
+      setTimeout(()=>URL.revokeObjectURL(url),5000);
+      $('loadStatusBadge').textContent='症例ファイルを保存しました';
+    }catch(e){$('loadStatusBadge').textContent='保存失敗: '+e.message}
+  });
+  on($('clearDataBtn'),'click',clearAllData);
+  on($('doctorNotes'),'change',()=>saveStateToDB());
   on($('scopeTab'),'click',()=>page(false));on($('reportTab'),'click',()=>page(true));on($('printBtn'),'click',()=>window.print());on(window,'beforeprint',stageChart);
   on($('waveformGainSlider'),'input',e=>{waveGain=clamp(num(e.target.value,1),.25,100);updateGain()});
   on($('motionOffsetSlider'),'input',e=>offset(e.target.value));on($('motionOffsetInput'),'change',e=>offset(e.target.value));on($('motionOffsetMinusBtn'),'click',()=>offset(motionOffset-1));on($('motionOffsetPlusBtn'),'click',()=>offset(motionOffset+1));on($('motionOffsetResetBtn'),'click',()=>offset(0));on($('motionScaleSlider'),'input',e=>scale(e.target.value));on($('motionScaleAutoBtn'),'click',()=>scale('auto'));on($('motionModeSelect'),'change',e=>{motionMode=['both','bar','line'].includes(e.target.value)?e.target.value:'both';save('sleepScopeMotionMode',motionMode);requestDraw()});
@@ -678,6 +836,7 @@ main{flex:1;min-height:0;padding:5px}
   on($('refPlayBtn'),'click',()=>{playRef()});
   on(window,'resize',()=>{resize();if(!$('reportPage').hidden)stageChart()});if(typeof ResizeObserver==='function'){observer=new ResizeObserver(resize);observer.observe(viewport)}
   motionMode=['both','bar','line'].includes(stored('sleepScopeMotionMode','both'))?stored('sleepScopeMotionMode','both'):'both';$('motionModeSelect').value=motionMode;scale(stored('sleepScopeMotionScale','auto'));offset(num(stored('sleepScopeMotionOffsetSec','0'),0));updateGain();resize();refresh();requestAnimationFrame(()=>{resize();requestDraw()});
+  loadStateFromDB();
 })();
 </script>
 <script id="st-scope-updater" data-update-protocol="6">
