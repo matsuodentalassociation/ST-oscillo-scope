@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="st-scope-build" content="ST-Oscillograph-V59-20261127-01">
+<meta name="st-scope-build" content="ST-Oscillograph-V60-20261127-01">
 <meta name="st-scope-source-url" content="https://matsuodentalassociation.github.io/ST-oscillo-scope/">
 <meta name="st-scope-repository" content="matsuodentalassociation/ST-oscillo-scope">
 <meta name="st-scope-branch" content="main">
 <meta name="st-scope-path" content="index.html">
-<title>ST-Oscillograph-V59-20261127-01</title>
+<title>ST-Oscillograph-V60-20261127-01</title>
 <style>
 *{box-sizing:border-box}
 body{margin:0;height:100dvh;display:flex;flex-direction:column;overflow:hidden;background:#f8fafc;color:#1e293b;font:11px Consolas,"Noto Sans JP",monospace;user-select:none}
@@ -103,7 +103,7 @@ main{flex:1;min-height:0;padding:5px}
 <body>
 <header id="appHeader">
   <div class="topBar">
-    <div class="brand">ST-Oscillograph-V59</div>
+    <div class="brand">ST-Oscillograph-V60</div>
     <label>ログ種別
       <select id="logTypeSelect" aria-label="ログ種別">
         <option value="tracker">睡眠ログ</option>
@@ -537,7 +537,18 @@ main{flex:1;min-height:0;padding:5px}
         line(x,0,x,canvas.height,col,1);
       }
     }
-    function graph(points,left,right,scale,color){let previous=null;for(const item of points){const s=(item.at-startMs)/1000;if(s<start)continue;if(s>end)break;const p={x:left+clamp(scale(item.value),0,1)*(right-left),y:secToY(s),s};if(previous&&p.s-previous.s<=600)line(previous.x,previous.y,p.x,p.y,color,1.5);ctx.fillStyle=color;ctx.fillRect(p.x-1,p.y-1,2,2);previous=p}}
+    function graph(points,left,right,scale,color){
+      let previous=null;
+      for(const item of points){
+        const s=(item.at-startMs)/1000;
+        const p={x:left+clamp(scale(item.value),0,1)*(right-left),y:secToY(s),s};
+        if(s<start){previous=p;continue}
+        if(previous&&p.s-previous.s<=600)line(previous.x,previous.y,p.x,p.y,color,1.5);
+        if(s<=end){ctx.fillStyle=color;ctx.fillRect(p.x-1,p.y-1,2,2)}
+        if(s>end)break;
+        previous=p;
+      }
+    }
     graph(fitbit.spo2,sLeft,sRight,v=>(v-sMin)/sSpan,'#0f766e');
     graph(fitbit.bpm,c.bpm+3,c.stage-4,v=>(v-40)/80,'#dc2626');
     for(const item of fitbit.stages){const a=(item.start-startMs)/1000,b=(item.end-startMs)/1000;if(b<start)continue;if(a>end)break;const top=clamp(secToY(a),0,canvas.height),bottom=clamp(secToY(b),0,canvas.height);ctx.fillStyle=COLORS[item.level];ctx.fillRect(c.stage+3,top,Math.max(1,c.brux-c.stage-6),Math.max(1,bottom-top))}
