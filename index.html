@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="st-scope-build" content="ST-Oscillograph-V57-20261127-01">
+<meta name="st-scope-build" content="ST-Oscillograph-V58-20261127-01">
 <meta name="st-scope-source-url" content="https://matsuodentalassociation.github.io/ST-oscillo-scope/">
 <meta name="st-scope-repository" content="matsuodentalassociation/ST-oscillo-scope">
 <meta name="st-scope-branch" content="main">
 <meta name="st-scope-path" content="index.html">
-<title>ST-Oscillograph-V57-20261127-01</title>
+<title>ST-Oscillograph-V58-20261127-01</title>
 <style>
 *{box-sizing:border-box}
 body{margin:0;height:100dvh;display:flex;flex-direction:column;overflow:hidden;background:#f8fafc;color:#1e293b;font:11px Consolas,"Noto Sans JP",monospace;user-select:none}
@@ -103,11 +103,11 @@ main{flex:1;min-height:0;padding:5px}
 <body>
 <header id="appHeader">
   <div class="topBar">
-    <div class="brand">ST-Oscillograph-V57</div>
+    <div class="brand">ST-Oscillograph-V58</div>
     <label>ログ種別
       <select id="logTypeSelect" aria-label="ログ種別">
         <option value="tracker">睡眠ログ</option>
-        <option value="fitbit">Fitbit / バイタルJSON</option>
+        <option value="fitbit">Fitbit / バイタル (JSON/ZIP/FIT)</option>
         <option value="bruxism">食いしばりCSV</option>
       </select>
     </label>
@@ -130,7 +130,7 @@ main{flex:1;min-height:0;padding:5px}
       <button id="applyUpdateBtn" type="button" hidden>更新</button>
     </div>
     <input id="masterInput" type="file" accept=".json,.zip" hidden>
-    <input id="fitbitInput" type="file" accept=".json,.zip" multiple hidden>
+    <input id="fitbitInput" type="file" multiple hidden>
     <input id="bruxismInput" type="file" accept=".csv" hidden>
   </div>
   <div class="subBar">
@@ -340,14 +340,14 @@ main{flex:1;min-height:0;padding:5px}
       for(;;){const v=symbol(literal);if(v<256){put(v);continue}if(v===256)break;const li=v-257;if(li<0||li>=LB.length)throw Error('ZIP長さ符号が不正');const length=LB[li]+bits(LE[li]),di=symbol(distance);if(di>=DB.length)throw Error('ZIP距離符号が不正');const dist=DB[di]+bits(DE[di]);if(dist>used)throw Error('ZIPコピー距離が不正');for(let i=0;i<length;i++)put(out[used-dist])}}
     if(used!==expected)throw Error('ZIP展開サイズ不一致');return out.buffer
   }
-  async function unzip(file){
+  async function unzip(file,extRe=/\.(json|wav|webm|mp3|ogg|m4a|mp4|aac)$/i){
     const bytes=new Uint8Array(await file.arrayBuffer()),view=new DataView(bytes.buffer),u16=p=>view.getUint16(p,true),u32=p=>view.getUint32(p,true);let end=-1;
     for(let p=bytes.length-22;p>=Math.max(0,bytes.length-65557);p--)if(u32(p)===0x06054b50&&p+22+u16(p+20)===bytes.length){end=p;break}
     if(end<0)throw Error('ZIP中央ディレクトリがありません');if(u16(end+4)||u16(end+6))throw Error('分割ZIPは非対応');
     const count=u16(end+10),offset=u32(end+16);if(count===65535||offset===0xffffffff)throw Error('ZIP64は非対応');
     const entries=[],decoder=new TextDecoder();let p=offset;
     for(let i=0;i<count;i++){if(p+46>bytes.length||u32(p)!==0x02014b50)throw Error('ZIP中央ディレクトリが不正');const flags=u16(p+8),method=u16(p+10),compressed=u32(p+20),expanded=u32(p+24),nl=u16(p+28),extra=u16(p+30),comment=u16(p+32),local=u32(p+42);if(p+46+nl+extra+comment>bytes.length)throw Error('ZIPヘッダーが不完全');const name=decoder.decode(bytes.subarray(p+46,p+46+nl));
-      if(!name.endsWith('/')&&/\.(json|wav|webm|mp3|ogg|m4a|mp4|aac)$/i.test(name)){if(flags&1)throw Error('暗号化ZIPは非対応');entries.push({name,async data(){if(local+30>bytes.length||u32(local)!==0x04034b50)throw Error('ZIPローカルヘッダーが不正');const begin=local+30+u16(local+26)+u16(local+28);if(begin+compressed>bytes.length||expanded>268435456)throw Error('ZIPエントリー破損または256MB超');const data=bytes.subarray(begin,begin+compressed);if(method===0){if(compressed!==expanded)throw Error('ZIP格納サイズ不一致');return data.slice().buffer}if(method===8)return inflate(data,expanded);throw Error('未対応ZIP方式: '+method)}})}p+=46+nl+extra+comment}
+      if(!name.endsWith('/')&&extRe.test(name)){if(flags&1)throw Error('暗号化ZIPは非対応');entries.push({name,async data(){if(local+30>bytes.length||u32(local)!==0x04034b50)throw Error('ZIPローカルヘッダーが不正');const begin=local+30+u16(local+26)+u16(local+28);if(begin+compressed>bytes.length||expanded>268435456)throw Error('ZIPエントリー破損または256MB超');const data=bytes.subarray(begin,begin+compressed);if(method===0){if(compressed!==expanded)throw Error('ZIP格納サイズ不一致');return data.slice().buffer}if(method===8)return inflate(data,expanded);throw Error('未対応ZIP方式: '+method)}})}p+=46+nl+extra+comment}
     return entries
   }
   const jsonText=text=>JSON.parse(text.replace(/^\uFEFF/,''));
@@ -426,6 +426,49 @@ main{flex:1;min-height:0;padding:5px}
     if(/spo2|oxygen/i.test(name)||object.spo2||object.SpO2){const r=object.value&&typeof object.value==='object'&&!Array.isArray(object.value)?object.value:object,min=num(r.minimum??r.min),max=num(r.maximum??r.max);if(min!==null&&max!==null&&min>=50&&max<=100&&min<=max)target.spo2Range=target.spo2Range?{min:Math.min(min,target.spo2Range.min),max:Math.max(max,target.spo2Range.max)}:{min,max}}
     const temp=object.temperature??object['Relative Sleep Skin Temperature'];if(Array.isArray(temp))for(const x of temp)timeValue(target.temperature,x.dateTime??x.datetime,x.value?.nightlyRelative??x.value,-20,20)
   }
+  const FIT_EPOCH_MS=631065600000;
+  const FIT_BASE_SIZE={0:1,1:1,2:1,3:2,4:2,5:4,6:4,7:1,8:4,9:8,10:1,11:2,12:4,13:1,14:8,15:8,16:8};
+  function parseFitBuffer(buf,target){
+    const u8=new Uint8Array(buf),dv=new DataView(buf),hsize=u8[0];
+    if(hsize<12||String.fromCharCode(u8[8],u8[9],u8[10],u8[11])!=='.FIT')throw Error('FITファイルではありません');
+    let pos=hsize,lastTs=null;const end=buf.byteLength-2,defs={};
+    function readData(def,compTs){
+      let ts=null,ts16=null,hrVal=null,spo2Val=null;
+      for(const f of def.fields){
+        const bs=FIT_BASE_SIZE[f.base]||1,cnt=Math.max(1,Math.floor(f.size/bs));let v=null;
+        if(cnt===1){
+          if(f.base===2||f.base===0||f.base===10)v=dv.getUint8(pos);
+          else if(f.base===4||f.base===11)v=dv.getUint16(pos,!def.be);
+          else if(f.base===6||f.base===12)v=dv.getUint32(pos,!def.be);
+        }
+        if(f.num===253&&v!==null&&v>=0x10000000)ts=v;
+        else if(def.global===55&&f.num===26&&v!==null)ts16=v;
+        else if(def.global===55&&f.num===27&&v!==null)hrVal=v;
+        else if(def.global===269&&f.num===0&&v!==null)spo2Val=v;
+        pos+=f.size;
+      }
+      if(ts!==null)lastTs=ts;else if(compTs!==null)ts=compTs;
+      else if(ts16!==null&&lastTs!==null){let cand=(lastTs&~0xFFFF)|ts16;if(cand<lastTs)cand+=65536;ts=cand}
+      if(ts===null)return;
+      const at=ts*1000+FIT_EPOCH_MS;
+      if(def.global===55&&hrVal!==null&&hrVal>=30&&hrVal<=250)target.bpm.push({at,value:hrVal});
+      if(def.global===269&&spo2Val!==null&&spo2Val>=50&&spo2Val<=100)target.spo2.push({at,value:spo2Val});
+    }
+    while(pos<end){
+      const h=u8[pos++];
+      if(h&0x80){const def=defs[(h>>5)&3];if(!def)break;let compTs=null;if(lastTs!==null)compTs=lastTs+((h&0x1F)-(lastTs&31)+32)%32;readData(def,compTs);if(compTs!==null)lastTs=compTs}
+      else if(h&0x40){const local=h&0x0F;pos++;const be=u8[pos++]===1,global=be?dv.getUint16(pos,false):dv.getUint16(pos,true);pos+=2;const nf=u8[pos++],fields=[];for(let i=0;i<nf;i++){fields.push({num:u8[pos],size:u8[pos+1],base:u8[pos+2]&0x1F});pos+=3}if(h&0x20){const nd=u8[pos++];pos+=nd*3}defs[local]={global,be,fields}}
+      else{const def=defs[h&0x0F];if(!def)break;readData(def,null)}
+    }
+  }
+  async function sniffKind(file){
+    const head=new Uint8Array(await file.slice(0,64).arrayBuffer());
+    if(head.length>=2&&head[0]===0x50&&head[1]===0x4B)return'zip';
+    if(head.length>=12&&String.fromCharCode(head[8],head[9],head[10],head[11])==='.FIT')return'fit';
+    const t=new TextDecoder().decode(head).trimStart();
+    if(t.startsWith('{')||t.startsWith('['))return'json';
+    return'';
+  }
   function normalizeFitbit(){
     for(const k of['bpm','spo2','temperature']){const unique=new Map(fitbit[k].map(x=>[x.at,x]));fitbit[k]=[...unique.values()].sort((a,b)=>a.at-b.at)}
     const unique=new Map(fitbit.stages.map(x=>[`${x.start}:${x.end}:${x.level}`,x]));fitbit.stages=[...unique.values()].sort((a,b)=>a.start-b.start);
@@ -447,7 +490,30 @@ main{flex:1;min-height:0;padding:5px}
     $('fitbitStatus').textContent=`段階${fitbit.stages.length} / 心拍${fitbit.bpm.length} / SpO₂${fitbit.spo2.length}`;
     refresh();
   }
-  async function loadFitbit(files,generation){const current=()=>generation===fitbitGeneration&&!disposed;$('fitbitStatus').textContent='解析中…';const target=emptyFitbit();for(const file of files){const result=await documentsFrom(file,current);if(!result||!current())return;for(const d of result.documents){fitbitObject(target,d.obj,d.name);target.sourceCount++}}if(!current())return;fitbit=target;normalizeFitbit()}
+  async function loadFitbit(files,generation){
+    const current=()=>generation===fitbitGeneration&&!disposed;
+    $('fitbitStatus').textContent='解析中…';
+    const target=emptyFitbit();
+    for(const file of files){
+      if(!current())return;
+      const kind=await sniffKind(file);
+      if(kind==='fit'||/\.fit$/i.test(file.name)){
+        parseFitBuffer(await file.arrayBuffer(),target);target.sourceCount++;
+      }else if(kind==='zip'||/\.zip$/i.test(file.name)){
+        const entries=await unzip(file,/\.(json|fit)$/i);
+        for(const e of entries){
+          if(!current())return;
+          if(/\.fit$/i.test(e.name)){parseFitBuffer(await e.data(),target);target.sourceCount++}
+          else if(/\.json$/i.test(e.name)){try{fitbitObject(target,jsonText(new TextDecoder().decode(await e.data())),e.name);target.sourceCount++}catch(_){}}
+        }
+      }else{
+        const obj=jsonText(await file.text());
+        fitbitObject(target,obj,file.name);target.sourceCount++;
+      }
+    }
+    if(!current())return;
+    fitbit=target;normalizeFitbit();
+  }
   let playMode='normal';
   function windowStart(){return center-span/2}
   function yToSec(y){return windowStart()+y/Math.max(1,canvas.height)*span}
@@ -531,7 +597,7 @@ main{flex:1;min-height:0;padding:5px}
   on($('bruxismInput'),'change',e=>{pendingBruxismFile=e.target.files?.[0]||null;if(pendingBruxismFile)$('loadStatusBadge').textContent='選択済み: '+pendingBruxismFile.name});
   on($('logReadBtn'),'click',async()=>{
     const t=$('logTypeSelect').value;
-    if(t==='fitbit'){if(!pendingFitbitFiles.length){$('loadStatusBadge').textContent='先にログを選択してください';return}const generation=++fitbitGeneration;fitbitLoading=true;try{await loadFitbit(pendingFitbitFiles,generation);$('loadStatusBadge').textContent='Fitbit / バイタルJSON読込み完了'}catch(error){$('loadStatusBadge').textContent='読込失敗: '+error.message;console.error(error)}finally{if(generation===fitbitGeneration)fitbitLoading=false}return}
+    if(t==='fitbit'){if(!pendingFitbitFiles.length){$('loadStatusBadge').textContent='先にログを選択してください';return}const generation=++fitbitGeneration;fitbitLoading=true;try{await loadFitbit(pendingFitbitFiles,generation);$('loadStatusBadge').textContent='Fitbit / バイタル読込み完了'}catch(error){$('loadStatusBadge').textContent='読込失敗: '+error.message;console.error(error)}finally{if(generation===fitbitGeneration)fitbitLoading=false}return}
     if(t==='bruxism'){if(!pendingBruxismFile){$('loadStatusBadge').textContent='先にCSVを選択してください';return}bruxismLoading=true;try{await loadBruxism(pendingBruxismFile);$('loadStatusBadge').textContent='食いしばりCSV読込み完了'}catch(error){$('loadStatusBadge').textContent='読込失敗: '+error.message;console.error(error)}finally{bruxismLoading=false;updateLines()}return}
     if(!pendingTrackerFile){$('loadStatusBadge').textContent='先にログを選択してください';return}const generation=++trackerGeneration;trackerLoading=true;gesture=null;try{await loadTracker(pendingTrackerFile,generation)}catch(error){if(generation===trackerGeneration&&!disposed){$('loadStatusBadge').textContent='読込失敗: '+error.message;console.error(error)}}finally{if(generation===trackerGeneration){trackerLoading=false;updateLines()}}
   });
