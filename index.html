@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="st-scope-build" content="ST-Oscillograph-V58-20261127-01">
+<meta name="st-scope-build" content="ST-Oscillograph-V59-20261127-01">
 <meta name="st-scope-source-url" content="https://matsuodentalassociation.github.io/ST-oscillo-scope/">
 <meta name="st-scope-repository" content="matsuodentalassociation/ST-oscillo-scope">
 <meta name="st-scope-branch" content="main">
 <meta name="st-scope-path" content="index.html">
-<title>ST-Oscillograph-V58-20261127-01</title>
+<title>ST-Oscillograph-V59-20261127-01</title>
 <style>
 *{box-sizing:border-box}
 body{margin:0;height:100dvh;display:flex;flex-direction:column;overflow:hidden;background:#f8fafc;color:#1e293b;font:11px Consolas,"Noto Sans JP",monospace;user-select:none}
@@ -103,7 +103,7 @@ main{flex:1;min-height:0;padding:5px}
 <body>
 <header id="appHeader">
   <div class="topBar">
-    <div class="brand">ST-Oscillograph-V58</div>
+    <div class="brand">ST-Oscillograph-V59</div>
     <label>ログ種別
       <select id="logTypeSelect" aria-label="ログ種別">
         <option value="tracker">睡眠ログ</option>
@@ -528,7 +528,20 @@ main{flex:1;min-height:0;padding:5px}
   function motionGraph(start,end,c,max){let previous=null;if(motionPoints.length){for(const item of motionPoints){const s=item.sec+motionOffset;if(s<start)continue;if(s>end)break;const y=secToY(s),x=motionX(item.motion,max,c);if(motionMode!=='bar'&&previous&&s-previous.s<=2)line(previous.x,previous.y,x,y,'#2563eb',1.3);if(motionMode!=='line')line(c.ml,y,x,y,'#f97316');previous={s,x,y}}}else for(const b of bins){if(b.start+motionOffset+b.length<start)continue;if(b.start+motionOffset>end)break;const s=b.start+motionOffset+b.length/2,y=secToY(s),x=motionX(b.avg,max,c);if(motionMode!=='bar'&&previous&&s-previous.s<=Math.max(b.length,previous.length)*1.6)line(previous.x,previous.y,x,y,'#2563eb',1.4);previous={s,x,y,length:b.length};if(motionMode!=='line'&&y>=0&&y<=canvas.height)line(c.ml,y,motionX(b.max,max,c),y,'#f97316',1.2)}}
   function soundGraph(start,end,c,color='#2563eb'){ctx.save();ctx.beginPath();ctx.rect(c.sl,0,c.sw,canvas.height);ctx.clip();const mid=c.sl+c.sw/2,amp=c.sw/2*waveGain;for(const clip of clips){if(clip.start>end)break;if(clip.start+clip.length<start)continue;const first=Math.max(0,Math.floor((start-clip.start)*PEAK_RATE)),last=Math.min(clip.minimum.length-1,Math.ceil((end-clip.start)*PEAK_RATE)),floor=clip.noiseFloor||0;let row=-1,low=0,high=0;const flush=()=>{if(row>=0&&(low!==0||high!==0))line(mid+clamp(low*amp,-c.sw/2,c.sw/2),row+.5,mid+clamp(high*amp,-c.sw/2,c.sw/2),row+.5,color,color==='#dc2626'?2:1)};for(let i=first;i<=last;i++){const y=Math.floor(secToY(clip.start+i/PEAK_RATE));if(y<0||y>=canvas.height)continue;const lo=clip.minimum[i],hi=clip.maximum[i],l=Math.sign(lo)*Math.max(0,Math.abs(lo)-floor),h=Math.sign(hi)*Math.max(0,Math.abs(hi)-floor);if(y!==row){flush();row=y;low=l;high=h}else{low=Math.min(low,l);high=Math.max(high,h)}}flush()}ctx.restore()}
   function intervalMark(c){if(!hasInterval())return;const y1=secToY(recStart),y2=secToY(recStop);if(y2<0||y1>canvas.height)return;const top=clamp(Math.min(y1,y2),0,canvas.height),bottom=clamp(Math.max(y1,y2),0,canvas.height);ctx.fillStyle='#dc2626';ctx.fillRect(c.ml,top,5,Math.max(3,bottom-top));ctx.fillRect(c.sl,top,c.sw,2);ctx.fillRect(c.sl,Math.max(0,bottom-2),c.sw,2)}
-  function fitbitGraph(start,end,c){for(const x of[c.spo,c.bpm,c.stage,c.brux])line(x,0,x,canvas.height);function graph(points,left,right,scale,color){let previous=null;for(const item of points){const s=(item.at-startMs)/1000;if(s<start)continue;if(s>end)break;const p={x:left+clamp(scale(item.value),0,1)*(right-left),y:secToY(s),s};if(previous&&p.s-previous.s<=600)line(previous.x,previous.y,p.x,p.y,color,1.5);ctx.fillStyle=color;ctx.fillRect(p.x-1,p.y-1,2,2);previous=p}}const sMin=fitbit.spo2Min??90,sSpan=Math.max(1,100-sMin);graph(fitbit.spo2,c.spo+3,c.bpm-4,v=>(v-sMin)/sSpan,'#0f766e');graph(fitbit.bpm,c.bpm+3,c.stage-4,v=>(v-40)/80,'#dc2626');for(const item of fitbit.stages){const a=(item.start-startMs)/1000,b=(item.end-startMs)/1000;if(b<start)continue;if(a>end)break;const top=clamp(secToY(a),0,canvas.height),bottom=clamp(secToY(b),0,canvas.height);ctx.fillStyle=COLORS[item.level];ctx.fillRect(c.stage+3,top,Math.max(1,c.brux-c.stage-6),Math.max(1,bottom-top))}}
+  function fitbitGraph(start,end,c){
+    for(const x of[c.spo,c.bpm,c.stage,c.brux])line(x,0,x,canvas.height);
+    const sMin=fitbit.spo2Min??90,sSpan=Math.max(1,100-sMin),sLeft=c.spo+3,sRight=c.bpm-4;
+    for(const[pct,col]of[[96,'#2563eb'],[93,'#f97316'],[90,'#dc2626']]){
+      if(pct>=sMin&&pct<=100){
+        const x=sLeft+(pct-sMin)/sSpan*(sRight-sLeft);
+        line(x,0,x,canvas.height,col,1);
+      }
+    }
+    function graph(points,left,right,scale,color){let previous=null;for(const item of points){const s=(item.at-startMs)/1000;if(s<start)continue;if(s>end)break;const p={x:left+clamp(scale(item.value),0,1)*(right-left),y:secToY(s),s};if(previous&&p.s-previous.s<=600)line(previous.x,previous.y,p.x,p.y,color,1.5);ctx.fillStyle=color;ctx.fillRect(p.x-1,p.y-1,2,2);previous=p}}
+    graph(fitbit.spo2,sLeft,sRight,v=>(v-sMin)/sSpan,'#0f766e');
+    graph(fitbit.bpm,c.bpm+3,c.stage-4,v=>(v-40)/80,'#dc2626');
+    for(const item of fitbit.stages){const a=(item.start-startMs)/1000,b=(item.end-startMs)/1000;if(b<start)continue;if(a>end)break;const top=clamp(secToY(a),0,canvas.height),bottom=clamp(secToY(b),0,canvas.height);ctx.fillStyle=COLORS[item.level];ctx.fillRect(c.stage+3,top,Math.max(1,c.brux-c.stage-6),Math.max(1,bottom-top))}
+  }
   function bruxismGraph(start,end,c){
     if(!bruxism.episodes.length)return;
     const offset=bruxismOffsetSec(),colW=Math.max(10,canvas.width-c.brux-6),maxInt=Math.max(100,bruxism.maxIntegral);
